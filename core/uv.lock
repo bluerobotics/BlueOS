@@ -125,6 +125,7 @@ name = "ardupilot-manager"
 version = "0.0.1"
 source = { virtual = "services/ardupilot_manager" }
 dependencies = [
+    { name = "aiocache" },
     { name = "aiofiles" },
     { name = "anyio" },
     { name = "appdirs" },
@@ -146,6 +147,7 @@ dependencies = [
 
 [package.metadata]
 requires-dist = [
+    { name = "aiocache", specifier = "==0.12.2" },
     { name = "aiofiles", specifier = "==0.6.0" },
     { name = "anyio", specifier = "==3.7.1" },
     { name = "appdirs", specifier = "==1.4.4" },

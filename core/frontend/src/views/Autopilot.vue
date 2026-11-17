@@ -29,7 +29,9 @@
         <span v-if="board_undefined">{{ t`No board running` }}</span>
         <div v-else>
           <v-row
-            v-for="{ key, label, value } in autopilot_info"
+            v-for="{
+              key, label, value, docs_url,
+            } in autopilot_info"
             :key="key"
             class="ma-0"
             no-gutters
@@ -42,6 +44,25 @@
               :data-testid="`autopilot-${key}`"
             >
               {{ value }}
+              <v-tooltip
+                v-if="docs_url"
+                bottom
+              >
+                <template #activator="{ on, attrs }">
+                  <a
+                    :href="docs_url"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    v-bind="attrs"
+                    v-on="on"
+                  >
+                    <v-icon small>
+                      mdi-file-document-outline
+                    </v-icon>
+                  </a>
+                </template>
+                <span>{{ t`Open documentation` }}</span>
+              </v-tooltip>
             </v-col>
           </v-row>
           <br>
@@ -85,7 +106,7 @@
           color="secondary"
           :block="$vuetify.breakpoint.xs"
           class="ma-1"
-          :disabled="restarting || installing_firmware"
+          :disabled="restarting || installing_firmware || !is_safe"
           data-testid="change-board-button"
           @click="openBoardChangeDialog"
         >
@@ -154,7 +175,9 @@ import { OneMoreTime } from '@/one-more-time'
 import autopilot_data from '@/store/autopilot'
 import autopilot from '@/store/autopilot_manager'
 import bag from '@/store/bag'
-import { FirmwareInfo, FirmwareVehicleType, FlightController } from '@/types/autopilot'
+import {
+  FirmwareInfo, FirmwareVehicleType, FlightController, vehicleDocsUrl,
+} from '@/types/autopilot'
 import { autopilot_service } from '@/types/frontend_services'
 import back_axios from '@/utils/api'
 
@@ -181,19 +204,24 @@ export default Vue.extend({
     }
   },
   computed: {
-    autopilot_info(): { key: string, label: string, value: string }[] {
+    autopilot_info(): { key: string, label: string, value: string, docs_url?: string }[] {
       let version = 'Unknown'
       if (this.firmware_info) {
         version = `${this.firmware_info.version} (${this.firmware_info.type})`
       }
 
       const vehicle = `${this.vehicle_type ?? 'Unknown'} (${this.firmware_vehicle_type ?? 'Unknown'})`
-      const info = [
+      const info: { key: string, label: string, value: string, docs_url?: string }[] = [
         { key: 'board-name', label: 'Board name', value: this.current_board?.name ?? 'Unknown' },
         { key: 'manufacturer', label: 'Manufacturer', value: this.current_board?.manufacturer ?? 'Unknown' },
         { key: 'mavlink-platform', label: 'Mavlink platform', value: this.current_board?.platform ?? 'Unknown' },
         { key: 'firmware-version', label: 'Firmware version', value: version },
-        { key: 'vehicle-type', label: 'Vehicle type', value: vehicle },
+        {
+          key: 'vehicle-type',
+          label: 'Vehicle type',
+          value: vehicle,
+          docs_url: vehicleDocsUrl(this.firmware_vehicle_type),
+        },
       ]
 
       if (this.current_board?.path) {
@@ -242,7 +270,7 @@ export default Vue.extend({
     firmware_info(): FirmwareInfo | null {
       return autopilot.firmware_info
     },
-    firmware_vehicle_type(): string | null {
+    firmware_vehicle_type(): FirmwareVehicleType | null {
       return autopilot.firmware_vehicle_type
     },
     vehicle_type(): string | null {
@@ -256,6 +284,9 @@ export default Vue.extend({
     },
     installing_firmware(): boolean {
       return autopilot.installing_firmware
+    },
+    is_safe(): boolean {
+      return autopilot_data.is_safe
     },
   },
   mounted() {
