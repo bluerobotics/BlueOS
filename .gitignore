@@ -5,6 +5,7 @@ build/
 dist/
 node_modules
 core/logs
+result*
 
 # Avoid local python development
 *__pycache__
