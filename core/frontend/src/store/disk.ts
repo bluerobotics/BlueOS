@@ -193,8 +193,9 @@ class DiskStore extends VuexModule {
         method: 'get',
         url: `${this.API_URL}/speed/stream`,
         timeout: 600000,
-        onDownloadProgress: (progressEvent: { event?: { currentTarget?: { response?: string } } }) => {
-          const response = progressEvent.event?.currentTarget?.response
+        // axios 0.21 has no .event, it passes the ProgressEvent directly
+        onDownloadProgress: (progressEvent) => {
+          const response = (progressEvent.event ?? progressEvent).currentTarget?.response
           if (!response) return
 
           const fragments = parseStreamingResponse(response)
