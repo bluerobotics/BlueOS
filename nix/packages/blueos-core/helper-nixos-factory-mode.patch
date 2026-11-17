@@ -1,0 +1,16 @@
+diff --git a/core/services/helper/main.py b/core/services/helper/main.py
+index 5f71130..801b42f 100755
+--- a/core/services/helper/main.py
++++ b/core/services/helper/main.py
+@@ -553,6 +553,11 @@ class Helper:
+ 
+     @staticmethod
+     async def check_and_notify_factory_mode() -> None:
++        # Factory mode is a container-image concept: the image ships a `factory`
++        # tag, which is what the version chooser reports. Generations have no
++        # equivalent, so there is nothing here to ask about.
++        if Path("/etc/NIXOS").exists():
++            return
+         try:
+             response = await asyncio.to_thread(
+                 requests.get, "http://localhost/version-chooser/v1.0/version/current", timeout=10

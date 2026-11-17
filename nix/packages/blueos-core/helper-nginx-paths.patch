@@ -1,0 +1,35 @@
+# NixOS files these under different paths than the container image does, so
+# every place helper looks them up is redirected. Not upstreamable.
+diff --git a/core/services/helper/main.py b/core/services/helper/main.py
+index 5f71130..4260ce2 100755
+--- a/core/services/helper/main.py
++++ b/core/services/helper/main.py
+@@ -483,7 +483,7 @@ class Helper:
+ 
+     @staticmethod
+     def reload_nginx() -> None:
+-        with open("/var/run/nginx.pid", "r", encoding="utf-8") as f:
++        with open("/run/nginx/nginx.pid", "r", encoding="utf-8") as f:
+             pid = int(f.readline())
+             # kill -HUP is the right way of doing a graceful reload in Nginx
+             subprocess.run(["kill", "-HUP", f"{pid}"], check=False)
+@@ -537,8 +537,8 @@ class Helper:
+         proxy_set_header X-Forwarded-Proto $scheme;
+         }}
+         """
+-        filename = f"/home/pi/tools/nginx/extensions/{name}.conf"
+-        Path.mkdir(Path("/home/pi/tools/nginx/extensions/"), parents=True, exist_ok=True)
++        filename = f"/var/lib/blueos/nginx-extensions/{name}.conf"
++        Path.mkdir(Path("/var/lib/blueos/nginx-extensions/"), parents=True, exist_ok=True)
+         try:
+             with open(filename, "r", encoding="utf-8") as f:
+                 if f.read() == text:
+@@ -740,7 +740,7 @@ async def root() -> HTMLResponse:
+     return HTMLResponse(content=html_content, status_code=200)
+ 
+ 
+-port_to_service_map: Dict[int, str] = parse_nginx_file("/home/pi/tools/nginx/nginx.conf")
++port_to_service_map: Dict[int, str] = parse_nginx_file("/etc/blueos/nginx.conf")
+ 
+ 
+ async def main() -> None:
