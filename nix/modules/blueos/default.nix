@@ -122,7 +122,7 @@ in
 
       updates = mkOption {
         type = types.package;
-        default = pkgs.callPackage ../../packages/blueos-updates { };
+        default = pkgs.callPackage ../../packages/blueos-updates { inherit src; };
         defaultText = lib.literalMD "this flake's package";
         description = "Update daemon, which lists and activates NixOS generations.";
       };
