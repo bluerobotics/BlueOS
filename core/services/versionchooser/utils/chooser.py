@@ -1,5 +1,6 @@
 import json
 import pathlib
+import re
 import sys
 from dataclasses import asdict
 from datetime import datetime
@@ -166,6 +167,35 @@ class VersionChooser:
         # TODO: restore pruning
         return response
 
+    async def get_factory_version(self) -> str:
+        """Get the factory version from the blueos-core:factory image
+
+        Retrieves the GIT_DESCRIBE_TAGS environment variable from the factory
+        image and extracts the version tag.
+
+        Returns:
+            str: The factory version tag, or empty string if not found
+        """
+        try:
+            factory_details = await self.client.images.inspect("bluerobotics/blueos-core:factory")
+            env_info = factory_details["Config"]["Env"]
+
+            for info in env_info:
+                if "=" not in info:
+                    continue
+
+                key, val = info.split("=", maxsplit=1)
+                if key == "GIT_DESCRIBE_TAGS" and val:
+                    version = str(val).rsplit("-", maxsplit=2)[0]
+                    return version
+
+            logger.info("GIT_DESCRIBE_TAGS not found in factory image environment")
+            return ""
+
+        except Exception as e:
+            logger.error(f"Error getting factory version: {e}")
+            return ""
+
     async def get_bootstrap_version(self) -> str:
         """Get the current bootstrap container image version.
 
@@ -298,6 +328,43 @@ class VersionChooser:
                 logger.critical(f"Error: {type(error)}: {error}")
                 return web.Response(status=500, text=f"Error: {type(error)}: {error}")
 
+    async def commit_version(self, repository: str, tag: str) -> web.Response:
+        """Commits the running core container as a new image, layered on top of the image it runs from.
+
+        Only the container filesystem is captured: bind mounts, and therefore every BlueOS setting under
+        /root/.config, the extensions and the user data, are left out.
+
+        Args:
+            repository (str): the repository for the new image, such as joaozinho/blueos-core
+            tag (str): the desired tag
+
+        Returns:
+            Response:
+                200 - OK
+                422 - Invalid repository/tag
+                500 - Docker refused to commit the container
+        """
+        # Commits are restricted to `<namespace>/blueos-core` names, since we filters the list based on that.
+        if not re.fullmatch(r"[^:]+/blueos-core", repository):
+            return web.json_response(
+                {"error": f"Invalid repository '{repository}', it should look like 'username/blueos-core'"},
+                status=422,
+            )
+        if not tag:
+            return web.json_response({"error": "Invalid tag"}, status=422)
+
+        logger.info(f"Committing running core as {repository}:{tag}...")
+        try:
+            core = await self.client.containers.get("blueos-core")  # type: ignore
+            # Pausing would freeze this very service, and bootstrap resets to factory if it stops answering
+            result = await core.commit(repository=repository, tag=tag, pause=False)
+        except Exception as error:
+            logger.critical(f"Error: {type(error)}: {error}")
+            return web.json_response({"error": f"Unable to commit image: {error}"}, status=500)
+
+        logger.info(f"Committed {repository}:{tag} as {result['Id']}")
+        return web.json_response({"message": f"Committed running BlueOS as {repository}:{tag}", "sha": result["Id"]})
+
     async def delete_version(self, image: str, tag: str) -> web.StreamResponse:
         """Deletes the selected version.
 
@@ -348,6 +415,8 @@ class VersionChooser:
                         "tag": tag,
                         "last_modified": datetime.fromtimestamp(image["Created"]).strftime("%Y-%m-%dT%H:%M:%S.%fZ"),
                         "sha": image["Id"],
+                        # Parent is the base docker image from the committed image
+                        "parent_sha": image["ParentId"] or None,
                     }
                 )
 

@@ -61,12 +61,47 @@ paths:
                   type: string
                   example: master
 
+  /version/factory:
+    get:
+      operationId: main.get_factory_version
+      summary: Get factory version information
+      responses:
+        '200':
+          description: The BlueOS version of the factory image, empty if unknown
+
   /version/restart:
     post:
       operationId: main.restart
       responses:
         '200':
           description: Restart the currently running docker container
+
+  /version/commit:
+    post:
+      operationId: main.commit_version
+      summary: Commit the running BlueOS container as a new local version
+      responses:
+        '200':
+          description: The running container was committed as a new image
+        '422':
+          description: Invalid repository or tag
+        '500':
+          description: Docker refused to commit the container
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - repository
+                - tag
+              properties:
+                repository:
+                  type: string
+                  example: joaozinho/blueos-core
+                tag:
+                  type: string
+                  example: my-changes
 
   /version/delete:
     delete:
