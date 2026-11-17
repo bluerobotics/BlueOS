@@ -1,0 +1,45 @@
+diff --git a/Cargo.toml b/Cargo.toml
+index ab41f6b..7d59cd8 100644
+--- a/Cargo.toml
++++ b/Cargo.toml
+@@ -44,7 +44,7 @@ strum_macros = "0.26"
+ 
+ [build-dependencies]
+ reqwest = {version = "0.11", features = ["blocking"]}
+-vergen = {version = "4", default-features = false, features = ["build", "git"]}
++vergen = {version = "4", default-features = false, features = ["build"]}
+ 
+ [features]
+ raspberry = ["notify", "rppal"]
+diff --git a/build.rs b/build.rs
+index 94e52ec..52dcc8d 100644
+--- a/build.rs
++++ b/build.rs
+@@ -1,21 +1,11 @@
+-extern crate vergen;
+-
+ use vergen::ConstantsFlags;
+ 
++// The `git` feature is disabled because vergen opens a repository for it, and
++// the Nix sandbox has none. VERGEN_GIT_SHA_SHORT is set directly instead, and
++// upstream's Vue download is supplied by the package's postPatch.
++#[allow(deprecated)]
+ fn main() {
+-    // Generate flags about build information
+-    let flags = ConstantsFlags::BUILD_TIMESTAMP
+-        | ConstantsFlags::SEMVER
+-        | ConstantsFlags::BUILD_DATE
+-        | ConstantsFlags::SHA_SHORT;
++    let flags = ConstantsFlags::BUILD_TIMESTAMP | ConstantsFlags::SEMVER | ConstantsFlags::BUILD_DATE;
+     vergen::gen(flags).expect("Unable to generate the cargo keys!");
+-
+-    // Download vue file
+-    let vue_url = "https://unpkg.com/vue@3.0.5/dist/vue.global.js";
+-    let mut resp = reqwest::blocking::get(vue_url)
+-        .expect(&format!("Failed to download vue file: {}", &vue_url));
+-    let vue_file_path = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("src/html/vue.js");
+-    let mut output_file = std::fs::File::create(&vue_file_path)
+-        .expect(&format!("Failed to create vue file: {:?}", &vue_file_path));
+-    std::io::copy(&mut resp, &mut output_file).expect("Failed to copy content.");
++    println!("cargo:rustc-env=VERGEN_GIT_SHA_SHORT=nix");
+ }
