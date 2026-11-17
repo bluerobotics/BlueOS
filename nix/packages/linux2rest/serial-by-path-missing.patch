@@ -1,0 +1,21 @@
+# Treats a missing /dev/serial/by-path as an empty directory instead of a warn.
+#
+# udev only creates that directory while a USB serial device is present. Boards
+# without one hit ENOENT on every lookup, once per enumerated port per poll, and
+# the multiline error costs several journal entries each time. The port still
+# reports by_path: null either way, so only the log changes.
+--- a/src/features/serial.rs
++++ b/src/features/serial.rs
+@@ -42,7 +42,11 @@ impl PortInfo {
+         let dir = std::fs::read_dir(by_path_dir);
+         if dir.is_err() {
+             let error = dir.err().unwrap();
+-            warn!("Failed to look over {by_path_dir}: {error:#?}");
++            // udev only creates the directory while a USB serial port is
++            // plugged in, so its absence is the normal state, not a failure.
++            if error.kind() != std::io::ErrorKind::NotFound {
++                warn!("Failed to look over {by_path_dir}: {error:#?}");
++            }
+             return (None, None);
+         }
+ 
