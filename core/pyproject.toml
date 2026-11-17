@@ -75,6 +75,7 @@ ping = { workspace = true }
 wifi = { workspace = true }
 
 [tool.uv.workspace]
+exclude = [ "services/blueos-updates" ]
 members = [
   "libs/*",
   "services/*",
