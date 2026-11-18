@@ -19,6 +19,8 @@ export const test = base.extend({
   page: async ({ page }, use) => {
     await preparePage(page)
     await use(page)
+    // A test that ends fast closes the page while the settings route still waits on the vehicle
+    await page.unrouteAll({ behavior: 'ignoreErrors' })
   },
 })
 
