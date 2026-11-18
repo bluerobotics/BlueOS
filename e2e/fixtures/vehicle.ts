@@ -14,6 +14,8 @@ export const test = base.extend({
     await page.route('**/bag/v1.0/get/wizard', (route) => route.fulfill({ json: { version: 4 } }))
     await page.addLocatorHandler(page.getByRole('button', { name: 'Skip tour' }), (skip) => skip.click())
     await use(page)
+    // A test that ends fast closes the page while the settings route still waits on the vehicle
+    await page.unrouteAll({ behavior: 'ignoreErrors' })
   },
 })
 
