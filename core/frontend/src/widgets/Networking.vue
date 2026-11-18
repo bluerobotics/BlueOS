@@ -4,17 +4,21 @@
       <!-- eslint-disable vue/no-v-html -->
       <div class="left-content ml-2">
         <i class="pi-icon" v-html="image" />
-        <span class="vertical-text">{{ interface }}</span>
+        <span class="vertical-text" data-testid="network-interface">{{ interface }}</span>
       </div>
       <v-spacer />
       <div class="d-flex flex-column stacked-text mr-3">
-        <div class="d-flex align-center text-caption bandwidth-row" style="margin-bottom: -8px">
+        <div
+          class="d-flex align-center text-caption bandwidth-row"
+          style="margin-bottom: -8px"
+          data-testid="network-received"
+        >
           <div class="icon-label-group">
             <i class="arrow-icon-rx" v-html="arrowLeft" />
           </div>
           {{ formatBandwidth(download) }}
         </div>
-        <div class="d-flex align-center text-caption bandwidth-row">
+        <div class="d-flex align-center text-caption bandwidth-row" data-testid="network-sent">
           <div class="icon-label-group">
             <i class="arrow-icon-tx" v-html="arrowRight" />
           </div>
