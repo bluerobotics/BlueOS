@@ -35,6 +35,7 @@
           <v-card
             class="px-3 rounded-xl app-card d-flex flex-column"
             :href="route"
+            data-testid="home-card"
           >
             <div class="card-header">
               <v-theme-provider dark>
