@@ -714,6 +714,32 @@ apply_firmware_and_params() {
     echo "Installed params to ${userdata}/ardupilot_${BOARD}params.params"
 }
 
+# Expects the boot partition mounted at rootfs/boot
+prepare_first_boot() {
+    local rootfs="$1"
+    local cmdline="${rootfs}/boot/cmdline.txt"
+    if [ ! -f "$cmdline" ]; then
+        echo "Error: $cmdline not found" >&2
+        exit 1
+    fi
+    # init_resize.sh reboots even when the partition already fills the card, expand_fs.service grows it online instead
+    sudo sed -i -E 's# init=/usr/lib/raspi-config/init_resize\.sh( |$)#\1#; s# quiet( |$)#\1#' "$cmdline"
+    sudo install -m 755 "${SCRIPT_DIR}/../expand_fs.sh" "${rootfs}/usr/bin/expand_fs.sh"
+    sudo install -m 644 "${SCRIPT_DIR}/files/expand_fs.service" "${rootfs}/etc/systemd/system/expand_fs.service"
+    sudo ln -sf /etc/systemd/system/expand_fs.service \
+        "${rootfs}/etc/systemd/system/multi-user.target.wants/expand_fs.service"
+
+    # bcm_27xx.sh reboots as soon as an EEPROM update is staged in /boot. The bootloader applies it on the next boot.
+    local eeprom="${rootfs}/lib/systemd/system/rpi-eeprom-update.service"
+    if [ -f "$eeprom" ]; then
+        sudo sed -i '/^ExecStart=.*rpi-eeprom-update.*reboot/c\ExecStart=/usr/bin/rpi-eeprom-update -a -d' "$eeprom"
+        if grep -q reboot "$eeprom"; then
+            echo "Error: $eeprom still reboots" >&2
+            exit 1
+        fi
+    fi
+}
+
 main() {
     trap cleanup EXIT
 
@@ -838,12 +864,15 @@ main() {
     echo "Mounting $root_partition to $MOUNTPOINT..."
     sudo mount "$root_partition" "$MOUNTPOINT"
     IMAGE_ROOTFS="$MOUNTPOINT"
+    sudo mount "${LOOP_DEVICE}p1" "$MOUNTPOINT/boot"
 
     echo "Copying overlay files from $OVERLAY_DIR..."
     sudo cp -r "$OVERLAY_DIR"/. "$MOUNTPOINT/"
     sudo rm -f "$MOUNTPOINT/usr/blueos/userdata/firmware/extra.params"
 
     echo "Overlay applied successfully!"
+
+    prepare_first_boot "$MOUNTPOINT"
 
     apply_rootfs_board "$MOUNTPOINT"
     ensure_work_dir
@@ -854,6 +883,8 @@ main() {
 
     echo "Unmounting and cleaning up..."
     stop_image_dockerd
+    # dockerd writes engine-id when it starts, so this goes after the extensions pull
+    sudo rm -f "$MOUNTPOINT/var/lib/docker/engine-id"
     if is_mounted "$IMAGE_ROOTFS"; then
         restore_container_restarts "$IMAGE_ROOTFS"
         umount_nested "$IMAGE_ROOTFS"
