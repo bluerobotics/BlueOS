@@ -10,6 +10,15 @@ const BACKEND_TIMEOUT = 65_000
 // Set by a scenario after it writes on the vehicle, so a failure still puts the original value back
 let restore: ((page: Page) => Promise<void>) | undefined
 
+function restoreLater(search: string, name: string, value: number): void {
+  // The report keeps the value, so it can still be written by hand if restoring fails too
+  test.info().annotations.push({ type: 'original value', description: `${name} = ${value}` })
+  restore = async (page) => {
+    await searchParameter(page, search)
+    await writeValue(page, name, value)
+  }
+}
+
 async function waitParameters(page: Page): Promise<void> {
   // Save is only enabled once every parameter and its metadata are loaded
   await expect(page.getByTestId('parameters-download-button'), 'the parameters should load')
@@ -117,10 +126,7 @@ test.describe.serial('Parameters', () => {
     const changed = original + 5
 
     await test.step(`change ${name} from ${original} to ${changed} Hz`, async () => {
-      restore = async (current) => {
-        await searchParameter(current, search)
-        await writeValue(current, name, original)
-      }
+      restoreLater(search, name, original)
       await writeValue(page, name, changed)
       await expect(value, `${name} should show ${changed}`).toHaveText(hertz(changed), { timeout: BACKEND_TIMEOUT })
     })
@@ -171,10 +177,7 @@ test.describe.serial('Parameters', () => {
       await setChecked(first, !enabled)
       await setChecked(custom, true)
       await expect(input, `Custom should show ${changed}`).toHaveValue(String(changed))
-      restore = async (current) => {
-        await searchParameter(current, 'log_bitmask')
-        await writeValue(current, 'LOG_BITMASK', original)
-      }
+      restoreLater('log_bitmask', 'LOG_BITMASK', original)
       await page.getByTestId('parameter-save-button').click()
       const shown = expect(value, `${name} should be ${enabled ? 'off' : 'on'}`)
       await (enabled ? shown.not : shown).toContainText(name, { timeout: BACKEND_TIMEOUT })
