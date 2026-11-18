@@ -221,14 +221,20 @@ test.describe.serial('Parameters', () => {
     await closeParameter(page)
   })
 
-  test('Scenario 4: SPEED_MAX shows m/s units', async ({ page }) => {
-    await searchParameter(page, 'speed_max')
-    // SPEED_MAX only exists on ArduRover
-    test.skip(!await parameterRow(page, 'SPEED_MAX').count(), 'this firmware has no SPEED_MAX')
-    await openParameter(page, 'SPEED_MAX')
-    // The units are the suffix next to the value field
-    await expect(page.getByTestId('parameter-edit-input').locator('..'), 'the value field should show m/s')
-      .toContainText('m/s')
-    await closeParameter(page)
+  test('Scenario 4: a speed parameter shows its units', async ({ page }) => {
+    // SPEED_MAX only exists on ArduRover, PILOT_SPEED_UP on ArduSub and ArduCopter
+    for (const [name, units] of [['SPEED_MAX', 'm/s'], ['PILOT_SPEED_UP', 'cm/s']]) {
+      await searchParameter(page, name.toLowerCase())
+      if (!await parameterRow(page, name).count()) {
+        continue
+      }
+      await openParameter(page, name)
+      // The units are the suffix next to the value field
+      await expect(page.getByTestId('parameter-edit-input').locator('..'), `the value field should show ${units}`)
+        .toContainText(units)
+      await closeParameter(page)
+      return
+    }
+    test.skip(true, 'this firmware has none of the speed parameters')
   })
 })
