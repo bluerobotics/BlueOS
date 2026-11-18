@@ -1,8 +1,9 @@
-// Tests for the BlueOS Autopilot Firmware page. They change the board to SITL and install firmware on the vehicle.
+// Tests for the BlueOS Autopilot Firmware page. They change the board to SITL and install firmware on the vehicle,
+// then put the original board back, and the original firmware too when the board was already SITL.
 // How to run: BLUEOS_URL=http://<ip> bun --cwd e2e e2e autopilot-firmware.spec.ts
 import { Locator, Page } from '@playwright/test'
 
-import { expect, test } from '@/fixtures/vehicle'
+import { expect, preparePage, test } from '@/fixtures/vehicle'
 
 const BACKEND_TIMEOUT = 60_000
 const INSTALL_TIMEOUT = 200_000
@@ -10,6 +11,9 @@ const VERSION = /\d+\.\d+\.\d+/
 const VEHICLES = ['ArduSub', 'ArduRover', 'ArduCopter', 'ArduPlane'] as const
 
 type Vehicle = typeof VEHICLES[number]
+
+// Each board keeps its own firmware and parameters, so only SITL needs its vehicle and version back
+let original: { board: string, vehicle?: Vehicle, version?: string } | undefined
 
 async function currentVehicle(page: Page): Promise<Vehicle> {
   const field = page.getByTestId('autopilot-vehicle-type')
@@ -79,26 +83,89 @@ async function selectStableFirmware(page: Page, running: string): Promise<string
   return name.replace('STABLE-', '')
 }
 
+async function changeBoard(page: Page, board: RegExp | string): Promise<void> {
+  await page.getByTestId('change-board-button').click()
+  const boards = await openSelect(page, 'available-boards-select')
+  await boards.getByRole('option', { name: board, exact: true }).click()
+  await page.getByTestId('set-board-button').click()
+}
+
+async function installFirmware(page: Page): Promise<void> {
+  await page.getByTestId('install-firmware-button').click()
+  const progress = page.getByTestId('install-firmware-progress')
+  await expect(progress, 'the progress message should be shown').toBeVisible()
+  await expect(progress, 'the install should finish').toBeHidden({ timeout: INSTALL_TIMEOUT })
+  await expect(page.getByTestId('install-firmware-result'), 'the success message should be shown')
+    .toContainText('Successfully installed new firmware')
+}
+
+async function restoreOriginal(page: Page): Promise<void> {
+  if (!original) {
+    return
+  }
+  const board = page.getByTestId('autopilot-board-name')
+  if ((await board.innerText()).trim() !== original.board) {
+    await changeBoard(page, original.board)
+    await expect(board, `the board should be back to ${original.board}`)
+      .toHaveText(original.board, { timeout: BACKEND_TIMEOUT })
+  }
+  const { vehicle, version } = original
+  if (!vehicle || !version) {
+    return
+  }
+  if (await currentVehicle(page) === vehicle && await currentVersion(page) === version) {
+    return
+  }
+  await selectVehicle(page, vehicle)
+  const firmwares = await openSelect(page, 'firmware-version-select')
+  await firmwares.getByRole('option', { name: `STABLE-${version}`, exact: true }).click()
+  await installFirmware(page)
+  await expectVehicle(page, vehicle)
+}
+
 test.describe.serial('Autopilot Firmware', () => {
   test.setTimeout(300_000)
+
+  // The board is changed here so that running only some scenarios still starts on SITL
+  test.beforeAll(async ({ browser }, testInfo) => {
+    testInfo.setTimeout(BACKEND_TIMEOUT * 3)
+    const page = await browser.newPage({ baseURL: testInfo.project.use.baseURL })
+    try {
+      await preparePage(page)
+      await page.goto('/vehicle/autopilot')
+      const board = page.getByTestId('autopilot-board-name')
+      await expect(board, 'the current board should be known').toHaveText(/^\s*(?!Unknown)\S/, { timeout: BACKEND_TIMEOUT })
+      const name = (await board.innerText()).trim()
+      if (name === 'SITL') {
+        original = { board: name, vehicle: await currentVehicle(page), version: await currentVersion(page) }
+      } else {
+        original = { board: name }
+        await changeBoard(page, /SITL|Software In The Loop/)
+      }
+      await expect(board, 'the board should become SITL').toHaveText(/^\s*SITL\s*$/, { timeout: BACKEND_TIMEOUT })
+      await openPanel(page, 'serial-configuration-panel')
+      await waitSerialsLoaded(page)
+    } finally {
+      await page.close()
+    }
+  })
+
+  // A failed scenario skips the ones after it, afterAll still runs
+  test.afterAll(async ({ browser }, testInfo) => {
+    testInfo.setTimeout(INSTALL_TIMEOUT + BACKEND_TIMEOUT * 2)
+    const page = await browser.newPage({ baseURL: testInfo.project.use.baseURL })
+    await preparePage(page)
+    await page.goto('/vehicle/autopilot')
+    await expect(page.getByTestId('autopilot-board-name'), 'the current board should be known')
+      .toHaveText(/^\s*(?!Unknown)\S/, { timeout: BACKEND_TIMEOUT })
+    await restoreOriginal(page)
+    await page.close()
+  })
 
   test.beforeEach(async ({ page }) => {
     await page.goto('/vehicle/autopilot')
     await expect(page.getByTestId('autopilot-board-name'), 'the current board should be known')
       .toHaveText(/^\s*(?!Unknown)\S/, { timeout: BACKEND_TIMEOUT })
-  })
-
-  test('Precondition: the current board is SITL', async ({ page }) => {
-    const board = page.getByTestId('autopilot-board-name')
-    if ((await board.innerText()).trim() !== 'SITL') {
-      await page.getByTestId('change-board-button').click()
-      const boards = await openSelect(page, 'available-boards-select')
-      await boards.getByRole('option', { name: /SITL|Software In The Loop/ }).click()
-      await page.getByTestId('set-board-button').click()
-    }
-    await expect(board, 'the board should become SITL').toHaveText(/^\s*SITL\s*$/, { timeout: BACKEND_TIMEOUT })
-    await openPanel(page, 'serial-configuration-panel')
-    await waitSerialsLoaded(page)
   })
 
   test('Scenario 1: banner and vehicle type match the current firmware', async ({ page }) => {
@@ -153,13 +220,7 @@ test.describe.serial('Autopilot Firmware', () => {
 
     await selectVehicle(page, target)
     const version = await selectStableFirmware(page, running)
-    await page.getByTestId('install-firmware-button').click()
-
-    const progress = page.getByTestId('install-firmware-progress')
-    await expect(progress, 'the progress message should be shown').toBeVisible()
-    await expect(progress, 'the install should finish').toBeHidden({ timeout: INSTALL_TIMEOUT })
-    await expect(page.getByTestId('install-firmware-result'), 'the success message should be shown')
-      .toContainText('Successfully installed new firmware')
+    await installFirmware(page)
 
     await expectVehicle(page, target)
     await expect(page.getByTestId('autopilot-firmware-version'), `the installed version should be ${version}`)
