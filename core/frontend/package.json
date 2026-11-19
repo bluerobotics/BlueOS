@@ -13,7 +13,7 @@
     "serve": "echo 'This is a preview server for testing the built website. Please use `dev` command over `serve`.\nStarting preview server in 5 seconds..\n';sleep 5; vite preview",
     "lint": "eslint --max-warnings=0 --ext .js,.vue --ignore-path .gitignore --ignore-pattern src/components/vue-tour src",
     "i18n:extract": "bun scripts/extract-i18n.ts",
-    "i18n:json": "if [ -f src/i18n/pt_BR.po ]; then ttag po2json src/i18n/pt_BR.po > src/i18n/pt_BR.po.json; fi"
+    "i18n:json": "for po in src/i18n/*_*.po; do [ -f \"$po\" ] || continue; ttag po2json \"$po\" > \"$po.json\"; done"
   },
   "dependencies": {
     "@google/model-viewer": "^3.0.0",
