@@ -289,6 +289,35 @@ class BootstrapperTests(TestCase):  # type: ignore
         assert fake_client.containers.get("blueos-core").created_time == start_time + 1000
         mock_time.stop()
 
+    @pytest.mark.timeout(10)
+    def test_bootstrap_core_crash_loop_timeout(self) -> None:
+        start_time = time.monotonic()
+        defaults = json.loads(SAMPLE_JSON)
+        defaults["core"]["tag"] = "stable"
+        self.fs.create_file(Bootstrapper.DOCKER_CONFIG_FILE_PATH, contents=SAMPLE_JSON)
+        self.fs.create_file(Bootstrapper.DEFAULT_FILE_PATH, contents=json.dumps(defaults))
+        fake_client = FakeClient()
+        # The image is already local, so starting core does not pull it
+        local_images = patch.object(
+            fake_client.images, "list", side_effect=lambda name: [FakeImage(image=name, tags=[f"{name}:master"])]
+        )
+        local_images.start()
+        self.addCleanup(local_images.stop)
+        bootstrapper = Bootstrapper(fake_client, FakeLowLevelAPI())
+        self.mock_response.json.return_value = {"repository": []}
+        bootstrapper.run()
+
+        # core exits right after starting and bootstrap starts it again
+        fake_client.containers.remove(Bootstrapper.CORE_CONTAINER_NAME)
+        with patch("time.monotonic", return_value=start_time + 200):
+            bootstrapper.run()
+        assert bootstrapper.read_config_file()["core"]["tag"] == "master"
+
+        fake_client.containers.remove(Bootstrapper.CORE_CONTAINER_NAME)
+        with patch("time.monotonic", return_value=start_time + 1000):
+            bootstrapper.run()
+        assert bootstrapper.read_config_file()["core"]["tag"] == "stable"
+
     def test_default_is_valid_json(self) -> None:
         config = json.loads(self.external_defaults)
         assert config is not None
