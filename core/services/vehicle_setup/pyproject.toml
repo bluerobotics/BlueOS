@@ -1,0 +1,18 @@
+[project]
+name = "vehicle_setup"
+version = "0.1.0"
+description = "Vehicle setup: calibration, parameters, motors and the setup wizard, with undoable changes."
+requires-python = ">=3.11"
+dependencies = [
+    "aiohttp==3.13.2",
+    "commonwealth==0.1.0",
+    "fastapi==0.125.0",
+    "fastapi-versioning==0.10.0",
+    "loguru==0.7.3",
+    "pydantic==2.12.5",
+    "uvicorn==0.38.0",
+    "websockets==15.0.1",
+]
+
+[tool.uv]
+package = false

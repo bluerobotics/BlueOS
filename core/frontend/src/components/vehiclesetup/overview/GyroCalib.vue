@@ -44,6 +44,7 @@
       <v-card-actions class="justify-center">
         <v-btn
           color="primary"
+          :disabled="calibrating"
           @click="calibrate"
         >
           {{ t`Calibrate Gyroscopes` }}
@@ -68,7 +69,9 @@ import { Dictionary } from '@/types/common'
 import decode from '@/utils/deviceid_decoder'
 import mavlink_store_get from '@/utils/mavlink'
 
-import { calibrator, PreflightCalibration } from '../calibration'
+import {
+  CalibrationKind, CalibrationSession, CalibrationWatcher, isRunning, statusText,
+} from '../calibration'
 
 const GYRO_REFRESH_MESSAGES = ['RAW_IMU', 'SCALED_IMU2', 'SCALED_IMU3']
 
@@ -86,10 +89,18 @@ export default Vue.extend({
   },
   data() {
     return {
-      calibration_status: '',
+      error: '',
+      session: null as CalibrationSession | null,
+      watcher: null as CalibrationWatcher | null,
     }
   },
   computed: {
+    calibrating(): boolean {
+      return isRunning(this.session)
+    },
+    calibration_status(): string {
+      return this.error || statusText(this.session)
+    },
     table_items(): CalibrationStatus[] {
       return [1, 2, 3].map((index) => {
         const suffix = index === 1 ? '' : index.toString()
@@ -131,21 +142,20 @@ export default Vue.extend({
     },
   },
   mounted() {
+    this.watcher = new CalibrationWatcher(CalibrationKind.GYROSCOPE, (session) => { this.session = session })
     for (const msg of GYRO_REFRESH_MESSAGES) {
       mavlink.subscribeMessageRefreshRate({ messageName: msg, refreshRate: 10 })
     }
   },
   beforeDestroy() {
+    this.watcher?.stop()
     for (const msg of GYRO_REFRESH_MESSAGES) {
       mavlink.unsubscribeMessageRefreshRate({ messageName: msg, refreshRate: 10 })
     }
   },
   methods: {
     async calibrate() {
-      this.calibration_status = 'Calibrating...'
-      for await (const value of calibrator.calibrate(PreflightCalibration.GYROSCOPE)) {
-        this.calibration_status = value
-      }
+      this.error = await this.watcher?.start() ?? ''
     },
     renderVec3(value: vec3 | null): string {
       if (!value) {

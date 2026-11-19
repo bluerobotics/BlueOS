@@ -24,6 +24,11 @@
           {{ t`Quick calibration requires that you place the vehicle on a level surface and keep it still for a few seconds. It is usually enough if your vehicle is generally leveled while in use.` }}
         </div>
       </v-card-text>
+      <v-card-text v-if="failure">
+        <v-alert dense type="error">
+          {{ failure }}
+        </v-alert>
+      </v-card-text>
       <v-card-actions>
         <v-alert v-if="state === states.CALIBRATED" type="success">
           {{ t`Calibration Successful` }}
@@ -39,20 +44,21 @@
 </template>
 
 <script lang="ts">
+import Vue from 'vue'
 
 import SpinningLogo from '@/components/common/SpinningLogo.vue'
-import mavlink2rest from '@/libs/MAVLink2Rest'
-import { MavCmd } from '@/libs/MAVLink2Rest/mavlink2rest-ts/messages/mavlink2rest-enum'
-import autopilot_data from '@/store/autopilot'
+
+import {
+  CalibrationKind, CalibrationSession, CalibrationStatus, CalibrationWatcher, isRunning, statusText,
+} from '../../calibration'
 
 const states = {
   IDLE: 0,
-  WAITING_FOR_RESPONSE: 1,
   CALIBRATION_STARTED: 2,
   CALIBRATED: 3,
 }
 
-export default {
+export default Vue.extend({
   name: 'QuickAccelerometerCalibration',
   components: {
     SpinningLogo,
@@ -60,64 +66,63 @@ export default {
   data() {
     return {
       dialog: false,
-      calibrating: false,
-      state: states.IDLE,
+      // A finished session only shows until the dialog closes, or not at all if it finished before page load
+      dismissed: true,
+      error: '',
+      close_timeout: undefined as ReturnType<typeof setTimeout> | undefined,
+      session: null as CalibrationSession | null,
+      watcher: null as CalibrationWatcher | null,
     }
   },
   computed: {
     states() {
       return states
     },
-  },
-  methods: {
-    doCalibration() {
-      this.calibrating = true
-      mavlink2rest.sendMessage({
-        header: {
-          system_id: 255,
-          component_id: 1,
-          sequence: 1,
-        },
-        message: {
-          type: 'COMMAND_LONG',
-          param1: 0,
-          param2: 0,
-          param3: 0,
-          param4: 0,
-          param5: 4, // see https://mavlink.io/en/messages/common.html#MAV_CMD_PREFLIGHT_CALIBRATION
-          param6: 0,
-          param7: 0,
-          command: {
-            type: MavCmd.MAV_CMD_PREFLIGHT_CALIBRATION,
-          },
-          target_system: autopilot_data.system_id,
-          target_component: 1,
-          confirmation: 1,
-        },
-      })
-      this.state = states.WAITING_FOR_RESPONSE
-      let timeout = 0
-      this.state = states.CALIBRATION_STARTED
-      const ack_listener = mavlink2rest.startListening('COMMAND_ACK').setCallback((message) => {
-        if (message?.message?.command?.type === 'MAV_CMD_PREFLIGHT_CALIBRATION') {
-          if (message.message.result.type !== 'MAV_RESULT_ACCEPTED') {
-            console.error(
-              `Unexpected answer to quick accel calibration: ${message.result.type}`,
-            )
-          }
-          clearTimeout(timeout)
-          this.state = states.CALIBRATED
-          ack_listener.discard()
-          setTimeout(() => { this.dialog = false }, 2000)
-          setTimeout(() => { this.state = states.IDLE }, 3000)
-        }
-      })
-      timeout = setTimeout(() => {
-        ack_listener.discard()
-        this.state = states.IDLE
-        this.dialog = false
-      }, 5000)
+    state(): number {
+      if (isRunning(this.session)) {
+        return states.CALIBRATION_STARTED
+      }
+      if (!this.dismissed && this.session?.status === CalibrationStatus.DONE) {
+        return states.CALIBRATED
+      }
+      return states.IDLE
+    },
+    failure(): string {
+      if (this.error) {
+        return this.error
+      }
+      return !this.dismissed && this.session?.status === CalibrationStatus.FAILED ? statusText(this.session) : ''
     },
   },
-}
+  watch: {
+    dialog(open: boolean) {
+      if (!open) {
+        this.dismissed = true
+        this.error = ''
+      }
+    },
+  },
+  mounted() {
+    this.watcher = new CalibrationWatcher(CalibrationKind.SIMPLE_ACCELEROMETER, this.onSession)
+  },
+  beforeDestroy() {
+    clearTimeout(this.close_timeout)
+    this.watcher?.stop()
+  },
+  methods: {
+    onSession(session: CalibrationSession) {
+      if (isRunning(session)) {
+        this.dismissed = false
+      }
+      const succeeded = session.status === CalibrationStatus.DONE && isRunning(this.session)
+      this.session = session
+      if (succeeded) {
+        this.close_timeout = setTimeout(() => { this.dialog = false }, 2000)
+      }
+    },
+    async doCalibration() {
+      this.error = await this.watcher?.start() ?? ''
+    },
+  },
+})
 </script>

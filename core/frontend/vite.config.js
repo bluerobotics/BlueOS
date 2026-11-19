@@ -347,6 +347,10 @@ export default defineConfig(({ command, mode }) => {
           target: SERVER_ADDRESS,
           changeOrigin: true,
         },
+        '^/vehicle-setup': {
+          target: SERVER_ADDRESS,
+          ws: true,
+        },
         '^/vehicles': {
           target: SERVER_ADDRESS,
         },
