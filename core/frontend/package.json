@@ -18,7 +18,7 @@
     "lint:css:fix": "stylelint 'src/**/*.{vue,css,scss}' --fix",
     "i18n:extract": "bun scripts/extract-i18n.ts",
     "i18n:check": "bun scripts/extract-i18n.ts --check",
-    "i18n:json": "if [ -f src/i18n/pt_BR.po ]; then ttag po2json src/i18n/pt_BR.po > src/i18n/pt_BR.po.json; fi"
+    "i18n:json": "for po in src/i18n/*_*.po; do [ -f \"$po\" ] || continue; ttag po2json \"$po\" > \"$po.json\"; done"
   },
   "dependencies": {
     "@eclipse-zenoh/zenoh-ts": "1.9.0",
