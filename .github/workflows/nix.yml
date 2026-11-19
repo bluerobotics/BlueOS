@@ -1,0 +1,191 @@
+name: Build and cache images with Nix
+
+on:
+  push:
+    branches: [master]
+    paths-ignore:
+      - 'doc/**'
+      - '**/*.md'
+  pull_request:
+    paths-ignore:
+      - 'doc/**'
+      - '**/*.md'
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  image:
+    name: Cache the RPi image (${{ matrix.board }})
+    runs-on: ubuntu-24.04-arm
+    permissions:
+      contents: read
+      id-token: write
+    strategy:
+      fail-fast: false
+      matrix:
+        board: [pi4, pi5]
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          submodules: recursive
+
+      - name: Free disk space
+        uses: wimpysworld/nothing-but-nix@687c797a730352432950c707ab493fcc951818d7 # v10
+
+      - name: Install Nix
+        uses: NixOS/nix-installer-action@62c1943b776c509394b550f3f983adc14e9212d6 # v1.0.0
+        with:
+          add-channel: "true"
+          extra-conf: |
+            accept-flake-config = true
+            extra-substituters = ${{ vars.NIKS3_SERVER_URL }}
+            extra-trusted-public-keys = ${{ vars.NIKS3_PUBLIC_KEY }}
+            # Prevent out-of-memory SIGTERM
+            max-jobs = 1
+
+      - name: Install niks3
+        id: niks3
+        uses: Mic92/niks3-action@01820a2b97ac01531ad9fb859db94af63ffcbd83 # v1.10.0
+        with:
+          server-url: ${{ vars.NIKS3_SERVER_URL }}
+          skip-push: true
+
+      # The action caches its binaries but only exposes the directory as an
+      # output, so the CLI has to be put on PATH explicitly for `niks3 push`.
+      - name: Put niks3 on PATH
+        run: |
+          echo "${{ steps.niks3.outputs.binary-dir }}" >> "$GITHUB_PATH"
+
+      - name: Build the kernel
+        run: |
+          nix build --no-link --print-out-paths \
+            .#nixosConfigurations.blueos-${{ matrix.board }}.config.boot.kernelPackages.kernel \
+            .#nixosConfigurations.blueos-${{ matrix.board }}.config.boot.kernelPackages.kernel.modules \
+            > "$RUNNER_TEMP/kernel"
+
+      - name: Push the kernel to the cache
+        if: github.event_name != 'pull_request'
+        env:
+          NIKS3_SERVER_URL: ${{ vars.NIKS3_SERVER_URL }}
+          AUTH_TOKEN_SCRIPT: ${{ steps.niks3.outputs.auth-token-script }}
+        run: |
+          if [[ -z "$AUTH_TOKEN_SCRIPT" ]]; then
+            echo "::error::No OIDC token available. Check the niks3 OIDC rule for this repository." >&2
+            exit 1
+          fi
+
+          xargs niks3 push --auth-token-script "$AUTH_TOKEN_SCRIPT" < "$RUNNER_TEMP/kernel"
+
+      - name: Build the system
+        run: |
+          nix build --cores 2 --no-link --print-out-paths \
+            .#nixosConfigurations.blueos-${{ matrix.board }}.config.system.build.toplevel \
+            > "$RUNNER_TEMP/toplevel"
+
+      - name: Push the system to the cache
+        if: github.event_name != 'pull_request'
+        env:
+          NIKS3_SERVER_URL: ${{ vars.NIKS3_SERVER_URL }}
+          AUTH_TOKEN_SCRIPT: ${{ steps.niks3.outputs.auth-token-script }}
+        run: |
+          if [[ -z "$AUTH_TOKEN_SCRIPT" ]]; then
+            echo "::error::No OIDC token available. Check the niks3 OIDC rule for this repository." >&2
+            exit 1
+          fi
+
+          niks3 push --auth-token-script "$AUTH_TOKEN_SCRIPT" "$(cat "$RUNNER_TEMP/toplevel")"
+
+      - name: Build the SD card image
+        run: |
+          nix build .#nixosConfigurations.blueos-${{ matrix.board }}.config.system.build.sdImage \
+            --out-link result
+
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: blueos-nix-${{ matrix.board }}
+          path: result/sd-image/*.img.zst
+          if-no-files-found: error
+          retention-days: 7
+
+  qemu-system:
+    name: Cache the QEMU system (${{ matrix.guest }})
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+      id-token: write
+    strategy:
+      fail-fast: false
+      matrix:
+        guest: [guest, native]
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          submodules: recursive
+
+      - name: Enable KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' \
+            | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+
+      - name: Free disk space
+        uses: wimpysworld/nothing-but-nix@687c797a730352432950c707ab493fcc951818d7 # v10
+
+      - name: Install Nix
+        uses: NixOS/nix-installer-action@62c1943b776c509394b550f3f983adc14e9212d6 # v1.0.0
+        with:
+          add-channel: "true"
+          extra-conf: |
+            accept-flake-config = true
+            extra-substituters = ${{ vars.NIKS3_SERVER_URL }}
+            extra-trusted-public-keys = ${{ vars.NIKS3_PUBLIC_KEY }}
+            max-jobs = 1
+
+      - name: Install niks3
+        id: niks3
+        uses: Mic92/niks3-action@01820a2b97ac01531ad9fb859db94af63ffcbd83 # v1.10.0
+        with:
+          server-url: ${{ vars.NIKS3_SERVER_URL }}
+          skip-push: true
+
+      # The action caches its binaries but only exposes the directory as an
+      # output, so the CLI has to be put on PATH explicitly for `niks3 push`.
+      - name: Put niks3 on PATH
+        run: |
+          echo "${{ steps.niks3.outputs.binary-dir }}" >> "$GITHUB_PATH"
+
+      - name: Build the system
+        run: |
+          nix build --no-link --print-out-paths \
+            ".#nixosConfigurations.blueos-${{ matrix.guest }}.config.system.build.toplevel" \
+            > "$RUNNER_TEMP/toplevel"
+
+      - name: Push the system to the cache
+        if: github.event_name != 'pull_request'
+        env:
+          NIKS3_SERVER_URL: ${{ vars.NIKS3_SERVER_URL }}
+          AUTH_TOKEN_SCRIPT: ${{ steps.niks3.outputs.auth-token-script }}
+        run: |
+          if [[ -z "$AUTH_TOKEN_SCRIPT" ]]; then
+            echo "::error::No OIDC token available. Check the niks3 OIDC rule for this repository." >&2
+            exit 1
+          fi
+
+          niks3 push --auth-token-script "$AUTH_TOKEN_SCRIPT" "$(cat "$RUNNER_TEMP/toplevel")"
+          niks3 pins create --auth-token-script "$AUTH_TOKEN_SCRIPT" \
+            "blueos-${{ matrix.guest }}-system" "$(cat "$RUNNER_TEMP/toplevel")"
+
+      - name: Build the QEMU image
+        run: |
+          nix build .#blueos-${{ matrix.guest }}-qemu --out-link result
+
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: blueos-qemu-${{ matrix.guest }}
+          path: result/*.qcow2
+          if-no-files-found: error
+          retention-days: 7

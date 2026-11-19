@@ -376,7 +376,7 @@
     </v-main>
     <ethernet-updater />
     <mavlink-updater />
-    <new-version-notificator />
+    <blueos-new-version-notificator />
     <Wizard @start-tour="setStartTour" />
     <alerter />
     <VTour
@@ -405,12 +405,14 @@ import wifi from '@/store/wifi'
 import { Service } from '@/types/helper'
 import { convertGitDescribeToTag, convertGitDescribeToUrl } from '@/utils/helper_functions'
 import updateTime from '@/utils/update_time'
+import use_nixos_updates from '@/utils/updates_backend'
 import * as VCU from '@/utils/version_chooser'
 
 import Alerter from './components/app/Alerter.vue'
 import BackendStatusChecker from './components/app/BackendStatusChecker.vue'
 import InternetTrayMenu from './components/app/InternetTrayMenu.vue'
-import NewVersionNotificator from './components/app/NewVersionNotificator.vue'
+import NewVersionNotificatorDocker from './components/app/NewVersionNotificator.vue'
+import NewVersionNotificatorNixos from './components/app/NewVersionNotificatorNixos.vue'
 import OnBoardComputerRequiredTrayMenu from './components/app/OnBoardComputerRequiredTrayMenu.vue'
 import PiradeModeTrayMenu from './components/app/PirateModeTrayMenu.vue'
 import PowerMenu from './components/app/PowerMenu.vue'
@@ -460,7 +462,7 @@ export default Vue.extend({
     'backend-status-checker': BackendStatusChecker,
     Alerter,
     'vehicle-banner': VehicleBanner,
-    'new-version-notificator': NewVersionNotificator,
+    'blueos-new-version-notificator': use_nixos_updates ? NewVersionNotificatorNixos : NewVersionNotificatorDocker,
     SystemCheckerTrayMenu,
     VehicleRebootRequiredTrayMenu,
     OnBoardComputerRequiredTrayMenu,
@@ -830,7 +832,7 @@ export default Vue.extend({
         // Invalid URL, ignore
       }
     })
-    this.bootstrap_version = await VCU.loadBootstrapCurrentVersion()
+    this.bootstrap_version = use_nixos_updates ? undefined : await VCU.loadBootstrapCurrentVersion()
   },
 
   beforeDestroy() {

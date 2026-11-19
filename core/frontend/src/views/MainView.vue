@@ -17,7 +17,7 @@
         <!-- eslint-disable-next-line vue/no-v-html, max-len -->
         <span v-html="t`Before you start, we highly recommend <a href='https://blueos.cloud/docs/stable/usage/getting-started/#connect-internet' target='_blank'>connecting to the internet</a> and performing a <a href='https://blueos.cloud/docs/stable/usage/getting-started/#select-version' target='_blank'>system update to the latest available BlueOS version</a>.`" />
       </v-alert>
-      <self-health-test />
+      <blueos-self-health-test />
     </v-row>
     <div class="grid-holder">
       <div class="app-grid">
@@ -80,7 +80,8 @@
 import { t } from 'ttag'
 import Vue from 'vue'
 
-import SelfHealthTest from '@/components/health/SelfHealthTest.vue'
+import SelfHealthTestDocker from '@/components/health/SelfHealthTest.vue'
+import SelfHealthTestNixos from '@/components/health/SelfHealthTestNixos.vue'
 import GenericViewer from '@/components/vehiclesetup/viewers/GenericViewer.vue'
 import VideoThumbnail from '@/components/video-manager/VideoThumbnail.vue'
 import { OneMoreTime } from '@/one-more-time'
@@ -90,6 +91,7 @@ import video from '@/store/video'
 import { InternetConnectionState } from '@/types/helper'
 import { StreamStatus } from '@/types/video'
 import mavlink_store_get from '@/utils/mavlink'
+import use_nixos_updates from '@/utils/updates_backend'
 import CPUUsage from '@/widgets/CpuPie.vue'
 import Networking from '@/widgets/Networking.vue'
 
@@ -117,7 +119,7 @@ interface AppItem {
 export default Vue.extend({
   name: 'MainView',
   components: {
-    SelfHealthTest,
+    'blueos-self-health-test': use_nixos_updates ? SelfHealthTestNixos : SelfHealthTestDocker,
     GenericViewer,
   },
   data() {

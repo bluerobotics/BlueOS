@@ -1,0 +1,161 @@
+# Reads throttled flags from vcgencmd instead of the get_throttled sysfs node.
+#
+# The rpi firmware driver removed that attribute in 6.12, and the hwmon
+# replacement only reports the undervoltage sticky bit, so the throttling and
+# frequency-capping indicators had no source. Asking the firmware mailbox
+# through vcgencmd still returns the full bitmask. Polling replaces the inotify
+# watch, so events.list only grows when the flags actually change.
+--- a/src/features/platform/raspberry.rs
++++ b/src/features/platform/raspberry.rs
+@@ -1,7 +1,9 @@
+-use std::sync::{mpsc::channel, Arc, Mutex, Once};
++use std::process::Command;
++use std::sync::{Arc, Mutex, Once};
++use std::thread;
++use std::time::Duration;
+ 
+ use chrono;
+-use notify::{RecommendedWatcher, RecursiveMode, Watcher};
+ use paperclip::actix::Apiv2Schema;
+ use serde::Serialize;
+ use tracing::*;
+@@ -39,60 +41,96 @@ pub fn events() -> Events {
+ 
+ pub fn start_raspberry_events_scanner() {
+     ONCE.call_once(|| {
+-        let event_file = "/sys/devices/platform/soc/soc:firmware/get_throttled";
+-
+         std::thread::spawn(move || {
+-            let (tx, rx) = channel();
+-            let mut watcher: RecommendedWatcher = Watcher::new_raw(tx).unwrap();
+-            watcher
+-                .watch(event_file, RecursiveMode::NonRecursive)
+-                .unwrap();
++            // The firmware driver exposed this through a get_throttled sysfs
++            // attribute until 6.6, where it was deprecated; 6.12 removed it and
++            // registers no attributes at all, so sysfs is not a source here.
++            // raspberrypi-hwmon only reports the undervoltage sticky bit, so the
++            // full bitmask has to come from the firmware mailbox via vcgencmd.
++            let mut last_firmware_event: Option<u64> = None;
++            let mut read_failed = false;
+ 
+             loop {
+-                match rx.recv() {
+-                    Ok(event) => {
+-                        debug!("Event in: {}, reason: {:#?}", event_file, event);
+-                        let content = std::fs::read_to_string(event_file)
+-                            .expect("Something went wrong reading the file");
+-                        let firmware_event = u64::from_str_radix(content.trim(), 16).unwrap();
+-
+-                        let time = chrono::Local::now();
+-                        let mut occurring_events = vec![];
+-                        if (firmware_event & 0b1) != 0 {
+-                            occurring_events.push(Event {
+-                                time: time,
+-                                typ: EventType::UnderVoltage,
+-                            });
++                match firmware_event_flags() {
++                    Ok(firmware_event) => {
++                        if read_failed {
++                            info!("Recovered reading throttled flags from vcgencmd");
++                            read_failed = false;
+                         }
+ 
+-                        if (firmware_event & 0b10) != 0 {
+-                            occurring_events.push(Event {
+-                                time: time,
+-                                typ: EventType::FrequencyCapping,
+-                            });
+-                        }
++                        if last_firmware_event != Some(firmware_event) {
++                            debug!("Throttled flags: {firmware_event:#x}");
++                            last_firmware_event = Some(firmware_event);
+ 
+-                        if (firmware_event & 0b100) != 0 {
+-                            occurring_events.push(Event {
+-                                time: time,
+-                                typ: EventType::Throttling,
+-                            });
+-                        }
++                            let time = chrono::Local::now();
++                            let mut occurring_events = vec![];
++                            if (firmware_event & 0b1) != 0 {
++                                occurring_events.push(Event {
++                                    time: time,
++                                    typ: EventType::UnderVoltage,
++                                });
++                            }
+ 
+-                        if (firmware_event & 0b1000) != 0 {
+-                            occurring_events.push(Event {
+-                                time: time,
+-                                typ: EventType::TemperatureLimit,
+-                            });
+-                        }
++                            if (firmware_event & 0b10) != 0 {
++                                occurring_events.push(Event {
++                                    time: time,
++                                    typ: EventType::FrequencyCapping,
++                                });
++                            }
+ 
+-                        let mut events = EVENTS.lock().unwrap();
+-                        events.occurring = occurring_events.clone();
+-                        events.list.extend(occurring_events);
++                            if (firmware_event & 0b100) != 0 {
++                                occurring_events.push(Event {
++                                    time: time,
++                                    typ: EventType::Throttling,
++                                });
++                            }
++
++                            if (firmware_event & 0b1000) != 0 {
++                                occurring_events.push(Event {
++                                    time: time,
++                                    typ: EventType::TemperatureLimit,
++                                });
++                            }
++
++                            let mut events = EVENTS.lock().unwrap();
++                            events.occurring = occurring_events.clone();
++                            events.list.extend(occurring_events);
++                        }
++                    }
++                    Err(error) => {
++                        // Logged once per failure stretch: the poll runs every
++                        // two seconds and a missing vcgencmd would otherwise
++                        // flood the journal, which this service forwards on.
++                        if !read_failed {
++                            warn!("Failed to read throttled flags: {error}");
++                            read_failed = true;
++                        }
+                     }
+-                    Err(error) => warn!("Failed to watch: {}, reason: {:?}", event_file, error),
+                 }
++
++                thread::sleep(Duration::from_secs(2));
+             }
+         });
+     });
+ }
++
++fn firmware_event_flags() -> Result<u64, String> {
++    let output = Command::new("vcgencmd")
++        .arg("get_throttled")
++        .output()
++        .map_err(|error| format!("Failed to run vcgencmd: {error}"))?;
++
++    if !output.status.success() {
++        return Err(format!("vcgencmd exited with {}", output.status));
++    }
++
++    let stdout = String::from_utf8_lossy(&output.stdout);
++    stdout
++        .trim()
++        .strip_prefix("throttled=")
++        .ok_or_else(|| format!("Unexpected vcgencmd output: {stdout:?}"))
++        .and_then(|value| {
++            u64::from_str_radix(value.trim_start_matches("0x"), 16)
++                .map_err(|error| format!("Failed to parse {value:?}: {error}"))
++        })
++}

@@ -1,0 +1,17 @@
+# Caps the retained journal history at 20k entries instead of 200k.
+#
+# The follower keeps every parsed entry in a Vec and clones the whole thing into
+# each new client's channel. At ~1.09 KB per entry the upstream cap approaches
+# the service's 250 MB MemoryMax; 20k entries is ~22 MB, which still covers the
+# live log stream the frontend reads.
+--- a/src/features/journal.rs
++++ b/src/features/journal.rs
+@@ -11,7 +11,7 @@
+ use std::time::Duration;
+ use tracing::*;
+ 
+-const MAX_ENTRIES: usize = 200000;
++const MAX_ENTRIES: usize = 20000;
+ 
+ #[derive(Clone, Serialize, Apiv2Schema)]
+ pub struct JournalEntry {
