@@ -13,6 +13,7 @@ export interface HotspotStatus {
   }
 
 export interface WifiStatus {
+    interface?: string
     bssid: string
     freq: number
     ssid: string

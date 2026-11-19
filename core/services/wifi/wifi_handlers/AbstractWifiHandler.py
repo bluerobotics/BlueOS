@@ -3,7 +3,8 @@ from argparse import ArgumentParser, Namespace
 from typing import List, Optional
 
 from commonwealth.settings.manager import PydanticManager
-from settings import SettingsV1
+from exceptions import InterfaceNotFound
+from settings import SettingsV2
 from typedefs import SavedWifiNetwork, ScannedWifiNetwork, WifiCredentials, WifiStatus
 from wifi_handlers.wpa_supplicant.wpa_supplicant import WPASupplicant
 
@@ -12,7 +13,7 @@ class AbstractWifiManager:
     wpa = WPASupplicant()
 
     def __init__(self) -> None:
-        self._settings_manager: PydanticManager[SettingsV1] = PydanticManager("wifi-manager", SettingsV1)
+        self._settings_manager: PydanticManager[SettingsV2] = PydanticManager("wifi-manager", SettingsV2)
         self._settings_manager.load()
 
     @abc.abstractmethod
@@ -21,7 +22,26 @@ class AbstractWifiManager:
         return True
 
     @abc.abstractmethod
-    async def get_wifi_available(self) -> List[ScannedWifiNetwork]:
+    async def get_interfaces(self) -> List[str]:
+        """Get the names of the wifi interfaces, the first one is the default for interface-less requests"""
+        raise NotImplementedError
+
+    async def validate_interface(self, interface: Optional[str]) -> None:
+        if interface is not None and interface not in await self.get_interfaces():
+            raise InterfaceNotFound(interface)
+
+    @abc.abstractmethod
+    async def hotspot_interface(self) -> Optional[str]:
+        """Get the wifi interface that hosts the hotspot."""
+        raise NotImplementedError
+
+    @abc.abstractmethod
+    async def set_hotspot_interface(self, interface: str) -> None:
+        """Set the wifi interface that hosts the hotspot."""
+        raise NotImplementedError
+
+    @abc.abstractmethod
+    async def get_wifi_available(self, interface: Optional[str] = None) -> List[ScannedWifiNetwork]:
         """Get a dict from the wifi signals available"""
         raise NotImplementedError
 
@@ -51,19 +71,23 @@ class AbstractWifiManager:
         raise NotImplementedError
 
     @abc.abstractmethod
-    async def try_connect_to_network(self, credentials: WifiCredentials, hidden: bool = False) -> None:
+    async def try_connect_to_network(
+        self, credentials: WifiCredentials, hidden: bool = False, interface: Optional[str] = None
+    ) -> None:
         """Try to connect to a network"""
         raise NotImplementedError
 
     @abc.abstractmethod
-    async def status(self) -> WifiStatus:
+    async def status(self, interface: Optional[str] = None) -> WifiStatus:
         """Check wpa_supplicant status"""
         raise NotImplementedError
 
-    async def disconnect(self) -> None:
+    @abc.abstractmethod
+    async def disconnect(self, interface: Optional[str] = None) -> None:
         """Reconfigure wpa_supplicant
         This will force the reevaluation of the conf file
         """
+        raise NotImplementedError
 
     @abc.abstractmethod
     async def remove_network(self, ssid: str) -> None:

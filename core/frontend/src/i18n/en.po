@@ -1964,6 +1964,10 @@ msgid "Hotspot SSID"
 msgstr ""
 
 #: src/components/wifi/WifiSettingsDialog.vue
+msgid "Hotspot interface"
+msgstr ""
+
+#: src/components/wifi/WifiSettingsDialog.vue
 msgid "Hotspot password"
 msgstr ""
 
@@ -4112,6 +4116,10 @@ msgid "Successfully updated hotspot credentials."
 msgstr ""
 
 #: src/components/wifi/WifiSettingsDialog.vue
+msgid "Successfully updated hotspot interface."
+msgstr ""
+
+#: src/components/wifi/WifiSettingsDialog.vue
 msgid "Successfully updated smart-hotspot configuration."
 msgstr ""
 
@@ -5004,6 +5012,10 @@ msgstr ""
 msgid "Wifi Manager"
 msgstr ""
 
+#: src/components/wifi/WifiManager.vue
+msgid "Wifi interface"
+msgstr ""
+
 #: src/components/wifi/WifiTrayMenu.vue
 msgid "Wifi is disabled"
 msgstr ""
@@ -5102,6 +5114,10 @@ msgstr ""
 
 #: src/components/bridges/BridgeCreationDialog.vue
 msgid "an automatically assigned port"
+msgstr ""
+
+#: src/components/wifi/WifiManager.vue
+msgid "disconnected"
 msgstr ""
 
 #: src/components/ethernet/InterfaceCard.vue

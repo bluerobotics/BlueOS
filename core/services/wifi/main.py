@@ -3,8 +3,9 @@
 import argparse
 import asyncio
 import logging
+from contextlib import contextmanager
 from pathlib import Path
-from typing import Any, List, Optional
+from typing import Any, Iterator, List, Optional
 
 from commonwealth.utils.apis import (
     GenericErrorHandlingRoute,
@@ -14,8 +15,8 @@ from commonwealth.utils.apis import (
 )
 from commonwealth.utils.logs import InterceptHandler, init_logger
 from commonwealth.utils.sentry_config import init_sentry_async
-from exceptions import BusyError
-from fastapi import FastAPI, HTTPException, status
+from exceptions import BusyError, InterfaceNotFound
+from fastapi import Depends, FastAPI, HTTPException, status
 from fastapi.staticfiles import StaticFiles
 from fastapi_versioning import VersionedFastAPI, version
 from loguru import logger
@@ -51,11 +52,36 @@ app = FastAPI(
 app.router.route_class = GenericErrorHandlingRoute
 
 
+@contextmanager
+def interface_not_found_as_404() -> Iterator[None]:
+    # Cards can be unplugged at any time, including in the middle of a request
+    try:
+        yield
+    except InterfaceNotFound as error:
+        raise StackedHTTPException(status_code=status.HTTP_404_NOT_FOUND, error=error) from error
+
+
+async def wifi_interface(interface: Optional[str] = None) -> Optional[str]:
+    """Wifi interface to operate on, the default one when not provided."""
+    assert wifi_manager is not None
+    with interface_not_found_as_404():
+        await wifi_manager.validate_interface(interface)
+    return interface
+
+
+@app.get("/interfaces", response_model=List[str], summary="Retrieve available wifi interfaces.")
+@version(1, 0)
+async def interfaces() -> Any:
+    assert wifi_manager is not None
+    return await wifi_manager.get_interfaces()
+
+
 @app.get("/status", summary="Retrieve status of wifi manager.")
 @version(1, 0)
-async def network_status() -> Any:
+async def network_status(interface: Optional[str] = Depends(wifi_interface)) -> Any:
     assert wifi_manager is not None
-    wifi_status = await wifi_manager.status()
+    with interface_not_found_as_404():
+        wifi_status = await wifi_manager.status(interface)
     for line in tabulate(list(vars(wifi_status).items())).splitlines():
         logger.info(line)
     return wifi_status
@@ -63,10 +89,11 @@ async def network_status() -> Any:
 
 @app.get("/scan", response_model=List[ScannedWifiNetwork], summary="Retrieve available wifi networks.")
 @version(1, 0)
-async def scan() -> Any:
+async def scan(interface: Optional[str] = Depends(wifi_interface)) -> Any:
     assert wifi_manager is not None
     try:
-        available_networks = await wifi_manager.get_wifi_available()
+        with interface_not_found_as_404():
+            available_networks = await wifi_manager.get_wifi_available(interface)
         return available_networks
     except BusyError as error:
         raise StackedHTTPException(status_code=status.HTTP_425_TOO_EARLY, error=error) from error
@@ -82,9 +109,12 @@ async def saved() -> Any:
 
 @app.post("/connect", summary="Connect to wifi network.")
 @version(1, 0)
-async def connect(credentials: WifiCredentials, hidden: bool = False) -> Any:
+async def connect(
+    credentials: WifiCredentials, hidden: bool = False, interface: Optional[str] = Depends(wifi_interface)
+) -> Any:
     assert wifi_manager is not None
-    await wifi_manager.try_connect_to_network(credentials, hidden)
+    with interface_not_found_as_404():
+        await wifi_manager.try_connect_to_network(credentials, hidden, interface)
 
 
 @app.post("/remove", summary="Remove saved wifi network.")
@@ -102,9 +132,10 @@ async def remove(ssid: str) -> Any:
 
 @app.get("/disconnect", summary="Disconnect from wifi network.")
 @version(1, 0)
-async def disconnect() -> Any:
+async def disconnect(interface: Optional[str] = Depends(wifi_interface)) -> Any:
     assert wifi_manager is not None
-    await wifi_manager.disconnect()
+    with interface_not_found_as_404():
+        await wifi_manager.disconnect(interface)
     logger.info("Successfully disconnected from network.")
 
 
@@ -148,6 +179,22 @@ def toggle_smart_hotspot(enable: bool) -> Any:
 def check_smart_hotspot() -> Any:
     assert wifi_manager is not None
     return wifi_manager.is_smart_hotspot_enabled()
+
+
+@app.get("/hotspot_interface", response_model=Optional[str], summary="Get the wifi interface hosting the hotspot.")
+@version(1, 0)
+async def get_hotspot_interface() -> Any:
+    assert wifi_manager is not None
+    return await wifi_manager.hotspot_interface()
+
+
+@app.post("/hotspot_interface", summary="Set the wifi interface hosting the hotspot.")
+@version(1, 0)
+async def set_hotspot_interface(interface: str) -> Any:
+    assert wifi_manager is not None
+    await wifi_interface(interface)
+    with interface_not_found_as_404():
+        await wifi_manager.set_hotspot_interface(interface)
 
 
 @app.post("/hotspot_credentials", summary="Update hotspot credentials.")
