@@ -11,6 +11,7 @@ from utils.dockerhub import (
     DNS_FAILURE_MESSAGE,
     TagFetcher,
     TagMetadata,
+    get_current_arch,
     get_json_with_retry,
     is_name_resolution_error,
     remote_tags_error_message,
@@ -118,6 +119,7 @@ EXPECTED_SET_VERSION_WRITE_CALL = """{  "core": {
 @mock.patch("aiohttp.web.StreamResponse.write", new_callable=AsyncMock)
 async def test_set_version(write_mock: AsyncMock) -> None:
     client = mock.AsyncMock()
+    client.images.inspect.return_value = {"Architecture": get_current_arch()}
     chooser = VersionChooser(client)
 
     with mock.patch("builtins.open", mock.mock_open(read_data=SAMPLE_JSON)):
