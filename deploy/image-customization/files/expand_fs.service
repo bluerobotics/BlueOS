@@ -1,0 +1,12 @@
+[Unit]
+Description=Grow the root partition and filesystem to fill the disk
+After=systemd-remount-fs.service
+Before=resize2fs_once.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/expand_fs.sh
+ExecStartPost=/bin/systemctl --no-reload disable %n
+
+[Install]
+WantedBy=multi-user.target
