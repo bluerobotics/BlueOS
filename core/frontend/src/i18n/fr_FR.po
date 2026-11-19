@@ -10,7 +10,7 @@ msgstr ""
 "X-Crowdin-File-ID: 24\n"
 "Project-Id-Version: blueos\n"
 "Language-Team: French\n"
-"PO-Revision-Date: 2026-11-19 00:33\n"
+"PO-Revision-Date: 2026-11-19 01:54\n"
 
 #: src/components/notifications/NotificationGroupCard.vue
 #, javascript-format
@@ -187,7 +187,6 @@ msgstr "APPLIQUER"
 
 #: src/components/ethernet/AddressDeletionDialog.vue
 #: src/components/vehiclesetup/configuration/compass/CompassLearn.vue
-#: src/components/version-chooser/VersionCard.vue
 #: src/components/wizard/Wizard.vue
 msgid "Abort"
 msgstr "Abandonner"
@@ -501,6 +500,10 @@ msgstr "ENTREPRISES"
 
 #: src/components/system-information/Processes.vue
 msgid "CPU (%)"
+msgstr ""
+
+#: src/widgets/CpuPie.vue
+msgid "CPU Usage"
 msgstr ""
 
 #: src/components/health/HealthTrayMenu.vue
@@ -957,6 +960,10 @@ msgstr "Contrôles du périphérique"
 msgid "Device: ${ 0 }"
 msgstr "Périphérique : ${ 0 }"
 
+#: src/views/MainView.vue
+msgid "Digital Twin"
+msgstr ""
+
 #: src/components/ethernet/InterfaceCard.vue
 #: src/components/kraken/cards/InstalledExtensionCard.vue
 msgid "Disable"
@@ -992,6 +999,14 @@ msgstr "Se déconnecter"
 #: src/components/app/ReportMenu.vue
 msgid "Discuss ideas with the community"
 msgstr "Discuter d'idées avec la communauté"
+
+#: src/menus.ts
+msgid "Disk"
+msgstr ""
+
+#: src/widgets/CpuPie.vue
+msgid "Disk Usage"
+msgstr ""
 
 #: src/components/kraken/cards/InstalledExtensionCard.vue
 msgid "Disk usage"
@@ -1165,6 +1180,10 @@ msgstr "Erreur : ${ 0 }"
 msgid "Errors:"
 msgstr "Erreurs :"
 
+#: src/views/MainView.vue
+msgid "Ethernet Status"
+msgstr ""
+
 #: src/components/notifications/EventLogModal.vue
 #: src/components/notifications/NotificationManager.vue
 msgid "Event log"
@@ -1311,10 +1330,6 @@ msgstr "Libérer de l'espace en supprimant les journaux MAVLink"
 msgid "Free up space by removing old logs"
 msgstr "Libérer de l'espace en supprimant les anciens journaux"
 
-#: src/components/health/HealthTrayMenu.vue
-msgid "Free:"
-msgstr "Libre :"
-
 #: src/views/SettingsView.vue
 #, javascript-format
 msgid "Freed: ${ 0 }"
@@ -1364,10 +1379,6 @@ msgstr "Les coordonnées GeoIP sont estimées à partir de votre adresse IP."
 msgid "GeoIP coordinates:"
 msgstr "Coordonnées GeoIP :"
 
-#: src/components/version-chooser/VersionChooser.vue
-msgid "Github's CI"
-msgstr "la CI de GitHub"
-
 #: src/components/cloud/CloudTrayMenu.vue
 msgid "Go to BlueOS Cloud"
 msgstr "Aller sur BlueOS Cloud"
@@ -1395,6 +1406,11 @@ msgstr "Masquer"
 #: src/components/version-chooser/VersionCard.vue
 msgid "Hide release notes"
 msgstr "Masquer les notes de version"
+
+#: src/components/health/HealthTrayMenu.vue
+#, javascript-format
+msgid "High disk usage! (${ 0 }%) please clean up the disk"
+msgstr ""
 
 #: src/components/vehiclesetup/configuration/compass/LevelHorizonCalibration.vue
 msgid "Horizon calibration trims the pitch and roll of the vehicle's inertial sensors to adjust for small deviations from level."
@@ -1487,10 +1503,6 @@ msgstr "Incrément"
 #: src/components/vehiclesetup/overview/OnboardSensors.vue
 msgid "Inertial Measurement Unit"
 msgstr "Centrale inertielle"
-
-#: src/components/version-chooser/VersionCard.vue
-msgid "Info"
-msgstr "Infos"
 
 #: src/components/bridges/BridgeCard.vue
 #: src/components/bridges/BridgeCreationDialog.vue
@@ -1786,8 +1798,8 @@ msgid "Manage your video devices and video streams."
 msgstr "Gérer vos périphériques vidéo et vos flux vidéo."
 
 #: src/components/version-chooser/VersionChooser.vue
-msgid "Manual upload"
-msgstr "Envoi manuel"
+msgid "Manual Upload"
+msgstr ""
 
 #: src/types/frontend_services.ts
 msgid "MavLink communication layer over REST API."
@@ -1817,6 +1829,10 @@ msgstr "Mesurez les angles limites de rotation et saisissez-les ci-dessous. Cela
 #: src/components/system-information/Processes.vue
 msgid "Memory (kB)"
 msgstr "Mémoire (ko)"
+
+#: src/widgets/CpuPie.vue
+msgid "Memory Usage"
+msgstr ""
 
 #: src/components/kraken/cards/InstalledExtensionCard.vue
 msgid "Memory usage"
@@ -2136,6 +2152,10 @@ msgstr "Uniquement lorsque armé"
 msgid "Open Settings"
 msgstr "Ouvrir les paramètres"
 
+#: src/views/Autopilot.vue
+msgid "Open documentation"
+msgstr ""
+
 #: src/components/logs/LogManager.vue
 msgid "Open log in UAV Log Viewer"
 msgstr "Ouvrir le journal dans UAV Log Viewer"
@@ -2227,10 +2247,6 @@ msgstr "Chemin : ${ 0 }"
 #: src/views/ExtensionManagerView.vue
 msgid "Pending"
 msgstr "En attente"
-
-#: src/components/health/HealthTrayMenu.vue
-msgid "Percentage (Full):"
-msgstr "Pourcentage (pleine charge) :"
 
 #: src/components/vehiclesetup/configuration/compass/ArdupilotMavlinkCompassSetup.vue
 msgid "Perform a full calibration of the selected compass(es) by manually spinning the vehicle around multiple times, about all 3 rotation axes."
@@ -2986,7 +3002,12 @@ msgstr "Basculer vers ${ 0 }.local"
 msgid "System"
 msgstr "Système"
 
+#: src/components/vehiclesetup/overview/VehicleInfo.vue
+msgid "System ID"
+msgstr ""
+
 #: src/menus.ts
+#: src/views/MainView.vue
 msgid "System Information"
 msgstr "Informations système"
 
@@ -3125,7 +3146,6 @@ msgid "This feature is disabled because the vehicle is armed."
 msgstr "Cette fonctionnalité est désactivée car le véhicule est armé."
 
 #: src/App.vue
-#: src/views/MainView.vue
 msgid "This is an advanced feature"
 msgstr "Ceci est une fonctionnalité avancée"
 
@@ -3189,10 +3209,6 @@ msgstr "Activer/désactiver le point d'accès"
 #: src/components/kraken/modals/ExtensionSettingsModal.vue
 msgid "Top ones have higher priority."
 msgstr "Les sources en haut de la liste sont prioritaires."
-
-#: src/components/health/HealthTrayMenu.vue
-msgid "Total:"
-msgstr "Total :"
 
 #: src/components/app/ReportMenu.vue
 msgid "Track changes, contribute, and get notified when fixed"
@@ -3295,7 +3311,6 @@ msgid "Up to date"
 msgstr "À jour"
 
 #: src/components/system-information/Firmware.vue
-#: src/components/version-chooser/VersionCard.vue
 msgid "Update"
 msgstr "Mettre à jour"
 
@@ -3334,10 +3349,6 @@ msgstr "Mettre à jour vers <strong style='white-space: nowrap;'>${ 0 }</strong>
 #, javascript-format
 msgid "Update to latest ${ 0 }"
 msgstr "Mettre à jour vers la dernière version ${ 0 }"
-
-#: src/components/version-chooser/VersionCard.vue
-msgid "Updating bootstrap is only recommended between stable versions."
-msgstr "La mise à jour du bootstrap n'est recommandée qu'entre versions stables."
 
 #: src/components/version-chooser/VersionChooser.vue
 msgid "Upload"
@@ -3431,6 +3442,10 @@ msgstr "Structure du véhicule"
 msgid "Vehicle Current:"
 msgstr "Courant du véhicule :"
 
+#: src/components/vehiclesetup/Configure.vue
+msgid "Vehicle ID"
+msgstr ""
+
 #: src/menus.ts
 msgid "Vehicle Setup"
 msgstr "Configuration du véhicule"
@@ -3512,6 +3527,10 @@ msgstr "Afficher le trafic MAVLink détaillé provenant de votre véhicule."
 msgid "Virt. Memory (kB)"
 msgstr "Mém. virtuelle (ko)"
 
+#: src/menus.ts
+msgid "Visualize disk usage and delete files/folders."
+msgstr ""
+
 #: src/components/vehiclesetup/overview/PowerInfo.vue
 msgid "Voltage Multiplier:"
 msgstr "Multiplicateur de tension :"
@@ -3558,6 +3577,14 @@ msgstr "Bienvenue dans BlueOS ! Cet assistant de configuration vous guidera dan
 #: src/components/version-chooser/VersionCard.vue
 msgid "What's new?"
 msgstr "Quoi de neuf ?"
+
+#: src/components/version-chooser/VersionChooser.vue
+msgid "When selecting the .tar artifact, make sure it matches your hardware architecture (armv7, arm64, or amd64)"
+msgstr ""
+
+#: src/views/MainView.vue
+msgid "WiFi Status"
+msgstr ""
 
 #: src/alerts/rules/network.ts
 msgid "WiFi is unavailable"
