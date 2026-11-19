@@ -2,16 +2,36 @@ import {
   addLocale, gettext, t, useLocale,
 } from 'ttag'
 import Vue from 'vue'
+import es from 'vuetify/lib/locale/es'
+import fr from 'vuetify/lib/locale/fr'
+import ja from 'vuetify/lib/locale/ja'
+import no from 'vuetify/lib/locale/no'
 import pt from 'vuetify/lib/locale/pt'
+import zhHans from 'vuetify/lib/locale/zh-Hans'
 
 import vuetify from '@/plugins/vuetify'
 import settings, { SettingsStore } from '@/store/settings'
 
 import { escapeHtml } from './escape'
-import pt_BR from './pt_BR.po.json'
 
-const catalogs: Record<string, typeof pt_BR> = {
-  pt_BR,
+type Catalog = Parameters<typeof addLocale>[1]
+
+const catalogs: Record<string, () => Promise<{ default: Catalog }>> = {
+  pt_BR: () => import('./pt_BR.po.json'),
+  es_ES: () => import('./es_ES.po.json'),
+  fr_FR: () => import('./fr_FR.po.json'),
+  ja_JP: () => import('./ja_JP.po.json'),
+  no_NO: () => import('./no_NO.po.json'),
+  zh_CN: () => import('./zh_CN.po.json'),
+}
+
+const vuetify_locales: Record<string, { id: string, messages: typeof pt }> = {
+  pt_BR: { id: 'pt', messages: pt },
+  es_ES: { id: 'es', messages: es },
+  fr_FR: { id: 'fr', messages: fr },
+  ja_JP: { id: 'ja', messages: ja },
+  no_NO: { id: 'no', messages: no },
+  zh_CN: { id: 'zh-Hans', messages: zhHans },
 }
 
 const language_names: Record<string, string> = {
@@ -34,15 +54,17 @@ export function resolveLocale(value: unknown): string {
   return 'en'
 }
 
-function applyLocale(locale: string): void {
+async function applyLocale(locale: string): Promise<void> {
   if (locale === 'en') {
     return
   }
-  addLocale(locale, catalogs[locale])
+  const catalog = await catalogs[locale]()
+  addLocale(locale, catalog.default)
   useLocale(locale)
-  if (locale === 'pt_BR') {
-    vuetify.framework.lang.locales.pt = pt
-    vuetify.framework.lang.current = 'pt'
+  const vuetify_locale = vuetify_locales[locale]
+  if (vuetify_locale !== undefined) {
+    vuetify.framework.lang.locales[vuetify_locale.id] = vuetify_locale.messages
+    vuetify.framework.lang.current = vuetify_locale.id
   }
 }
 
@@ -53,7 +75,13 @@ export async function initI18n(): Promise<string> {
     // Missing backend or bag settings should not block startup.
   }
   const locale = resolveLocale(settings.language)
-  applyLocale(locale)
+  try {
+    await applyLocale(locale)
+  } catch (error) {
+    // A catalog that fails to load should not block startup, English is used instead.
+    console.warn(`Failed to load the ${locale} translations:`, error)
+    return 'en'
+  }
   return locale
 }
 
