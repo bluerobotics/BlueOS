@@ -10,22 +10,22 @@ msgstr ""
 "X-Crowdin-File-ID: 24\n"
 "Project-Id-Version: blueos\n"
 "Language-Team: Japanese\n"
-"PO-Revision-Date: 2026-11-13 17:15\n"
+"PO-Revision-Date: 2026-11-19 00:33\n"
 
 #: src/components/notifications/NotificationGroupCard.vue
 #, javascript-format
 msgid "${ 0 } (${ 1 } notifications)"
-msgstr ""
+msgstr "${ 0 }（通知 ${ 1 } 件）"
 
 #: src/components/health/GpsTrayMenu.vue
 #, javascript-format
 msgid "${ 0 } (Number of satellites: ${ 1 })"
-msgstr ""
+msgstr "${ 0 }（衛星数: ${ 1 }）"
 
 #: src/components/system-information/NetworkCard.vue
 #, javascript-format
 msgid "${ 0 } / ${ 1 } total"
-msgstr ""
+msgstr "${ 0 } / 合計 ${ 1 }"
 
 #: src/components/health/HealthTrayMenu.vue
 #, javascript-format
@@ -35,17 +35,17 @@ msgstr ""
 #: src/components/vehiclesetup/configuration/power/BatteryCard.vue
 #, javascript-format
 msgid "${ 0 } Advanced"
-msgstr ""
+msgstr "詳細設定を${ 0 }"
 
 #: src/components/kraken/modals/ExtensionCreationModal.vue
 #, javascript-format
 msgid "${ 0 } Extension"
-msgstr ""
+msgstr "拡張機能の${ 0 }"
 
 #: src/components/vehiclesetup/overview/OnboardSensors.vue
 #, javascript-format
 msgid "${ 0 } Pressure"
-msgstr ""
+msgstr "${ 0 } 圧力"
 
 #: src/components/health/HealthTrayMenu.vue
 #, javascript-format
@@ -60,17 +60,17 @@ msgstr ""
 #: src/components/system-information/Usb.vue
 #, javascript-format
 msgid "${ 0 } device(s)"
-msgstr ""
+msgstr "${ 0 } 台のデバイス"
 
 #: src/components/vehiclesetup/configuration/lights.vue
 #, javascript-format
 msgid "${ 0 } steps result in a ${ 1 }% increase per button press."
-msgstr ""
+msgstr "${ 0 } ステップでは、ボタンを 1 回押すごとに ${ 1 }% 増加します。"
 
 #: src/components/parameter-editor/ParameterLoader.vue
 #, javascript-format
 msgid "${ 0 } to go"
-msgstr ""
+msgstr "残り ${ 0 }"
 
 #: src/components/health/HealthTrayMenu.vue
 #: src/components/vehiclesetup/overview/OnboardSensors.vue
@@ -85,37 +85,39 @@ msgstr ""
 
 #: src/components/vehiclesetup/MotorDetection.vue
 msgid "- choose the frame that matches your vehicle (or make a custom one)"
-msgstr ""
+msgstr "- ビークルに合ったフレームを選択してください（またはカスタムフレームを作成してください）"
 
 #: src/components/vehiclesetup/MotorDetection.vue
 msgid "- ensure the ESC is powered and receiving valid signals"
-msgstr ""
+msgstr "- ESC に電源が供給され、有効な信号を受信していることを確認してください"
 
 #: src/components/vehiclesetup/MotorDetection.vue
 msgid "- ensure the frame's motion contribution factors suit the positions and orientations of your thrusters relative to the vehicle's centers of mass and volume (you may need to trim with ballast and/or buoyancy)"
-msgstr ""
+msgstr "- フレームのモーション寄与係数が、ビークルの重心および浮心に対するスラスターの位置と向きに適合していることを確認してください（バラストや浮力材でトリム調整が必要な場合があります）"
 
 #: src/components/vehiclesetup/MotorDetection.vue
 msgid "- ensure the sensors are well calibrated"
-msgstr ""
+msgstr "- センサーが適切にキャリブレーションされていることを確認してください"
 
 #: src/components/vehiclesetup/MotorDetection.vue
 msgid "- ensure the thruster is connected to the ESC"
-msgstr ""
+msgstr "- スラスターが ESC に接続されていることを確認してください"
 
 #: src/components/vehiclesetup/MotorDetection.vue
 msgid "- ensure the thrusters are connected to the correct output channels of the flight controller, and in the correct order to match the frame numbering\n"
 "- load the recommended parameters for your frame"
-msgstr ""
+msgstr "- スラスターがフライトコントローラーの正しい出力チャンネルに、フレームの番号付けと一致する正しい順序で接続されていることを確認してください\n"
+"- フレームの推奨パラメータを読み込んでください"
 
 #: src/components/vehiclesetup/MotorDetection.vue
 msgid "- ensure the vehicle is in calm water\n"
 "- ensure the vehicle is not colliding with other objects"
-msgstr ""
+msgstr "- ビークルが穏やかな水中にあることを確認してください\n"
+"- ビークルが他の物体と衝突していないことを確認してください"
 
 #: src/components/vehiclesetup/MotorDetection.vue
 msgid "- ensure the vehicle is in the water"
-msgstr ""
+msgstr "- ビークルが水中にあることを確認してください"
 
 #: src/components/vehiclesetup/viewers/GenericViewer.vue
 msgid "0deg 0deg 0deg"
@@ -127,7 +129,7 @@ msgstr ""
 
 #: src/components/vehiclesetup/viewers/GenericViewer.vue
 msgid "3D viewer unavailable"
-msgstr ""
+msgstr "3D ビューアーは利用できません"
 
 #.  based on https://github.com/mavlink/qgroundcontrol/blob/Stable_V4.2/src/AutoPilotPlugins/APM/APMPowerComponent.qml
 #: src/components/vehiclesetup/configuration/power/BatteryCard.vue
@@ -141,224 +143,224 @@ msgstr ""
 
 #: src/components/vehiclesetup/configuration/compass/FullCompassCalibrator.vue
 msgid "<strong>Onboard Compass Calibration</strong> is the regular calibration used for ArduPilot vehicles. It requires spinning the vehicle around all axes, which allows it to calibrate the readings to the expected local magnetic field."
-msgstr ""
+msgstr "<strong>オンボードコンパスキャリブレーション</strong>は、ArduPilot ビークルで使用される標準的なキャリブレーションです。ビークルをすべての軸周りに回転させる必要があり、これにより読み取り値を想定される現地の磁場に合わせてキャリブレーションできます。"
 
 #: src/components/vehiclesetup/overview/GyroCalib.vue
 msgid "A calibrated gyro should display a value of 0 on all axes when the vehicle is stationary. Symptoms of a mis-calibrated gyro include yaw drift and small attitude offsets."
-msgstr ""
+msgstr "キャリブレーション済みのジャイロは、ビークルが静止しているときにすべての軸で 0 を表示するはずです。ジャイロのキャリブレーション不良の症状には、ヨーのドリフトやわずかな姿勢のずれがあります。"
 
 #: src/components/app/NewVersionNotificator.vue
 msgid "A new version is available!"
-msgstr ""
+msgstr "新しいバージョンが利用可能です！"
 
 #: src/components/vehiclesetup/configuration/compass/CompassLearn.vue
 msgid "A valid global region is required for Compass Learn to estimate the local world magnetic field."
-msgstr ""
+msgstr "Compass Learn で現地の地磁場を推定するには、有効な地域情報が必要です。"
 
 #: src/components/vehiclesetup/configuration/compass/FullCompassCalibrator.vue
 msgid "A valid global region/position is <strong>recomended</strong> for Onboard Calibration to estimate the local world magnetic field."
-msgstr ""
+msgstr "オンボードキャリブレーションで現地の地磁場を推定するには、有効な地域/位置情報が<strong>推奨</strong>されます。"
 
 #: src/components/vehiclesetup/configuration/compass/LargeVehicleCompassCalibrator.vue
 msgid "A valid global region/position is required to estimate the local world magnetic field."
-msgstr ""
+msgstr "現地の地磁場を推定するには、有効な地域/位置情報が必要です。"
 
 #: src/menus.ts
 msgid "A web-based console. Used mainly for debugging and development."
-msgstr ""
+msgstr "Web ベースのコンソールです。主にデバッグと開発に使用します。"
 
 #: src/components/beacon/BeaconTrayMenu.vue
 msgid "A wired connection is available:"
-msgstr ""
+msgstr "有線接続が利用可能です:"
 
 #: src/components/app/DnsConfigurationMenu.vue
 msgid "ADD DNS"
-msgstr ""
+msgstr "DNS を追加"
 
 #: src/components/scanner/availableServicesTable.vue
 msgid "API Documentation"
-msgstr ""
+msgstr "API ドキュメント"
 
 #: src/components/app/DnsConfigurationMenu.vue
 msgid "APPLY"
-msgstr ""
+msgstr "適用"
 
 #: src/components/ethernet/AddressDeletionDialog.vue
 #: src/components/vehiclesetup/configuration/compass/CompassLearn.vue
 #: src/components/version-chooser/VersionCard.vue
 #: src/components/wizard/Wizard.vue
 msgid "Abort"
-msgstr ""
+msgstr "中止"
 
 #: src/components/wizard/Wizard.vue
 msgid "Abort wizard"
-msgstr ""
+msgstr "ウィザードを中止"
 
 #: src/components/wizard/Wizard.vue
 msgid "Aborting wizard"
-msgstr ""
+msgstr "ウィザードを中止しています"
 
 #: src/views/SystemInformationView.vue
 msgid "About"
-msgstr ""
+msgstr "情報"
 
 #: src/components/vehiclesetup/Configure.vue
 msgid "Accelerometer"
-msgstr ""
+msgstr "加速度センサー"
 
 #: src/components/vehiclesetup/configuration/accelerometer/FullAccelerometerCalibration.vue
 #: src/components/vehiclesetup/configuration/accelerometer/QuickAccelerometerCalibration.vue
 #: src/components/vehiclesetup/configuration/compass/LevelHorizonCalibration.vue
 msgid "Accelerometer Calibration"
-msgstr ""
+msgstr "加速度センサーのキャリブレーション"
 
 #: src/views/SettingsView.vue
 msgid "Access advanced features and hidden pages"
-msgstr ""
+msgstr "高度な機能と非表示のページにアクセスします"
 
 #: src/components/version-chooser/DockerLogin.vue
 msgid "Accounts"
-msgstr ""
+msgstr "アカウント"
 
 #: src/components/logs/LogManager.vue
 msgid "Actions"
-msgstr ""
+msgstr "操作"
 
 #: src/types/frontend_services.ts
 msgid "Actual scanner for running services."
-msgstr ""
+msgstr "実行中のサービスを実際にスキャンします。"
 
 #: src/components/ethernet/InterfaceCard.vue
 msgid "Add"
-msgstr ""
+msgstr "追加"
 
 #: src/components/kraken/modals/ExtensionSettingsModal.vue
 msgid "Add a new source"
-msgstr ""
+msgstr "新しいソースを追加"
 
 #: src/components/app/DnsConfigurationMenu.vue
 msgid "Add one more DNS entry"
-msgstr ""
+msgstr "DNS エントリーをもう 1 つ追加"
 
 #: src/components/video-manager/VideoDevice.vue
 msgid "Add stream"
-msgstr ""
+msgstr "ストリームを追加"
 
 #: src/components/vehiclesetup/overview/BaroCalib.vue
 #: src/components/vehiclesetup/overview/OnboardSensors.vue
 msgid "Address"
-msgstr ""
+msgstr "アドレス"
 
 #: src/components/vehiclesetup/configuration/power/BatteryCard.vue
 msgid "Adjust if the vehicle reports current draw when there is none flowing."
-msgstr ""
+msgstr "電流が流れていないのにビークルが消費電流を報告する場合に調整してください。"
 
 #: src/components/parameter-editor/ServoFunctionRangeEditor.vue
 msgid "Adjust the minimum, trim, and maximum PWM values for this servo"
-msgstr ""
+msgstr "このサーボの最小、トリム、最大 PWM 値を調整します"
 
 #: src/views/SettingsView.vue
 msgid "Advanced Mode"
-msgstr ""
+msgstr "詳細モード"
 
 #: src/menus.ts
 msgid "Allow browsing the Telemetry (.tlog) and Binary (.bin) logs generated by your vehicle. Bin logs are currently only supported for Navigator boards."
-msgstr ""
+msgstr "ビークルが生成したテレメトリー（.tlog）ログとバイナリー（.bin）ログを閲覧できます。Bin ログは現在 Navigator ボードでのみサポートされています。"
 
 #: src/menus.ts
 msgid "Allows creating UDP/TCP to Serial bridges, used for communication to serial devices from your Control Station Computer."
-msgstr ""
+msgstr "UDP/TCP とシリアル間のブリッジを作成できます。コントロールステーションのコンピューターからシリアルデバイスと通信するために使用します。"
 
 #: src/types/frontend_services.ts
 msgid "Allows management of sockets for NMEA data injectior."
-msgstr ""
+msgstr "NMEA データ注入用のソケットを管理できます。"
 
 #: src/components/health/GpsTrayMenu.vue
 msgid "Altitude estimate"
-msgstr ""
+msgstr "推定高度"
 
 #: src/components/autopilot/EndpointManager.vue
 msgid "Always"
-msgstr ""
+msgstr "常に"
 
 #: src/components/common/rebootRequiredOverlay.vue
 msgid "An autopilot Reboot is required."
-msgstr ""
+msgstr "オートパイロットの再起動が必要です。"
 
 #: src/components/vehiclesetup/overview/GyroCalib.vue
 msgid "Angular speed (mrad/s)"
-msgstr ""
+msgstr "角速度 (mrad/s)"
 
 #: src/views/SettingsView.vue
 msgid "Appearance"
-msgstr ""
+msgstr "外観"
 
 #: src/components/app/NetworkInterfacePriorityMenu.vue
 msgid "Applied changes require a <b>system reboot</b>."
-msgstr ""
+msgstr "適用した変更を反映するには<b>システムの再起動</b>が必要です。"
 
 #: src/components/app/NetworkInterfacePriorityMenu.vue
 #: src/components/kraken/modals/ExtensionSettingsModal.vue
 #: src/components/version-chooser/VersionCard.vue
 #: src/components/wizard/Wizard.vue
 msgid "Apply"
-msgstr ""
+msgstr "適用"
 
 #: src/App.vue
 msgid "Armed"
-msgstr ""
+msgstr "アーム中"
 
 #: src/components/ethernet/InterfaceCard.vue
 msgid "Ask for"
-msgstr ""
+msgstr "要求"
 
 #: src/components/wifi/WifiSettingsDialog.vue
 msgid "Auto-start hotspot when not connected to a wifi network for some time."
-msgstr ""
+msgstr "一定時間 Wi-Fi ネットワークに接続されていない場合、ホットスポットを自動的に開始します。"
 
 #: src/components/vehiclesetup/MotorDetection.vue
 msgid "Automatic Motor Reversal Detection"
-msgstr ""
+msgstr "モーター逆転の自動検出"
 
 #: src/components/vehiclesetup/configuration/compass/ArdupilotMavlinkCompassSetup.vue
 msgid "Automatically \"learn\" compass calibration offsets by driving the vehicle around until enough data has been collected, and <b>\"CompassLearn: finished\"</b> is displayed. A valid global region estimate is required."
-msgstr ""
+msgstr "十分なデータが収集されて <b>\"CompassLearn: finished\"</b> と表示されるまでビークルを走行させ、コンパスのキャリブレーションオフセットを自動的に「学習」します。有効な地域の推定が必要です。"
 
 #: src/views/Autopilot.vue
 msgid "Autopilot"
-msgstr ""
+msgstr "オートパイロット"
 
 #: src/menus.ts
 msgid "Autopilot Firmware"
-msgstr ""
+msgstr "オートパイロットファームウェア"
 
 #: src/menus.ts
 msgid "Autopilot Parameters"
-msgstr ""
+msgstr "オートパイロットパラメータ"
 
 #: src/components/vehiclesetup/overview/OnboardSensors.vue
 msgid "Autopilot Sensors"
-msgstr ""
+msgstr "オートパイロットセンサー"
 
 #: src/alerts/rules/autopilot.ts
 msgid "Autopilot firmware is not installed"
-msgstr ""
+msgstr "オートパイロットファームウェアがインストールされていません"
 
 #: src/views/SettingsView.vue
 msgid "Autopilot flight logs"
-msgstr ""
+msgstr "オートパイロットのフライトログ"
 
 #: src/components/logs/LogManager.vue
 msgid "Autopilot logs"
-msgstr ""
+msgstr "オートパイロットログ"
 
 #: src/components/app/VehicleRebootMenu.vue
 msgid "Autopilot reboot is necessary for new settings to take effect."
-msgstr ""
+msgstr "新しい設定を反映するには、オートパイロットの再起動が必要です。"
 
 #: src/menus.ts
 msgid "Available Services"
-msgstr ""
+msgstr "利用可能なサービス"
 
 #: src/views/ExtensionManagerView.vue
 msgid "Back Alley"
@@ -366,23 +368,23 @@ msgstr ""
 
 #: src/alerts/rules/backend.ts
 msgid "Backend is offline"
-msgstr ""
+msgstr "バックエンドがオフラインです"
 
 #: src/menus.ts
 msgid "Bag Editor"
-msgstr ""
+msgstr "Bag エディター"
 
 #: src/components/vehiclesetup/Configure.vue
 msgid "Baro"
-msgstr ""
+msgstr "気圧計"
 
 #: src/widgets/Battery.vue
 msgid "Battery"
-msgstr ""
+msgstr "バッテリー"
 
 #: src/components/vehiclesetup/overview/PowerInfo.vue
 msgid "Battery Monitor"
-msgstr ""
+msgstr "バッテリーモニター"
 
 #: src/views/ExtensionManagerView.vue
 msgid "Bazaar"
@@ -390,23 +392,23 @@ msgstr ""
 
 #: src/components/video-manager/VideoStreamCreationDialog.vue
 msgid "Be aware that \"Fake source\" streams consume a lot of computing power. If you just need it for connection tests we recommend you to use small resolutions and low framerates."
-msgstr ""
+msgstr "\"Fake source\" ストリームは多くの計算リソースを消費することに注意してください。接続テストにのみ使用する場合は、低い解像度と低いフレームレートを使用することをお勧めします。"
 
 #: src/views/MainView.vue
 msgid "Before you start, we highly recommend <a href='https://blueos.cloud/docs/stable/usage/getting-started/#connect-internet' target='_blank'>connecting to the internet</a> and performing a <a href='https://blueos.cloud/docs/stable/usage/getting-started/#select-version' target='_blank'>system update to the latest available BlueOS version</a>."
-msgstr ""
+msgstr "開始する前に、<a href='https://blueos.cloud/docs/stable/usage/getting-started/#connect-internet' target='_blank'>インターネットに接続</a>し、<a href='https://blueos.cloud/docs/stable/usage/getting-started/#select-version' target='_blank'>利用可能な最新の BlueOS バージョンへのシステム更新</a>を行うことを強くお勧めします。"
 
 #: src/App.vue
 msgid "Beta"
-msgstr ""
+msgstr "ベータ"
 
 #: src/components/autopilot/FirmwareManager.vue
 msgid "Beta - In-testing, with new features and improvements, aiming to become stable. May have bugs."
-msgstr ""
+msgstr "ベータ - 新機能と改善を含むテスト中のバージョンで、安定版を目指しています。バグが含まれている可能性があります。"
 
 #: src/views/SettingsView.vue
 msgid "Better visibility in bright environments"
-msgstr ""
+msgstr "明るい環境での視認性を向上します"
 
 #.  based on https://github.com/mavlink/qgroundcontrol/blob/Stable_V4.2/src/AutoPilotPlugins/APM/APMPowerComponent.qml
 #: src/components/vehiclesetup/configuration/power/BatteryCard.vue
@@ -416,86 +418,86 @@ msgstr ""
 
 #: src/components/vehiclesetup/viewers/GenericViewer.vue
 msgid "BlueOS Documentation"
-msgstr ""
+msgstr "BlueOS ドキュメント"
 
 #: src/menus.ts
 msgid "BlueOS Version"
-msgstr ""
+msgstr "BlueOS バージョン"
 
 #: src/App.vue
 msgid "BlueOS Version:"
-msgstr ""
+msgstr "BlueOS バージョン:"
 
 #: src/alerts/rules/network.ts
 msgid "BlueOS cannot reach the WiFi manager. Check the WiFi adapter."
-msgstr ""
+msgstr "BlueOS が Wi-Fi マネージャーに接続できません。Wi-Fi アダプターを確認してください。"
 
 #: src/components/app/ReportMenu.vue
 msgid "BlueOS feedback - (Please add a title here)"
-msgstr ""
+msgstr "BlueOS フィードバック -（ここにタイトルを追加してください）"
 
 #: src/views/SettingsView.vue
 msgid "BlueOS service logs"
-msgstr ""
+msgstr "BlueOS サービスログ"
 
 #: src/components/vehiclesetup/OrientationPicker.vue
 msgid "Board Orientation"
-msgstr ""
+msgstr "ボードの向き"
 
 #: src/components/wizard/Wizard.vue
 msgid "Boat Setup"
-msgstr ""
+msgstr "ボートのセットアップ"
 
 #: src/components/system-information/Firmware.vue
 msgid "Bootloader Version"
-msgstr ""
+msgstr "ブートローダーのバージョン"
 
 #: src/components/ping/ping1d.vue
 #: src/components/ping/ping360.vue
 msgid "Bridge"
-msgstr ""
+msgstr "ブリッジ"
 
 #: src/types/frontend_services.ts
 msgid "Bridges management service for BlueOS."
-msgstr ""
+msgstr "BlueOS 用のブリッジ管理サービスです。"
 
 #: src/menus.ts
 msgid "Browse all the files in BlueOS. Useful for fetching logs, tweaking configurations, and development."
-msgstr ""
+msgstr "BlueOS 内のすべてのファイルを閲覧します。ログの取得、設定の調整、開発に便利です。"
 
 #: src/components/app/ReportMenu.vue
 msgid "Bug report / Feature request"
-msgstr ""
+msgstr "バグ報告 / 機能リクエスト"
 
 #: src/components/vehiclesetup/overview/BaroCalib.vue
 #: src/components/vehiclesetup/overview/OnboardSensors.vue
 msgid "Bus"
-msgstr ""
+msgstr "バス"
 
 #: src/components/vehiclesetup/configuration/compass/ArdupilotMavlinkCompassSetup.vue
 #, javascript-format
 msgid "Bus: 0x${ 0 } @ ${ 1 }${ 2 }"
-msgstr ""
+msgstr "バス: 0x${ 0 } @ ${ 1 }${ 2 }"
 
 #: src/App.vue
 msgid "By"
-msgstr ""
+msgstr "作成者"
 
 #: src/components/system-information/NetworkCard.vue
 msgid "Bytes received:"
-msgstr ""
+msgstr "受信バイト数:"
 
 #: src/components/system-information/NetworkCard.vue
 msgid "Bytes transmitted:"
-msgstr ""
+msgstr "送信バイト数:"
 
 #: src/components/kraken/BackAlleyTab.vue
 msgid "CATEGORIES"
-msgstr ""
+msgstr "カテゴリー"
 
 #: src/components/kraken/BackAlleyTab.vue
 msgid "COMPANIES"
-msgstr ""
+msgstr "企業"
 
 #: src/components/system-information/Processes.vue
 msgid "CPU (%)"
@@ -503,94 +505,94 @@ msgstr ""
 
 #: src/components/health/HealthTrayMenu.vue
 msgid "CPU has reported low voltage. Please check your power supply!"
-msgstr ""
+msgstr "CPU が低電圧を報告しました。電源を確認してください！"
 
 #: src/components/health/HealthTrayMenu.vue
 msgid "CPU is throttled. Performance may be affected. Please check your power supply and cooling!"
-msgstr ""
+msgstr "CPU がスロットリングされています。パフォーマンスに影響する可能性があります。電源と冷却を確認してください！"
 
 #: src/components/kraken/cards/InstalledExtensionCard.vue
 msgid "CPU usage"
-msgstr ""
+msgstr "CPU 使用率"
 
 #: src/components/vehiclesetup/configuration/power/BatteryCard.vue
 msgid "Calculate"
-msgstr ""
+msgstr "計算"
 
 #: src/components/vehiclesetup/configuration/power/BatteryCard.vue
 msgid "Calculate & Set"
-msgstr ""
+msgstr "計算して設定"
 
 #: src/components/vehiclesetup/configuration/power/BatteryCard.vue
 msgid "Calculate Amps per Volt"
-msgstr ""
+msgstr "アンペア/ボルトを計算"
 
 #: src/components/vehiclesetup/configuration/power/BatteryCard.vue
 msgid "Calculate Voltage Multiplier"
-msgstr ""
+msgstr "電圧乗数を計算"
 
 #: src/components/vehiclesetup/configuration/camera.vue
 msgid "Calculated PWM/degree:"
-msgstr ""
+msgstr "計算された PWM/度:"
 
 #: src/components/vehiclesetup/configuration/compass/FullCompassCalibrator.vue
 #: src/components/vehiclesetup/configuration/compass/LargeVehicleCompassCalibrator.vue
 #: src/components/vehiclesetup/configuration/compass/LevelHorizonCalibration.vue
 #: src/components/vehiclesetup/overview/BaroCalib.vue
 msgid "Calibrate"
-msgstr ""
+msgstr "キャリブレーション"
 
 #: src/components/vehiclesetup/overview/BaroCalib.vue
 msgid "Calibrate Barometer"
-msgstr ""
+msgstr "気圧計のキャリブレーション"
 
 #: src/components/vehiclesetup/overview/GyroCalib.vue
 msgid "Calibrate Gyroscopes"
-msgstr ""
+msgstr "ジャイロスコープのキャリブレーション"
 
 #: src/components/vehiclesetup/overview/BaroCalib.vue
 msgid "Calibrate all barometers to ground level"
-msgstr ""
+msgstr "すべての気圧計を地上レベルにキャリブレーションします"
 
 #: src/components/vehiclesetup/configuration/compass/ArdupilotMavlinkCompassSetup.vue
 msgid "Calibrate the compass(es) using a previous flight log. This usually gives the best results. While it is not currently implemented here, the compass offset information can be determined in the Log Browser page. Press the green play button on a log file, click the three vertical dots in the sidebar, open the <b>Mag Fit Tool</b>, specify the general global region where the log was created, then click \"Fit\" for each compass you wish to calibrate. Resulting values can be copied across to the COMPASS_* autopilot parameters."
-msgstr ""
+msgstr "過去のフライトログを使用してコンパスをキャリブレーションします。通常、これが最良の結果をもたらします。現在ここには実装されていませんが、コンパスのオフセット情報はログブラウザーページで求めることができます。ログファイルの緑色の再生ボタンを押し、サイドバーの縦三点リーダーをクリックして <b>Mag Fit Tool</b> を開き、ログが作成されたおおよその地域を指定してから、キャリブレーションしたい各コンパスについて \"Fit\" をクリックします。得られた値は COMPASS_* オートパイロットパラメータにコピーできます。"
 
 #: src/components/vehiclesetup/configuration/accelerometer/ArdupilotAccelerometerSetup.vue
 msgid "Calibrated"
-msgstr ""
+msgstr "キャリブレーション済み"
 
 #: src/components/vehiclesetup/overview/BaroCalib.vue
 msgid "Calibrated at"
-msgstr ""
+msgstr "キャリブレーション日時"
 
 #: src/components/vehiclesetup/configuration/compass/ArdupilotMavlinkCompassSetup.vue
 msgid "Calibrated, but without a known (detected or specified) global region, Consider retrying with a valid position to improve compass performance."
-msgstr ""
+msgstr "キャリブレーションは完了しましたが、既知の（検出または指定された）地域情報がありません。コンパスの性能を向上させるため、有効な位置情報で再試行することを検討してください。"
 
 #: src/components/vehiclesetup/configuration/accelerometer/ArdupilotAccelerometerSetup.vue
 msgid "Calibration"
-msgstr ""
+msgstr "キャリブレーション"
 
 #: src/components/vehiclesetup/configuration/accelerometer/QuickAccelerometerCalibration.vue
 msgid "Calibration Successful"
-msgstr ""
+msgstr "キャリブレーション成功"
 
 #: src/components/vehiclesetup/overview/GyroCalib.vue
 msgid "Calibration temperature (°C)"
-msgstr ""
+msgstr "キャリブレーション温度 (°C)"
 
 #: src/components/vehiclesetup/Configure.vue
 msgid "Camera Gimbal"
-msgstr ""
+msgstr "カメラジンバル"
 
 #: src/components/vehiclesetup/configuration/camera.vue
 msgid "Camera Gimbal Configuration"
-msgstr ""
+msgstr "カメラジンバルの設定"
 
 #: src/components/vehiclesetup/configuration/camera.vue
 msgid "Camera mount setup is not supported on this firmware (MNT1_TYPE param not found). Please update to a newer autopilot firmware version."
-msgstr ""
+msgstr "このファームウェアではカメラマウントのセットアップはサポートされていません（MNT1_TYPE パラメータが見つかりません）。より新しいオートパイロットファームウェアに更新してください。"
 
 #: src/components/app/NetworkInterfacePriorityMenu.vue
 #: src/components/app/VehicleBanner.vue
@@ -605,78 +607,78 @@ msgstr ""
 #: src/components/version-chooser/DockerLogin.vue
 #: src/components/video-manager/VideoStreamCreationDialog.vue
 msgid "Cancel"
-msgstr ""
+msgstr "キャンセル"
 
 #: src/components/wizard/Wizard.vue
 msgid "Cancel wizard"
-msgstr ""
+msgstr "ウィザードをキャンセル"
 
 #: src/components/vehiclesetup/MotorDetection.vue
 msgid "Cause"
-msgstr ""
+msgstr "原因"
 
 #: src/views/Autopilot.vue
 msgid "Change board"
-msgstr ""
+msgstr "ボードを変更"
 
 #: src/components/autopilot/BoardChangeDialog.vue
 msgid "Change running board"
-msgstr ""
+msgstr "実行中のボードを変更"
 
 #: src/components/app/ThemeTrayMenu.vue
 msgid "Change theme between dark and light mode."
-msgstr ""
+msgstr "テーマをダークモードとライトモードで切り替えます。"
 
 #: src/components/system-information/Firmware.vue
 msgid "Changes applied, please do a <b>system reboot</b>."
-msgstr ""
+msgstr "変更を適用しました。<b>システムを再起動</b>してください。"
 
 #: src/components/wizard/Wizard.vue
 msgid "Check internet"
-msgstr ""
+msgstr "インターネットを確認"
 
 #: src/components/wizard/Wizard.vue
 msgid "Choose Vehicle"
-msgstr ""
+msgstr "ビークルを選択"
 
 #: src/views/SettingsView.vue
 msgid "Choose the interface language"
-msgstr ""
+msgstr "インターフェースの言語を選択します"
 
 #: src/components/kraken/BackAlleyTab.vue
 #: src/views/SettingsView.vue
 msgid "Clear"
-msgstr ""
+msgstr "クリア"
 
 #: src/components/cloud/CloudTrayMenu.vue
 #, javascript-format
 msgid "Click here if you ${ 0 }"
-msgstr ""
+msgstr "${ 0 }場合はここをクリック"
 
 #: src/views/Autopilot.vue
 msgid "Click to activate wizard"
-msgstr ""
+msgstr "クリックしてウィザードを有効化"
 
 #: src/components/app/ImagePicker.vue
 msgid "Click to upload an image"
-msgstr ""
+msgstr "クリックして画像をアップロード"
 
 #: src/components/vehiclesetup/configuration/compass/ArdupilotMavlinkCompassSetup.vue
 msgid "Click-and-drag the dots to change the priority of the compass options. Adjusted compass priorities are applied once the autopilot restarts."
-msgstr ""
+msgstr "ドットをドラッグしてコンパスの優先順位を変更します。調整した優先順位は、オートパイロットの再起動後に適用されます。"
 
 #: src/components/bridges/BridgeCreationDialog.vue
 msgid "Client Mode"
-msgstr ""
+msgstr "クライアントモード"
 
 #: src/components/bridges/BridgeCreationDialog.vue
 #, javascript-format
 msgid "Client mode will send data to the given IP address and port. This means it will send data to the topside computer at IP <B>${ 0 }</B> and port <B>${ 1 }</B>. It will receive data back from the topside computer at <b>${ 2 }</b>."
-msgstr ""
+msgstr "クライアントモードでは、指定された IP アドレスとポートにデータを送信します。つまり、IP <B>${ 0 }</B>、ポート <B>${ 1 }</B> のトップサイドコンピューターにデータを送信します。トップサイドコンピューターからのデータは <b>${ 2 }</b> で受信します。"
 
 #: src/components/speedtest/InternetSpeedTest.vue
 msgid "Client provider"
-msgstr ""
+msgstr "クライアントのプロバイダー"
 
 #: src/components/app/Alerter.vue
 #: src/components/app/SystemCheckerTrayMenu.vue
@@ -688,32 +690,32 @@ msgstr ""
 #: src/views/ExtensionManagerView.vue
 #: src/views/SettingsView.vue
 msgid "Close"
-msgstr ""
+msgstr "閉じる"
 
 #: src/components/cloud/CloudTrayMenu.vue
 msgid "Cloud"
-msgstr ""
+msgstr "クラウド"
 
 #: src/components/health/GpsTrayMenu.vue
 msgid "Combined 3D position uncertainty"
-msgstr ""
+msgstr "3D 位置の総合不確かさ"
 
 #: src/components/system-information/Processes.vue
 msgid "Command"
-msgstr ""
+msgstr "コマンド"
 
 #: src/components/vehiclesetup/Configure.vue
 #: src/components/vehiclesetup/configuration/compass/FullCompassCalibrator.vue
 msgid "Compass"
-msgstr ""
+msgstr "コンパス"
 
 #: src/components/vehiclesetup/configuration/compass/ArdupilotMavlinkCompassSetup.vue
 msgid "Compass Calibration"
-msgstr ""
+msgstr "コンパスのキャリブレーション"
 
 #: src/components/vehiclesetup/configuration/compass/CompassLearn.vue
 msgid "Compass Calibration Learning"
-msgstr ""
+msgstr "コンパスキャリブレーションの学習"
 
 #: src/components/vehiclesetup/configuration/compass/ArdupilotMavlinkCompassSetup.vue
 msgid "Compass Learn"
@@ -721,77 +723,77 @@ msgstr ""
 
 #: src/views/SettingsView.vue
 msgid "Configuration Wizard"
-msgstr ""
+msgstr "設定ウィザード"
 
 #: src/components/wizard/Wizard.vue
 msgid "Configuration was aborted, some settings have failed to apply."
-msgstr ""
+msgstr "設定が中止されました。一部の設定の適用に失敗しました。"
 
 #: src/components/wizard/Wizard.vue
 msgid "Configuration was skipped."
-msgstr ""
+msgstr "設定はスキップされました。"
 
 #: src/components/wizard/Wizard.vue
 #: src/views/VehicleSetupView.vue
 msgid "Configure"
-msgstr ""
+msgstr "設定"
 
 #: src/views/ExtensionManagerView.vue
 msgid "Configure & Install"
-msgstr ""
+msgstr "設定してインストール"
 
 #: src/views/SettingsView.vue
 msgid "Configure BlueOS system preferences and manage data"
-msgstr ""
+msgstr "BlueOS のシステム設定を構成し、データを管理します"
 
 #: src/components/kraken/modals/ExtensionCreationModal.vue
 msgid "Configure Uploaded"
-msgstr ""
+msgstr "アップロードの設定"
 
 #: src/views/ExtensionManagerView.vue
 msgid "Configure metadata"
-msgstr ""
+msgstr "メタデータを設定"
 
 #: src/components/ethernet/AddressDeletionDialog.vue
 msgid "Confirm"
-msgstr ""
+msgstr "確認"
 
 #: src/components/wifi/ConnectionDialog.vue
 msgid "Connect"
-msgstr ""
+msgstr "接続"
 
 #: src/components/wifi/WifiManager.vue
 msgid "Connect to the hotspot"
-msgstr ""
+msgstr "ホットスポットに接続"
 
 #: src/components/wifi/ConnectionDialog.vue
 msgid "Connecting to network, please wait..."
-msgstr ""
+msgstr "ネットワークに接続しています。しばらくお待ちください..."
 
 #: src/components/health/GpsTrayMenu.vue
 msgid "Connection type and status"
-msgstr ""
+msgstr "接続タイプと状態"
 
 #: src/components/wizard/Wizard.vue
 msgid "Continue"
-msgstr ""
+msgstr "続行"
 
 #: src/components/video-manager/VideoStream.vue
 msgid "Copy"
-msgstr ""
+msgstr "コピー"
 
 #: src/components/video-manager/VideoStream.vue
 msgid "Copy SDP file URL"
-msgstr ""
+msgstr "SDP ファイルの URL をコピー"
 
 #: src/components/autopilot/EndpointCard.vue
 #, javascript-format
 msgid "Copy command line string (${ 0 })"
-msgstr ""
+msgstr "コマンドライン文字列をコピー（${ 0 }）"
 
 #: src/components/health/HealthTrayMenu.vue
 msgid "Core Temperature:"
-msgstr ""
+msgstr "コア温度:"
 
 #: src/components/bridges/BridgeCreationDialog.vue
 #: src/components/ethernet/AddressCreationDialog.vue
@@ -799,209 +801,209 @@ msgstr ""
 #: src/components/nmea-injector/NMEASocketCreationDialog.vue
 #: src/components/video-manager/VideoStreamCreationDialog.vue
 msgid "Create"
-msgstr ""
+msgstr "作成"
 
 #: src/components/autopilot/EndpointCreationDialog.vue
 #: src/components/autopilot/EndpointManager.vue
 msgid "Create endpoint"
-msgstr ""
+msgstr "エンドポイントを作成"
 
 #: src/views/ExtensionManagerView.vue
 msgid "Create from scratch"
-msgstr ""
+msgstr "一から作成"
 
 #: src/components/bridges/BridgeCreationDialog.vue
 #, javascript-format
 msgid "Created: ${ 0 }"
-msgstr ""
+msgstr "作成済み: ${ 0 }"
 
 #: src/components/vehiclesetup/overview/PowerInfo.vue
 msgid "Critical Voltage Failsafe:"
-msgstr ""
+msgstr "危険電圧フェイルセーフ:"
 
 #: src/components/vehiclesetup/configuration/power/BatteryCard.vue
 msgid "Current Amps/Volt:"
-msgstr ""
+msgstr "現在のアンペア/ボルト:"
 
 #: src/components/vehiclesetup/configuration/power/BatteryCard.vue
 msgid "Current Multiplier:"
-msgstr ""
+msgstr "現在の乗数:"
 
 #: src/components/vehiclesetup/overview/PowerInfo.vue
 msgid "Current Offset:"
-msgstr ""
+msgstr "電流オフセット:"
 
 #: src/components/vehiclesetup/overview/PowerInfo.vue
 msgid "Current Pin:"
-msgstr ""
+msgstr "電流ピン:"
 
 #: src/components/version-chooser/VersionChooser.vue
 msgid "Current Version"
-msgstr ""
+msgstr "現在のバージョン"
 
 #: src/components/vehiclesetup/overview/PowerInfo.vue
 msgid "Current per Volt:"
-msgstr ""
+msgstr "ボルトあたりの電流:"
 
 #: src/components/health/HealthTrayMenu.vue
 #: src/components/system-information/Firmware.vue
 #: src/components/vehiclesetup/overview/PowerInfo.vue
 msgid "Current:"
-msgstr ""
+msgstr "電流:"
 
 #: src/components/wizard/Wizard.vue
 msgid "Customize"
-msgstr ""
+msgstr "カスタマイズ"
 
 #: src/views/SettingsView.vue
 msgid "Customize how BlueOS looks"
-msgstr ""
+msgstr "BlueOS の外観をカスタマイズします"
 
 #: src/components/ethernet/DHCPServerDialog.vue
 #, javascript-format
 msgid "DHCP Server for interface '${ 0 }'"
-msgstr ""
+msgstr "インターフェース '${ 0 }' の DHCP サーバー"
 
 #: src/components/ethernet/InterfaceCard.vue
 msgid "DHCP server"
-msgstr ""
+msgstr "DHCP サーバー"
 
 #: src/views/SettingsView.vue
 msgid "Dark Theme"
-msgstr ""
+msgstr "ダークテーマ"
 
 #: src/views/SettingsView.vue
 msgid "Data Management"
-msgstr ""
+msgstr "データ管理"
 
 #: src/components/vehiclesetup/configuration/compass/ArdupilotMavlinkCompassSetup.vue
 msgid "Declination"
-msgstr ""
+msgstr "偏角"
 
 #: src/components/version-chooser/VersionChooser.vue
 msgid "Decompressing file, this usually takes up to one minute, please stand by..."
-msgstr ""
+msgstr "ファイルを展開しています。通常は最大 1 分ほどかかります。しばらくお待ちください..."
 
 #: src/components/version-chooser/VersionCard.vue
 msgid "Delete"
-msgstr ""
+msgstr "削除"
 
 #: src/components/autopilot/EndpointCard.vue
 msgid "Delete endpoint"
-msgstr ""
+msgstr "エンドポイントを削除"
 
 #: src/components/logs/LogManager.vue
 msgid "Delete selected logs"
-msgstr ""
+msgstr "選択したログを削除"
 
 #: src/views/SettingsView.vue
 msgid "Deleting:"
-msgstr ""
+msgstr "削除中:"
 
 #: src/components/parameter-editor/ParameterLabel.vue
 #: src/components/system-information/NetworkCard.vue
 #, javascript-format
 msgid "Description: ${ 0 }"
-msgstr ""
+msgstr "説明: ${ 0 }"
 
 #: src/menus.ts
 msgid "Detailed system status information, CPU, memory, disk, and ethernet status."
-msgstr ""
+msgstr "CPU、メモリ、ディスク、イーサネットの状態など、詳細なシステム状態情報です。"
 
 #: src/components/utils/PullProgress.vue
 #: src/components/vehiclesetup/configuration/compass/ArdupilotMavlinkCompassSetup.vue
 msgid "Details"
-msgstr ""
+msgstr "詳細"
 
 #: src/components/vehiclesetup/MotorDetection.vue
 msgid "Detect Reversed Motors"
-msgstr ""
+msgstr "逆転モーターを検出"
 
 #: src/views/ExtensionManagerView.vue
 msgid "Detected metadata"
-msgstr ""
+msgstr "検出されたメタデータ"
 
 #: src/components/wizard/DefaultParamLoader.vue
 #: src/components/wizard/ScriptLoader.vue
 msgid "Determining current board..."
-msgstr ""
+msgstr "現在のボードを判定しています..."
 
 #: src/components/autopilot/FirmwareManager.vue
 msgid "Dev - Development branch, with all the newest features. Intentionally unstable (changes quickly), and possibly untested/dangerous."
-msgstr ""
+msgstr "Dev - 最新の機能をすべて含む開発ブランチです。意図的に不安定（頻繁に変更）であり、未テストまたは危険な場合があります。"
 
 #: src/components/kraken/modals/ExtensionDetailsModal.vue
 #, javascript-format
 msgid "Developed by <strong>${ 0 }</strong>"
-msgstr ""
+msgstr "開発者: <strong>${ 0 }</strong>"
 
 #: src/views/SettingsView.vue
 msgid "Developer Mode"
-msgstr ""
+msgstr "開発者モード"
 
 #: src/components/autopilot/AutopilotSerialConfiguration.vue
 #: src/components/ping/ping1d.vue
 #: src/components/ping/ping360.vue
 msgid "Device"
-msgstr ""
+msgstr "デバイス"
 
 #: src/components/video-manager/VideoControlsDialog.vue
 #: src/components/video-manager/VideoDevice.vue
 msgid "Device Controls"
-msgstr ""
+msgstr "デバイスコントロール"
 
 #: src/components/bridges/BridgeCreationDialog.vue
 #, javascript-format
 msgid "Device: ${ 0 }"
-msgstr ""
+msgstr "デバイス: ${ 0 }"
 
 #: src/components/ethernet/InterfaceCard.vue
 #: src/components/kraken/cards/InstalledExtensionCard.vue
 msgid "Disable"
-msgstr ""
+msgstr "無効化"
 
 #: src/components/app/PirateModeMenu.vue
 msgid "Disable Pirate Mode"
-msgstr ""
+msgstr "Pirate モードを無効化"
 
 #: src/components/wizard/Wizard.vue
 msgid "Disable Wi-Fi hotspot"
-msgstr ""
+msgstr "Wi-Fi ホットスポットを無効化"
 
 #: src/App.vue
 msgid "Disable dev mode"
-msgstr ""
+msgstr "開発者モードを無効化"
 
 #: src/components/wizard/Wizard.vue
 msgid "Disable smart Wi-Fi hotspot"
-msgstr ""
+msgstr "スマート Wi-Fi ホットスポットを無効化"
 
 #: src/components/autopilot/EndpointManager.vue
 #: src/components/kraken/cards/InstalledExtensionCard.vue
 #: src/components/system-information/NetworkCard.vue
 #: src/components/vehiclesetup/overview/LeakInfo.vue
 msgid "Disabled"
-msgstr ""
+msgstr "無効"
 
 #: src/components/wifi/DisconnectionDialog.vue
 msgid "Disconnect"
-msgstr ""
+msgstr "切断"
 
 #: src/components/app/ReportMenu.vue
 msgid "Discuss ideas with the community"
-msgstr ""
+msgstr "コミュニティでアイデアを議論する"
 
 #: src/components/kraken/cards/InstalledExtensionCard.vue
 msgid "Disk usage"
-msgstr ""
+msgstr "ディスク使用量"
 
 #: src/components/vehiclesetup/configuration/compass/FullCompassCalibrator.vue
 msgid "Dismiss"
-msgstr ""
+msgstr "閉じる"
 
 #: src/components/app/NetworkInterfaceMenu.vue
 msgid "Dns Configuration"
-msgstr ""
+msgstr "DNS 設定"
 
 #: src/views/ExtensionManagerView.vue
 msgid "Docker"
@@ -1009,193 +1011,193 @@ msgstr ""
 
 #: src/components/version-chooser/VersionChooser.vue
 msgid "Docker Login"
-msgstr ""
+msgstr "Docker ログイン"
 
 #: src/components/version-chooser/VersionCard.vue
 msgid "Documentation for this version"
-msgstr ""
+msgstr "このバージョンのドキュメント"
 
 #: src/components/wizard/Wizard.vue
 msgid "Done"
-msgstr ""
+msgstr "完了"
 
 #: src/views/SettingsView.vue
 msgid "Download"
-msgstr ""
+msgstr "ダウンロード"
 
 #: src/views/SettingsView.vue
 msgid "Download MAVLink logs"
-msgstr ""
+msgstr "MAVLink ログをダウンロード"
 
 #: src/components/video-manager/VideoStream.vue
 msgid "Download SDP to file"
-msgstr ""
+msgstr "SDP をファイルにダウンロード"
 
 #: src/components/version-chooser/VersionCard.vue
 msgid "Download and Apply"
-msgstr ""
+msgstr "ダウンロードして適用"
 
 #: src/components/logs/LogManager.vue
 msgid "Download log"
-msgstr ""
+msgstr "ログをダウンロード"
 
 #: src/views/SettingsView.vue
 msgid "Download logs for all BlueOS services"
-msgstr ""
+msgstr "すべての BlueOS サービスのログをダウンロードします"
 
 #: src/components/logs/LogManager.vue
 msgid "Download selected logs"
-msgstr ""
+msgstr "選択したログをダウンロード"
 
 #: src/components/speedtest/InternetSpeedTest.vue
 msgid "Download speed from internet"
-msgstr ""
+msgstr "インターネットからのダウンロード速度"
 
 #: src/components/speedtest/NetworkSpeedTest.vue
 msgid "Download speed from vehicle"
-msgstr ""
+msgstr "ビークルからのダウンロード速度"
 
 #: src/components/utils/PullProgress.vue
 #, javascript-format
 msgid "Downloading: ${ 0 }%"
-msgstr ""
+msgstr "ダウンロード中: ${ 0 }%"
 
 #: src/components/app/ImagePicker.vue
 msgid "Drag and drop an image file here to upload"
-msgstr ""
+msgstr "アップロードする画像ファイルをここにドラッグ＆ドロップしてください"
 
 #: src/components/kraken/modals/ExtensionSettingsModal.vue
 msgid "Drag manifest sources to set priority."
-msgstr ""
+msgstr "マニフェストのソースをドラッグして優先順位を設定します。"
 
 #: src/components/app/NetworkInterfacePriorityMenu.vue
 msgid "Drag the network interfaces to move the highest priority to the top."
-msgstr ""
+msgstr "ネットワークインターフェースをドラッグし、最も優先度の高いものを一番上に移動してください。"
 
 #: src/components/autopilot/AutopilotSerialConfiguration.vue
 msgid "Driver"
-msgstr ""
+msgstr "ドライバー"
 
 #: src/views/SettingsView.vue
 msgid "Easier on the eyes in low-light environments"
-msgstr ""
+msgstr "暗い環境で目に優しい表示です"
 
 #: src/components/kraken/cards/InstalledExtensionCard.vue
 #: src/components/kraken/modals/ExtensionCreationModal.vue
 msgid "Edit"
-msgstr ""
+msgstr "編集"
 
 #: src/components/app/VehicleBanner.vue
 msgid "Edit Vehicle Details"
-msgstr ""
+msgstr "ビークルの詳細を編集"
 
 #: src/components/autopilot/EndpointCard.vue
 msgid "Edit endpoint"
-msgstr ""
+msgstr "エンドポイントを編集"
 
 #: src/components/video-manager/VideoStream.vue
 msgid "Edit stream"
-msgstr ""
+msgstr "ストリームを編集"
 
 #: src/menus.ts
 msgid "Editor for Bag Of Holding service."
-msgstr ""
+msgstr "Bag Of Holding サービス用のエディターです。"
 
 #: src/components/ethernet/DHCPServerDialog.vue
 #: src/components/ethernet/InterfaceCard.vue
 msgid "Enable"
-msgstr ""
+msgstr "有効化"
 
 #: src/components/app/PirateModeMenu.vue
 msgid "Enable Pirate Mode"
-msgstr ""
+msgstr "Pirate モードを有効化"
 
 #: src/views/SettingsView.vue
 msgid "Enable additional debugging and development tools"
-msgstr ""
+msgstr "追加のデバッグおよび開発ツールを有効にします"
 
 #: src/components/kraken/cards/InstalledExtensionCard.vue
 msgid "Enable and start"
-msgstr ""
+msgstr "有効化して開始"
 
 #: src/components/system-information/NetworkCard.vue
 msgid "Enabled"
-msgstr ""
+msgstr "有効"
 
 #: src/views/SettingsView.vue
 msgid "Enabled - Advanced features are visible"
-msgstr ""
+msgstr "有効 - 高度な機能が表示されています"
 
 #: src/views/SettingsView.vue
 msgid "Enabled - Development tools are active"
-msgstr ""
+msgstr "有効 - 開発ツールがアクティブです"
 
 #: src/components/ethernet/DHCPServerDialog.vue
 msgid "Enabling DHCP server, please wait..."
-msgstr ""
+msgstr "DHCP サーバーを有効化しています。しばらくお待ちください..."
 
 #: src/components/video-manager/VideoStream.vue
 msgid "Encoding:"
-msgstr ""
+msgstr "エンコーディング:"
 
 #: src/components/autopilot/EndpointCreationDialog.vue
 msgid "Endpoint"
-msgstr ""
+msgstr "エンドポイント"
 
 #: src/components/video-manager/VideoStream.vue
 msgid "Endpoints:"
-msgstr ""
+msgstr "エンドポイント:"
 
 #: src/components/vehiclesetup/configuration/compass/AutoCoordinateDetector.vue
 msgid "Enter custom coordinate"
-msgstr ""
+msgstr "カスタム座標を入力"
 
 #: src/components/system-information/Processes.vue
 msgid "Environment"
-msgstr ""
+msgstr "環境変数"
 
 #: src/components/wizard/ActionStepper.vue
 #, javascript-format
 msgid "Error: ${ 0 }"
-msgstr ""
+msgstr "エラー: ${ 0 }"
 
 #: src/components/video-manager/VideoStream.vue
 msgid "Errors:"
-msgstr ""
+msgstr "エラー:"
 
 #: src/components/notifications/EventLogModal.vue
 #: src/components/notifications/NotificationManager.vue
 msgid "Event log"
-msgstr ""
+msgstr "イベントログ"
 
 #: src/components/system-information/Processes.vue
 msgid "Executable path"
-msgstr ""
+msgstr "実行ファイルのパス"
 
 #: src/views/ExtensionManagerView.vue
 msgid "Extension installed successfully."
-msgstr ""
+msgstr "拡張機能を正常にインストールしました。"
 
 #: src/App.vue
 msgid "Extensions"
-msgstr ""
+msgstr "拡張機能"
 
 #: src/components/kraken/modals/ExtensionSettingsModal.vue
 msgid "Extensions Manifest"
-msgstr ""
+msgstr "拡張機能マニフェスト"
 
 #: src/components/vehiclesetup/configuration/compass/ArdupilotMavlinkCompassSetup.vue
 msgid "External/Internal:"
-msgstr ""
+msgstr "外部/内部:"
 
 #: src/components/video-manager/VideoStreamCreationDialog.vue
 msgid "Extra configuration"
-msgstr ""
+msgstr "追加設定"
 
 #: src/components/utils/PullProgress.vue
 #, javascript-format
 msgid "Extracting: ${ 0 }%"
-msgstr ""
+msgstr "展開中: ${ 0 }%"
 
 #: src/components/ping/ping1d.vue
 #: src/components/ping/ping360.vue
@@ -1204,147 +1206,147 @@ msgstr ""
 
 #: src/components/kraken/modals/ExtensionSettingsModal.vue
 msgid "Factory sources can only be enabled/disabled."
-msgstr ""
+msgstr "初期設定のソースは有効化/無効化のみ可能です。"
 
 #: src/components/kraken/BackAlleyTab.vue
 #: src/components/kraken/BazaarTab.vue
 msgid "Failed to fetch extension manifest."
-msgstr ""
+msgstr "拡張機能マニフェストの取得に失敗しました。"
 
 #: src/views/ExtensionManagerView.vue
 msgid "Failed to fetch installed extensions. Make sure the vehicle has internet access and try again."
-msgstr ""
+msgstr "インストール済みの拡張機能の取得に失敗しました。ビークルがインターネットにアクセスできることを確認して、もう一度お試しください。"
 
 #: src/components/wizard/DefaultParamLoader.vue
 msgid "Failed to fetch parameters, trying again..."
-msgstr ""
+msgstr "パラメータの取得に失敗しました。再試行しています..."
 
 #: src/components/wizard/ScriptLoader.vue
 msgid "Failed to fetch scripts, trying again..."
-msgstr ""
+msgstr "スクリプトの取得に失敗しました。再試行しています..."
 
 #: src/components/wizard/DefaultParamLoader.vue
 msgid "Failed to load parameters."
-msgstr ""
+msgstr "パラメータの読み込みに失敗しました。"
 
 #: src/components/wizard/ScriptLoader.vue
 msgid "Failed to load scripts."
-msgstr ""
+msgstr "スクリプトの読み込みに失敗しました。"
 
 #: src/components/vehiclesetup/overview/LeakInfo.vue
 msgid "Failsafe:"
-msgstr ""
+msgstr "フェイルセーフ:"
 
 #: src/components/vehiclesetup/Configure.vue
 msgid "Failsafes"
-msgstr ""
+msgstr "フェイルセーフ"
 
 #: src/components/video-manager/VideoThumbnail.vue
 msgid "Fetch a single thumbnail"
-msgstr ""
+msgstr "サムネイルを 1 枚取得"
 
 #: src/components/logs/LogManager.vue
 msgid "Fetch available logs"
-msgstr ""
+msgstr "利用可能なログを取得"
 
 #: src/components/app/DnsConfigurationMenu.vue
 msgid "Fetching Host DNS nameservers..."
-msgstr ""
+msgstr "ホストの DNS ネームサーバーを取得しています..."
 
 #: src/menus.ts
 msgid "File Browser"
-msgstr ""
+msgstr "ファイルブラウザー"
 
 #: src/types/frontend_services.ts
 msgid "File browsing service."
-msgstr ""
+msgstr "ファイル閲覧サービスです。"
 
 #: src/components/kraken/BackAlleyTab.vue
 msgid "Filters"
-msgstr ""
+msgstr "フィルター"
 
 #: src/views/ExtensionManagerView.vue
 msgid "Finalize extension installation"
-msgstr ""
+msgstr "拡張機能のインストールを完了"
 
 #: src/components/vehiclesetup/overview/VehicleInfo.vue
 #: src/views/SystemInformationView.vue
 msgid "Firmware"
-msgstr ""
+msgstr "ファームウェア"
 
 #: src/views/Autopilot.vue
 msgid "Firmware update"
-msgstr ""
+msgstr "ファームウェアの更新"
 
 #: src/components/vehiclesetup/configuration/compass/FullCompassCalibrator.vue
 msgid "Fitness (mGauss)"
-msgstr ""
+msgstr "適合度 (mGauss)"
 
 #: src/components/vehiclesetup/overview/VehicleInfo.vue
 msgid "Flight Controller"
-msgstr ""
+msgstr "フライトコントローラー"
 
 #: src/components/wifi/ConnectionDialog.vue
 msgid "Force new password"
-msgstr ""
+msgstr "新しいパスワードを強制"
 
 #: src/components/wifi/ConnectionDialog.vue
 msgid "Forget"
-msgstr ""
+msgstr "削除"
 
 #: src/components/video-manager/VideoStream.vue
 msgid "Format:"
-msgstr ""
+msgstr "フォーマット:"
 
 #: src/components/vehiclesetup/configuration/ArdupilotVehicleBodySetup.vue
 #: src/components/vehiclesetup/overview/VehicleInfo.vue
 msgid "Frame"
-msgstr ""
+msgstr "フレーム"
 
 #: src/views/SettingsView.vue
 msgid "Free up space by removing MAVLink logs"
-msgstr ""
+msgstr "MAVLink ログを削除して空き容量を確保します"
 
 #: src/views/SettingsView.vue
 msgid "Free up space by removing old logs"
-msgstr ""
+msgstr "古いログを削除して空き容量を確保します"
 
 #: src/components/health/HealthTrayMenu.vue
 msgid "Free:"
-msgstr ""
+msgstr "空き:"
 
 #: src/views/SettingsView.vue
 #, javascript-format
 msgid "Freed: ${ 0 }"
-msgstr ""
+msgstr "解放済み: ${ 0 }"
 
 #: src/components/system-information/Firmware.vue
 msgid "From:"
-msgstr ""
+msgstr "日付:"
 
 #: src/types/frontend_services.ts
 msgid "Frontend status and logic."
-msgstr ""
+msgstr "フロントエンドの状態とロジックです。"
 
 #: src/components/vehiclesetup/configuration/compass/ArdupilotMavlinkCompassSetup.vue
 msgid "Full (Onboard) Calibration"
-msgstr ""
+msgstr "完全（オンボード）キャリブレーション"
 
 #: src/components/vehiclesetup/configuration/accelerometer/FullAccelerometerCalibration.vue
 msgid "Full accelerometer calibration requires you to place the vehicle onto all of its sides and keep it still for a few seconds. This will allow the autopilot to calibrate the accelerometer."
-msgstr ""
+msgstr "完全な加速度センサーのキャリブレーションでは、ビークルの各面を下にして置き、それぞれ数秒間静止させる必要があります。これによりオートパイロットが加速度センサーをキャリブレーションできます。"
 
 #: src/components/vehiclesetup/configuration/compass/ArdupilotMavlinkCompassSetup.vue
 msgid "Fully calibrated, including corrections from the internal World Magnetic Model (WMM) database."
-msgstr ""
+msgstr "内蔵の World Magnetic Model（WMM）データベースによる補正を含め、完全にキャリブレーションされています。"
 
 #: src/components/app/PowerMenu.vue
 msgid "Fully restarts the onboard computer"
-msgstr ""
+msgstr "オンボードコンピューターを完全に再起動します"
 
 #: src/components/kraken/BackAlleyTab.vue
 msgid "GENERIC"
-msgstr ""
+msgstr "汎用"
 
 #: src/components/nmea-injector/NMEAInjector.vue
 msgid "GPGNSS"
@@ -1352,75 +1354,75 @@ msgstr ""
 
 #: src/components/parameter-editor/ServoFunctionGpioEditor.vue
 msgid "GPIO Function:"
-msgstr ""
+msgstr "GPIO 機能:"
 
 #: src/components/vehiclesetup/configuration/compass/AutoCoordinateDetector.vue
 msgid "GeoIP coordinates are estimated based on your IP address."
-msgstr ""
+msgstr "GeoIP 座標は IP アドレスに基づいて推定されます。"
 
 #: src/components/vehiclesetup/configuration/compass/AutoCoordinateDetector.vue
 msgid "GeoIP coordinates:"
-msgstr ""
+msgstr "GeoIP 座標:"
 
 #: src/components/version-chooser/VersionChooser.vue
 msgid "Github's CI"
-msgstr ""
+msgstr "GitHub の CI"
 
 #: src/components/cloud/CloudTrayMenu.vue
 msgid "Go to BlueOS Cloud"
-msgstr ""
+msgstr "BlueOS Cloud へ移動"
 
 #: src/components/vehiclesetup/overview/gripper.vue
 msgid "Gripper"
-msgstr ""
+msgstr "グリッパー"
 
 #: src/components/notifications/ConfigMenu.vue
 msgid "Group by service"
-msgstr ""
+msgstr "サービスごとにグループ化"
 
 #: src/components/vehiclesetup/Configure.vue
 msgid "Gyroscope"
-msgstr ""
+msgstr "ジャイロスコープ"
 
 #: src/types/frontend_services.ts
 msgid "Helper program to provide easy access to commands via REST API."
-msgstr ""
+msgstr "REST API を介してコマンドに簡単にアクセスするためのヘルパープログラムです。"
 
 #: src/components/vehiclesetup/configuration/power/BatteryCard.vue
 msgid "Hide"
-msgstr ""
+msgstr "非表示"
 
 #: src/components/version-chooser/VersionCard.vue
 msgid "Hide release notes"
-msgstr ""
+msgstr "リリースノートを非表示"
 
 #: src/components/vehiclesetup/configuration/compass/LevelHorizonCalibration.vue
 msgid "Horizon calibration trims the pitch and roll of the vehicle's inertial sensors to adjust for small deviations from level."
-msgstr ""
+msgstr "水平キャリブレーションは、ビークルの慣性センサーのピッチとロールをトリム調整し、水平からのわずかなずれを補正します。"
 
 #: src/components/health/GpsTrayMenu.vue
 msgid "Horizontal Accuracy"
-msgstr ""
+msgstr "水平精度"
 
 #: src/components/health/GpsTrayMenu.vue
 msgid "Horizontal position uncertainty"
-msgstr ""
+msgstr "水平位置の不確かさ"
 
 #: src/components/app/DnsConfigurationMenu.vue
 msgid "Host DNS nameservers"
-msgstr ""
+msgstr "ホストの DNS ネームサーバー"
 
 #: src/components/system-information/AboutThisSystem.vue
 msgid "Hostname"
-msgstr ""
+msgstr "ホスト名"
 
 #: src/components/wifi/WifiManager.vue
 msgid "Hotspot QR code"
-msgstr ""
+msgstr "ホットスポットの QR コード"
 
 #: src/components/common/NotSafeOverlay.vue
 msgid "I know what I'm doing, let me through"
-msgstr ""
+msgstr "理解した上で続行します"
 
 #: src/components/ping/ping1d.vue
 #: src/components/ping/ping360.vue
@@ -1439,281 +1441,281 @@ msgstr ""
 
 #: src/views/ExtensionManagerView.vue
 msgid "Identifier"
-msgstr ""
+msgstr "識別子"
 
 #: src/components/vehiclesetup/MotorDetection.vue
 msgid "If necessary it is possible to manually test and set the motor spin directions instead."
-msgstr ""
+msgstr "必要に応じて、代わりにモーターの回転方向を手動でテストして設定することもできます。"
 
 #: src/components/kraken/BazaarTab.vue
 msgid "If the cloud icon is not visible, make sure Major Tom is enabled in installed extensions."
-msgstr ""
+msgstr "クラウドアイコンが表示されない場合は、インストール済みの拡張機能で Major Tom が有効になっていることを確認してください。"
 
 #: src/components/vehiclesetup/configuration/power/BatteryCard.vue
 msgid "If the reported voltage differs from a voltmeter reading, adjust the multiplier."
-msgstr ""
+msgstr "報告された電圧が電圧計の読み取り値と異なる場合は、乗数を調整してください。"
 
 #: src/components/vehiclesetup/configuration/compass/ArdupilotMavlinkCompassSetup.vue
 msgid "If you enable this option, the autopilot will automatically set the declination based on your current location. A GPS or other absolute positioning system is required."
-msgstr ""
+msgstr "このオプションを有効にすると、オートパイロットは現在地に基づいて偏角を自動的に設定します。GPS またはその他の絶対測位システムが必要です。"
 
 #: src/components/vehiclesetup/viewers/GenericViewer.vue
 msgid "If you want to add a custom 3D model please follow the instructions in"
-msgstr ""
+msgstr "カスタム 3D モデルを追加したい場合は、次の手順に従ってください:"
 
 #: src/components/ping/PingIgnoredPorts.vue
 msgid "Ignored serial ports"
-msgstr ""
+msgstr "無視するシリアルポート"
 
 #: src/components/ping/PingIgnoredPorts.vue
 msgid "Ignored serial ports saved."
-msgstr ""
+msgstr "無視するシリアルポートを保存しました。"
 
 #: src/views/ExtensionManagerView.vue
 msgid "Import extension image and inspect metadata"
-msgstr ""
+msgstr "拡張機能イメージをインポートしてメタデータを確認"
 
 #: src/components/bridges/BridgeCreationDialog.vue
 #, javascript-format
 msgid "In use by ${ 0 }"
-msgstr ""
+msgstr "${ 0 } が使用中"
 
 #: src/components/parameter-editor/ServoFunctionActuatorEditor.vue
 msgid "Increment"
-msgstr ""
+msgstr "増分"
 
 #: src/components/vehiclesetup/overview/OnboardSensors.vue
 msgid "Inertial Measurement Unit"
-msgstr ""
+msgstr "慣性計測装置"
 
 #: src/components/version-chooser/VersionCard.vue
 msgid "Info"
-msgstr ""
+msgstr "情報"
 
 #: src/components/bridges/BridgeCard.vue
 #: src/components/bridges/BridgeCreationDialog.vue
 #, javascript-format
 msgid "Info: ${ 0 } / ${ 1 }"
-msgstr ""
+msgstr "情報: ${ 0 } / ${ 1 }"
 
 #: src/components/kraken/modals/ExtensionCreationModal.vue
 #: src/components/kraken/modals/ExtensionDetailsModal.vue
 msgid "Install"
-msgstr ""
+msgstr "インストール"
 
 #: src/components/cloud/CloudTrayMenu.vue
 msgid "Install Major Tom"
-msgstr ""
+msgstr "Major Tom をインストール"
 
 #: src/views/ExtensionManagerView.vue
 msgid "Install extension"
-msgstr ""
+msgstr "拡張機能をインストール"
 
 #: src/views/ExtensionManagerView.vue
 msgid "Install extension from file"
-msgstr ""
+msgstr "ファイルから拡張機能をインストール"
 
 #: src/components/autopilot/FirmwareManager.vue
 msgid "Install firmware"
-msgstr ""
+msgstr "ファームウェアをインストール"
 
 #: src/alerts/rules/autopilot.ts
 msgid "Install firmware before starting the autopilot."
-msgstr ""
+msgstr "オートパイロットを起動する前にファームウェアをインストールしてください。"
 
 #: src/views/ExtensionManagerView.vue
 msgid "Install from file"
-msgstr ""
+msgstr "ファイルからインストール"
 
 #: src/components/wizard/Wizard.vue
 msgid "Install scripts"
-msgstr ""
+msgstr "スクリプトをインストール"
 
 #: src/components/wizard/Wizard.vue
 msgid "Install stable sub firmware"
-msgstr ""
+msgstr "安定版 Sub ファームウェアをインストール"
 
 #: src/views/ExtensionManagerView.vue
 msgid "Installed"
-msgstr ""
+msgstr "インストール済み"
 
 #: src/components/autopilot/FirmwareManager.vue
 msgid "Installing firmware. Please wait."
-msgstr ""
+msgstr "ファームウェアをインストールしています。しばらくお待ちください。"
 
 #: src/components/speedtest/InternetSpeedTest.vue
 msgid "Internet Speed and Latency Test"
-msgstr ""
+msgstr "インターネットの速度と遅延のテスト"
 
 #: src/views/NetworkTestView.vue
 msgid "Internet speed test"
-msgstr ""
+msgstr "インターネット速度テスト"
 
 #: src/components/video-manager/VideoDiagnosticHelper.vue
 #, javascript-format
 msgid "It looks like no available video streams are configured to reach your device's detected IP address (${ 0 })."
-msgstr ""
+msgstr "検出されたデバイスの IP アドレス（${ 0 }）に届くように設定されたビデオストリームがないようです。"
 
 #: src/components/beacon/BeaconTrayMenu.vue
 msgid "It looks like you are reaching BlueOS via its wi-fi network. This can result in degraded performance."
-msgstr ""
+msgstr "BlueOS の Wi-Fi ネットワーク経由で接続しているようです。パフォーマンスが低下する可能性があります。"
 
 #: src/views/SystemInformationView.vue
 msgid "Journal"
-msgstr ""
+msgstr "ジャーナル"
 
 #: src/components/parameter-editor/ServoFunctionLightsEditor.vue
 msgid "Joystick Steps"
-msgstr ""
+msgstr "ジョイスティックのステップ数"
 
 #: src/components/parameter-editor/ServoFunctionActuatorEditor.vue
 msgid "Joystick functions not configured for this actuator."
-msgstr ""
+msgstr "このアクチュエーターにはジョイスティック機能が設定されていません。"
 
 #: src/components/vehiclesetup/configuration/lights.vue
 msgid "Joystick steps"
-msgstr ""
+msgstr "ジョイスティックのステップ数"
 
 #: src/components/system-information/AboutThisSystem.vue
 #: src/views/SystemInformationView.vue
 msgid "Kernel"
-msgstr ""
+msgstr "カーネル"
 
 #: src/views/SettingsView.vue
 msgid "Language"
-msgstr ""
+msgstr "言語"
 
 #: src/components/vehiclesetup/configuration/compass/ArdupilotMavlinkCompassSetup.vue
 msgid "Large Vehicle Calibration"
-msgstr ""
+msgstr "大型ビークルのキャリブレーション"
 
 #: src/components/vehiclesetup/configuration/compass/LargeVehicleCompassCalibrator.vue
 msgid "Large Vehicle Compass Calibration"
-msgstr ""
+msgstr "大型ビークルのコンパスキャリブレーション"
 
 #: src/components/speedtest/InternetSpeedTest.vue
 #: src/components/speedtest/NetworkSpeedTest.vue
 msgid "Latency"
-msgstr ""
+msgstr "遅延"
 
 #: src/components/system-information/Firmware.vue
 msgid "Latest:"
-msgstr ""
+msgstr "最新:"
 
 #: src/components/vehiclesetup/overview/LeakInfo.vue
 msgid "Leak"
-msgstr ""
+msgstr "浸水"
 
 #: src/components/parameter-editor/LeakSetup.vue
 #, javascript-format
 msgid "Leak ${ 0 }"
-msgstr ""
+msgstr "浸水 ${ 0 }"
 
 #: src/components/vehiclesetup/overview/LeakInfo.vue
 #, javascript-format
 msgid "Leak sensor ${ 0 }:"
-msgstr ""
+msgstr "浸水センサー ${ 0 }:"
 
 #: src/components/cloud/CloudTrayMenu.vue
 msgid "Lets connect your vehicle!"
-msgstr ""
+msgstr "ビークルを接続しましょう！"
 
 #: src/components/vehiclesetup/configuration/compass/LevelHorizonCalibration.vue
 msgid "Level Horizon"
-msgstr ""
+msgstr "水平キャリブレーション"
 
 #: src/views/SettingsView.vue
 msgid "Light Theme"
-msgstr ""
+msgstr "ライトテーマ"
 
 #: src/components/vehiclesetup/Configure.vue
 #: src/components/vehiclesetup/overview/LightsInfo.vue
 msgid "Lights"
-msgstr ""
+msgstr "ライト"
 
 #: src/components/vehiclesetup/configuration/lights.vue
 msgid "Lights 1"
-msgstr ""
+msgstr "ライト 1"
 
 #: src/components/vehiclesetup/configuration/lights.vue
 msgid "Lights 2"
-msgstr ""
+msgstr "ライト 2"
 
 #: src/menus.ts
 msgid "List all available services found in BlueOS serving http interfaces, and their respective API documentations."
-msgstr ""
+msgstr "BlueOS 内で HTTP インターフェースを提供している利用可能なすべてのサービスと、それぞれの API ドキュメントを一覧表示します。"
 
 #: src/components/parameter-editor/ParameterEditor.vue
 msgid "Load"
-msgstr ""
+msgstr "読み込み"
 
 #: src/views/ExtensionManagerView.vue
 msgid "Load Docker image"
-msgstr ""
+msgstr "Docker イメージを読み込む"
 
 #: src/components/vehiclesetup/overview/ParamSets.vue
 msgid "Load Recommended Parameter sets"
-msgstr ""
+msgstr "推奨パラメータセットを読み込む"
 
 #: src/components/parameter-editor/ParameterEditor.vue
 msgid "Load parameter file"
-msgstr ""
+msgstr "パラメータファイルを読み込む"
 
 #: src/components/parameter-editor/ParameterEditor.vue
 msgid "Load parameters from file"
-msgstr ""
+msgstr "ファイルからパラメータを読み込む"
 
 #: src/components/parameter-editor/ParameterLoader.vue
 msgid "Loading Parameters"
-msgstr ""
+msgstr "パラメータを読み込んでいます"
 
 #: src/components/wizard/DefaultParamLoader.vue
 msgid "Loading parameters..."
-msgstr ""
+msgstr "パラメータを読み込んでいます..."
 
 #: src/components/wizard/ScriptLoader.vue
 msgid "Loading scripts..."
-msgstr ""
+msgstr "スクリプトを読み込んでいます..."
 
 #: src/components/speedtest/NetworkSpeedTest.vue
 msgid "Local Network Speed and Latency Test"
-msgstr ""
+msgstr "ローカルネットワークの速度と遅延のテスト"
 
 #: src/components/version-chooser/VersionChooser.vue
 msgid "Local Versions"
-msgstr ""
+msgstr "ローカルバージョン"
 
 #: src/views/NetworkTestView.vue
 msgid "Local network test"
-msgstr ""
+msgstr "ローカルネットワークテスト"
 
 #: src/menus.ts
 msgid "Log Browser"
-msgstr ""
+msgstr "ログブラウザー"
 
 #: src/components/version-chooser/DockerLogin.vue
 msgid "Log in using your Docker Hub credentials to access private repositories and benefit from an increased rate limit."
-msgstr ""
+msgstr "Docker Hub の認証情報でログインすると、プライベートリポジトリにアクセスでき、レート制限が緩和されます。"
 
 #: src/components/vehiclesetup/configuration/compass/ArdupilotMavlinkCompassSetup.vue
 msgid "Log-based Calibration (Coming soon)"
-msgstr ""
+msgstr "ログベースのキャリブレーション（近日公開）"
 
 #: src/components/vehiclesetup/overview/LeakInfo.vue
 msgid "Logic:"
-msgstr ""
+msgstr "ロジック:"
 
 #: src/components/version-chooser/DockerLogin.vue
 msgid "Login"
-msgstr ""
+msgstr "ログイン"
 
 #: src/components/vehiclesetup/overview/PowerInfo.vue
 msgid "Low Voltage Failsafe:"
-msgstr ""
+msgstr "低電圧フェイルセーフ:"
 
 #: src/components/vehiclesetup/overview/PowerInfo.vue
 msgid "Low Voltage Level:"
-msgstr ""
+msgstr "低電圧レベル:"
 
 #: src/components/system-information/NetworkCard.vue
 msgid "MAC:"
@@ -1725,76 +1727,76 @@ msgstr ""
 
 #: src/components/ping/ping1d.vue
 msgid "MAVLink Distances"
-msgstr ""
+msgstr "MAVLink 距離"
 
 #: src/menus.ts
 msgid "MAVLink Endpoints"
-msgstr ""
+msgstr "MAVLink エンドポイント"
 
 #: src/menus.ts
 msgid "MAVLink Inspector"
-msgstr ""
+msgstr "MAVLink インスペクター"
 
 #: src/views/SettingsView.vue
 msgid "MAVLink Logs"
-msgstr ""
+msgstr "MAVLink ログ"
 
 #: src/components/autopilot/EndpointManager.vue
 msgid "MAVP2P has been presenting issues and is not currently recommended."
-msgstr ""
+msgstr "MAVP2P には問題が発生しているため、現在は推奨されていません。"
 
 #: src/components/kraken/BazaarTab.vue
 msgid "Major Tom is not configured."
-msgstr ""
+msgstr "Major Tom が設定されていません。"
 
 #: src/components/cloud/CloudTrayMenu.vue
 msgid "Major Tom is not installed"
-msgstr ""
+msgstr "Major Tom がインストールされていません"
 
 #: src/components/vehiclesetup/configuration/compass/CompassLearn.vue
 msgid "Make sure you have a valid region/position specified, then click start and drive the vehicle around in manual mode until you see the message <b>\"CompassLearn: finished\"</b>."
-msgstr ""
+msgstr "有効な地域/位置情報が指定されていることを確認してから開始をクリックし、<b>\"CompassLearn: finished\"</b> というメッセージが表示されるまでマニュアルモードでビークルを走行させてください。"
 
 #: src/App.vue
 msgid "Manage BlueOS extensions"
-msgstr ""
+msgstr "BlueOS の拡張機能を管理"
 
 #: src/menus.ts
 msgid "Manage BlueOS versions and update to the latest available."
-msgstr ""
+msgstr "BlueOS のバージョンを管理し、利用可能な最新版に更新します。"
 
 #: src/menus.ts
 msgid "Manage MAVLink endpoints for internal/external systems. Use this if you need to connect additional MAVLink systems to your vehicle."
-msgstr ""
+msgstr "内部/外部システム用の MAVLink エンドポイントを管理します。ビークルに追加の MAVLink システムを接続する必要がある場合に使用します。"
 
 #: src/menus.ts
 msgid "Manage detected Ping family sonar devices, connected to either your Onboard Computer or its local network."
-msgstr ""
+msgstr "オンボードコンピューターまたはそのローカルネットワークに接続された、検出済みの Ping ファミリーソナーデバイスを管理します。"
 
 #: src/views/SettingsView.vue
 msgid "Manage logs and system data"
-msgstr ""
+msgstr "ログとシステムデータを管理します"
 
 #: src/types/frontend_services.ts
 msgid "Manage versions of BlueOS and bootstrap"
-msgstr ""
+msgstr "BlueOS とブートストラップのバージョンを管理します"
 
 #: src/menus.ts
 msgid "Manage your video devices and video streams."
-msgstr ""
+msgstr "ビデオデバイスとビデオストリームを管理します。"
 
 #: src/components/version-chooser/VersionChooser.vue
 msgid "Manual upload"
-msgstr ""
+msgstr "手動アップロード"
 
 #: src/types/frontend_services.ts
 msgid "MavLink communication layer over REST API."
-msgstr ""
+msgstr "REST API 上の MAVLink 通信レイヤーです。"
 
 #: src/components/nmea-injector/NMEASocketCard.vue
 #, javascript-format
 msgid "Mavlink Component #${ 0 }"
-msgstr ""
+msgstr "MAVLink コンポーネント #${ 0 }"
 
 #: src/components/autopilot/EndpointManager.vue
 msgid "Mavlink Router"
@@ -1802,67 +1804,67 @@ msgstr ""
 
 #: src/components/vehiclesetup/configuration/power/BatteryCard.vue
 msgid "Measure battery voltage with an external voltmeter and enter it below."
-msgstr ""
+msgstr "外部の電圧計でバッテリー電圧を測定し、下に入力してください。"
 
 #: src/components/vehiclesetup/configuration/power/BatteryCard.vue
 msgid "Measure current draw with an external current meter and enter it below."
-msgstr ""
+msgstr "外部の電流計で消費電流を測定し、下に入力してください。"
 
 #: src/components/vehiclesetup/configuration/camera.vue
 msgid "Measure the rotation limit angles and input them below. This will allow Ardupilot to accurately report the camera rotation angle from its commanded servo PWM value."
-msgstr ""
+msgstr "回転限界角度を測定し、下に入力してください。これにより ArduPilot は、指令したサーボ PWM 値からカメラの回転角度を正確に報告できるようになります。"
 
 #: src/components/system-information/Processes.vue
 msgid "Memory (kB)"
-msgstr ""
+msgstr "メモリ (kB)"
 
 #: src/components/kraken/cards/InstalledExtensionCard.vue
 msgid "Memory usage"
-msgstr ""
+msgstr "メモリ使用量"
 
 #: src/components/parameter-editor/ParameterEditorDialog.vue
 #, javascript-format
 msgid "Min: ${ 0 } Max: ${ 1 } Increment: ${ 2 }"
-msgstr ""
+msgstr "最小: ${ 0 } 最大: ${ 1 } 増分: ${ 2 }"
 
 #: src/components/autopilot/AutopilotSerialConfiguration.vue
 #: src/components/ping/ping1d.vue
 #: src/components/ping/ping360.vue
 #: src/components/system-information/AboutThisSystem.vue
 msgid "Model"
-msgstr ""
+msgstr "モデル"
 
 #: src/components/logs/LogManager.vue
 msgid "Modified"
-msgstr ""
+msgstr "更新日時"
 
 #: src/components/vehiclesetup/PwmSetup.vue
 msgid "Motor Test"
-msgstr ""
+msgstr "モーターテスト"
 
 #: src/components/vehiclesetup/MotorDetection.vue
 msgid "Motor direction detection failed. Please check the troubleshooting section below."
-msgstr ""
+msgstr "モーター回転方向の検出に失敗しました。下のトラブルシューティングを確認してください。"
 
 #: src/components/vehiclesetup/MotorDetection.vue
 msgid "Motor direction detection is complete. The vehicle is ready for normal operation."
-msgstr ""
+msgstr "モーター回転方向の検出が完了しました。ビークルは通常運用の準備ができています。"
 
 #: src/components/vehiclesetup/PwmSetup.vue
 msgid "Motor test is disabled when the page is out of focus"
-msgstr ""
+msgstr "ページにフォーカスがない間はモーターテストが無効になります"
 
 #: src/components/vehiclesetup/MotorDetection.vue
 msgid "Motor testing can fail due to any unexpected motions of the vehicle. Here are some common failure causes, and potential solutions:"
-msgstr ""
+msgstr "モーターテストは、ビークルの予期しない動きによって失敗することがあります。主な失敗の原因と考えられる解決策は次のとおりです:"
 
 #: src/components/vehiclesetup/configuration/camera.vue
 msgid "Mount is disabled. Enable it by setting the 'Gimbal Type' to 'Servo'."
-msgstr ""
+msgstr "マウントが無効になっています。'Gimbal Type' を 'Servo' に設定して有効にしてください。"
 
 #: src/components/vehiclesetup/configuration/compass/ArdupilotMavlinkCompassSetup.vue
 msgid "Mounting Rotation:"
-msgstr ""
+msgstr "取り付け回転:"
 
 #: src/components/kraken/cards/InstalledExtensionCard.vue
 #: src/components/parameter-editor/ParameterLoader.vue
@@ -1872,7 +1874,7 @@ msgstr ""
 
 #: src/menus.ts
 msgid "NMEA Injector"
-msgstr ""
+msgstr "NMEA インジェクター"
 
 #: src/components/logs/LogManager.vue
 #: src/components/parameter-editor/ParameterLoader.vue
@@ -1882,278 +1884,278 @@ msgstr ""
 #: src/components/wizard/DefaultParamLoader.vue
 #: src/views/ExtensionManagerView.vue
 msgid "Name"
-msgstr ""
+msgstr "名前"
 
 #: src/components/vehiclesetup/configuration/power/BatteryCard.vue
 msgid "Navigator w/ Blue Robotics Power Module"
-msgstr ""
+msgstr "Navigator + Blue Robotics Power Module"
 
 #.  based on https://github.com/mavlink/qgroundcontrol/blob/Stable_V4.2/src/AutoPilotPlugins/APM/APMPowerComponent.qml
 #: src/components/vehiclesetup/overview/PowerInfo.vue
 msgid "Navigator w/ Blue Robotics Power Sense Module"
-msgstr ""
+msgstr "Navigator + Blue Robotics Power Sense Module"
 
 #: src/components/vehiclesetup/configuration/power/BatteryCard.vue
 msgid "Navigator w/ Blue Robotics Power Sense Module or PowerSwitch (R2)"
-msgstr ""
+msgstr "Navigator + Blue Robotics Power Sense Module または PowerSwitch (R2)"
 
 #: src/components/vehiclesetup/configuration/power/BatteryCard.vue
 msgid "Navigator w/ Blue Robotics PowerSwitch (R1)"
-msgstr ""
+msgstr "Navigator + Blue Robotics PowerSwitch (R1)"
 
 #: src/components/vehiclesetup/configuration/accelerometer/ArdupilotAccelerometerSetup.vue
 msgid "Needs calibration"
-msgstr ""
+msgstr "キャリブレーションが必要"
 
 #: src/views/SystemInformationView.vue
 msgid "Network"
-msgstr ""
+msgstr "ネットワーク"
 
 #: src/components/app/NetworkInterfaceMenu.vue
 msgid "Network Interface Priority"
-msgstr ""
+msgstr "ネットワークインターフェースの優先順位"
 
 #: src/menus.ts
 msgid "Network Test"
-msgstr ""
+msgstr "ネットワークテスト"
 
 #: src/components/nmea-injector/NMEASocketCreationDialog.vue
 msgid "New NMEA socket"
-msgstr ""
+msgstr "新しい NMEA ソケット"
 
 #: src/components/parameter-editor/ParameterLoader.vue
 msgid "New Value"
-msgstr ""
+msgstr "新しい値"
 
 #: src/components/bridges/BridgeCreationDialog.vue
 msgid "New bridge"
-msgstr ""
+msgstr "新しいブリッジ"
 
 #: src/components/ethernet/AddressCreationDialog.vue
 #, javascript-format
 msgid "New static IP address on '${ 0 }'"
-msgstr ""
+msgstr "'${ 0 }' の新しい静的 IP アドレス"
 
 #: src/components/vehiclesetup/configuration/accelerometer/FullAccelerometerCalibration.vue
 msgid "Next"
-msgstr ""
+msgstr "次へ"
 
 #: src/components/scanner/availableServicesTable.vue
 msgid "No API documentation"
-msgstr ""
+msgstr "API ドキュメントがありません"
 
 #: src/components/app/DnsConfigurationMenu.vue
 msgid "No DNS nameservers found on host's resolv.conf configuration. At least one nameserver is recommended for the system have access to the internet. Click on \"ADD DNS\" below to add a new nameserver."
-msgstr ""
+msgstr "ホストの resolv.conf 設定に DNS ネームサーバーが見つかりません。システムがインターネットにアクセスするには、少なくとも 1 つのネームサーバーを設定することをお勧めします。下の「DNS を追加」をクリックして新しいネームサーバーを追加してください。"
 
 #: src/components/kraken/BackAlleyTab.vue
 msgid "No Extensions Available"
-msgstr ""
+msgstr "利用可能な拡張機能がありません"
 
 #: src/views/ExtensionManagerView.vue
 msgid "No Extensions installed."
-msgstr ""
+msgstr "インストールされている拡張機能はありません。"
 
 #: src/components/nmea-injector/NMEAInjector.vue
 msgid "No NMEA sockets available. You can add a connection by clicking the + symbol in the corner."
-msgstr ""
+msgstr "利用可能な NMEA ソケットがありません。隅の + 記号をクリックして接続を追加できます。"
 
 #: src/views/Pings.vue
 msgid "No Ping devices available."
-msgstr ""
+msgstr "利用可能な Ping デバイスがありません。"
 
 #: src/components/system-information/Usb.vue
 msgid "No USB devices found"
-msgstr ""
+msgstr "USB デバイスが見つかりません"
 
 #: src/views/Autopilot.vue
 msgid "No board running"
-msgstr ""
+msgstr "実行中のボードがありません"
 
 #: src/components/bridges/Bridget.vue
 msgid "No bridges available. You can add a serial to UDP bridge by clicking the + symbol in the corner."
-msgstr ""
+msgstr "利用可能なブリッジがありません。隅の + 記号をクリックして、シリアル - UDP ブリッジを追加できます。"
 
 #: src/components/version-chooser/DockerLogin.vue
 msgid "No connected accounts"
-msgstr ""
+msgstr "接続済みのアカウントがありません"
 
 #: src/components/video-manager/VideoControlsDialog.vue
 msgid "No controllers available for this device."
-msgstr ""
+msgstr "このデバイスで利用可能なコントロールがありません。"
 
 #: src/components/parameter-editor/ParameterLoader.vue
 #: src/components/wizard/DefaultParamLoader.vue
 msgid "No description provided"
-msgstr ""
+msgstr "説明がありません"
 
 #: src/components/autopilot/EndpointManager.vue
 msgid "No endpoints available."
-msgstr ""
+msgstr "利用可能なエンドポイントがありません。"
 
 #: src/components/ethernet/EthernetManager.vue
 msgid "No ethernet interfaces available"
-msgstr ""
+msgstr "利用可能なイーサネットインターフェースがありません"
 
 #: src/components/notifications/EventLogModal.vue
 msgid "No events yet"
-msgstr ""
+msgstr "まだイベントはありません"
 
 #: src/alerts/rules/autopilot.ts
 msgid "No flight controller detected"
-msgstr ""
+msgstr "フライトコントローラーが検出されません"
 
 #: src/components/app/ImagePicker.vue
 #, javascript-format
 msgid "No images found at ${ 0 }. Please upload some images to this directory using the file browser."
-msgstr ""
+msgstr "${ 0 } に画像が見つかりません。ファイルブラウザーを使用してこのディレクトリに画像をアップロードしてください。"
 
 #: src/alerts/rules/network.ts
 msgid "No internet connection"
-msgstr ""
+msgstr "インターネットに接続されていません"
 
 #: src/components/notifications/NotificationManager.vue
 msgid "No notifications to display :)"
-msgstr ""
+msgstr "表示する通知はありません :)"
 
 #: src/components/vehiclesetup/overview/ParamSets.vue
 msgid "No parameters available for this setup"
-msgstr ""
+msgstr "このセットアップで利用可能なパラメータはありません"
 
 #: src/components/wizard/DefaultParamLoader.vue
 msgid "No parameters available for this setup."
-msgstr ""
+msgstr "このセットアップで利用可能なパラメータはありません。"
 
 #: src/components/parameter-editor/ParameterLoader.vue
 msgid "No parameters to change. This means all the parameters in this group are already set to the desired values"
-msgstr ""
+msgstr "変更するパラメータはありません。このグループのすべてのパラメータは、すでに目的の値に設定されています"
 
 #: src/components/wizard/ScriptLoader.vue
 msgid "No scripts available for this setup."
-msgstr ""
+msgstr "このセットアップで利用可能なスクリプトはありません。"
 
 #: src/components/ping/PingIgnoredPorts.vue
 msgid "No serial ports available"
-msgstr ""
+msgstr "利用可能なシリアルポートがありません"
 
 #: src/components/video-manager/VideoDevice.vue
 msgid "No streams added to this video source"
-msgstr ""
+msgstr "このビデオソースにはストリームが追加されていません"
 
 #: src/components/vehiclesetup/configuration/compass/AutoCoordinateDetector.vue
 msgid "No valid GPS position"
-msgstr ""
+msgstr "有効な GPS 位置がありません"
 
 #: src/components/vehiclesetup/configuration/compass/AutoCoordinateDetector.vue
 msgid "No valid GPS position!"
-msgstr ""
+msgstr "有効な GPS 位置がありません！"
 
 #: src/components/scanner/availableServicesTable.vue
 msgid "No versions"
-msgstr ""
+msgstr "バージョンがありません"
 
 #: src/components/kraken/modals/ExtensionDetailsModal.vue
 msgid "No versions available for this architecture"
-msgstr ""
+msgstr "このアーキテクチャで利用可能なバージョンはありません"
 
 #: src/components/video-manager/VideoManager.vue
 msgid "No video-devices available."
-msgstr ""
+msgstr "利用可能なビデオデバイスがありません。"
 
 #: src/components/wifi/WifiManager.vue
 msgid "No wifi adapter"
-msgstr ""
+msgstr "Wi-Fi アダプターがありません"
 
 #: src/components/wifi/WifiManager.vue
 msgid "No wifi networks available :("
-msgstr ""
+msgstr "利用可能な Wi-Fi ネットワークがありません :("
 
 #: src/components/vehiclesetup/overview/gripper.vue
 msgid "Not configured"
-msgstr ""
+msgstr "未設定"
 
 #: src/components/ping/PingIgnoredPorts.vue
 msgid "Not connected"
-msgstr ""
+msgstr "未接続"
 
 #: src/components/autopilot/EndpointCard.vue
 msgid "Not persistent"
-msgstr ""
+msgstr "非永続"
 
 #: src/components/autopilot/EndpointCard.vue
 msgid "Not protected"
-msgstr ""
+msgstr "保護なし"
 
 #: src/components/notifications/NotificationManager.vue
 msgid "Notifications"
-msgstr ""
+msgstr "通知"
 
 #: src/components/vehiclesetup/configuration/lights.vue
 msgid "Number of button presses to step from 0% to 100% brightness:"
-msgstr ""
+msgstr "明るさを 0% から 100% にするまでのボタン押下回数:"
 
 #: src/components/system-information/AboutThisSystem.vue
 msgid "OS Type"
-msgstr ""
+msgstr "OS の種類"
 
 #: src/components/kraken/BackAlleyTab.vue
 msgid "OTHER"
-msgstr ""
+msgstr "その他"
 
 #: src/components/vehiclesetup/overview/GyroCalib.vue
 msgid "Offsets (mrad/s)"
-msgstr ""
+msgstr "オフセット (mrad/s)"
 
 #: src/components/vehiclesetup/configuration/accelerometer/FullAccelerometerCalibration.vue
 #: src/components/vehiclesetup/configuration/compass/FullCompassCalibrator.vue
 msgid "Ok"
-msgstr ""
+msgstr "OK"
 
 #: src/components/app/ReportMenu.vue
 #, javascript-format
 msgid "On ${ 0 } forum"
-msgstr ""
+msgstr "${ 0 } フォーラムで"
 
 #: src/components/autopilot/EndpointManager.vue
 msgid "On MAVLinkRouter, only while armed also applies to .bin logs."
-msgstr ""
+msgstr "MAVLinkRouter では、「アーム中のみ」は .bin ログにも適用されます。"
 
 #: src/components/vehiclesetup/configuration/compass/FullCompassCalibrator.vue
 msgid "Onboard Compass Calibration"
-msgstr ""
+msgstr "オンボードコンパスキャリブレーション"
 
 #: src/components/vehiclesetup/overview/VehicleInfo.vue
 msgid "Onboard Computer"
-msgstr ""
+msgstr "オンボードコンピューター"
 
 #: src/components/autopilot/EndpointManager.vue
 msgid "Only while armed"
-msgstr ""
+msgstr "アーム中のみ"
 
 #: src/components/app/SettingsMenu.vue
 msgid "Open Settings"
-msgstr ""
+msgstr "設定を開く"
 
 #: src/components/logs/LogManager.vue
 msgid "Open log in UAV Log Viewer"
-msgstr ""
+msgstr "UAV Log Viewer でログを開く"
 
 #: src/components/parameter-editor/ParameterLabel.vue
 #, javascript-format
 msgid "Options: ${ 0 }"
-msgstr ""
+msgstr "オプション: ${ 0 }"
 
 #: src/components/wizard/Wizard.vue
 msgid "Other Vehicle Setup"
-msgstr ""
+msgstr "その他のビークルのセットアップ"
 
 #: src/components/vehiclesetup/PwmSetup.vue
 msgid "Output"
-msgstr ""
+msgstr "出力"
 
 #: src/views/VehicleSetupView.vue
 msgid "Overview"
-msgstr ""
+msgstr "概要"
 
 #: src/components/system-information/Processes.vue
 msgid "PID"
@@ -2161,136 +2163,136 @@ msgstr ""
 
 #: src/views/VehicleSetupView.vue
 msgid "PWM Outputs"
-msgstr ""
+msgstr "PWM 出力"
 
 #: src/components/parameter-editor/ServoFunctionMotorEditor.vue
 msgid "PWM Type"
-msgstr ""
+msgstr "PWM タイプ"
 
 #: src/components/parameter-editor/ServoFunctionMotorEditor.vue
 msgid "PWM type is not supported by BlueOS."
-msgstr ""
+msgstr "この PWM タイプは BlueOS でサポートされていません。"
 
 #: src/components/system-information/NetworkCard.vue
 msgid "Packets received:"
-msgstr ""
+msgstr "受信パケット数:"
 
 #: src/components/system-information/NetworkCard.vue
 msgid "Packets transmitted:"
-msgstr ""
+msgstr "送信パケット数:"
 
 #: src/views/PageNotFound.vue
 msgid "Page not found!"
-msgstr ""
+msgstr "ページが見つかりません！"
 
 #: src/components/parameter-editor/ServoFunctionEditorDialog.vue
 msgid "Parameter Editor"
-msgstr ""
+msgstr "パラメータエディター"
 
 #: src/components/parameter-editor/ParameterLoader.vue
 msgid "Parameter not found in Autopilot data, most likely will not be written to the vehicle."
-msgstr ""
+msgstr "オートパイロットのデータにパラメータが見つかりません。ビークルには書き込まれない可能性が高いです。"
 
 #: src/components/vehiclesetup/Configure.vue
 msgid "Parameters"
-msgstr ""
+msgstr "パラメータ"
 
 #: src/components/vehiclesetup/overview/ParamSets.vue
 #, javascript-format
 msgid "Parameters Reset failed: ${ 0 }"
-msgstr ""
+msgstr "パラメータのリセットに失敗しました: ${ 0 }"
 
 #: src/components/vehiclesetup/overview/ParamSets.vue
 msgid "Parameters reset <b>successful</b>."
-msgstr ""
+msgstr "パラメータのリセットに<b>成功</b>しました。"
 
 #: src/components/parameter-editor/ParameterLoader.vue
 msgid "Parameters written successfully"
-msgstr ""
+msgstr "パラメータを正常に書き込みました"
 
 #: src/components/system-information/Processes.vue
 msgid "Parent PID"
-msgstr ""
+msgstr "親 PID"
 
 #: src/components/autopilot/AutopilotSerialConfiguration.vue
 msgid "Path"
-msgstr ""
+msgstr "パス"
 
 #: src/components/bridges/BridgeCard.vue
 #: src/components/bridges/BridgeCreationDialog.vue
 #, javascript-format
 msgid "Path: ${ 0 }"
-msgstr ""
+msgstr "パス: ${ 0 }"
 
 #: src/views/ExtensionManagerView.vue
 msgid "Pending"
-msgstr ""
+msgstr "保留中"
 
 #: src/components/health/HealthTrayMenu.vue
 msgid "Percentage (Full):"
-msgstr ""
+msgstr "割合（満充電）:"
 
 #: src/components/vehiclesetup/configuration/compass/ArdupilotMavlinkCompassSetup.vue
 msgid "Perform a full calibration of the selected compass(es) by manually spinning the vehicle around multiple times, about all 3 rotation axes."
-msgstr ""
+msgstr "ビークルを 3 つの回転軸すべての周りに手動で何度も回転させ、選択したコンパスの完全なキャリブレーションを実行します。"
 
 #: src/components/vehiclesetup/configuration/compass/ArdupilotMavlinkCompassSetup.vue
 msgid "Perform a quick, low-accuracy calibration of the compass(es) by pointing your vehicle North, then clicking the Calibrate button. It can be a good starting point for calibration, followed by <b>Compass Learn</b>."
-msgstr ""
+msgstr "ビークルを北に向けてからキャリブレーションボタンをクリックし、コンパスの簡易的な（低精度の）キャリブレーションを実行します。キャリブレーションの出発点として適しており、その後に <b>Compass Learn</b> を行います。"
 
 #: src/components/kraken/modals/ExtensionDetailsModal.vue
 msgid "Permissions"
-msgstr ""
+msgstr "権限"
 
 #: src/components/autopilot/EndpointCard.vue
 msgid "Persistent"
-msgstr ""
+msgstr "永続"
 
 #: src/components/app/ImagePicker.vue
 msgid "Pick an Image"
-msgstr ""
+msgstr "画像を選択"
 
 #: src/components/vehiclesetup/overview/LeakInfo.vue
 msgid "Pin:"
-msgstr ""
+msgstr "ピン:"
 
 #: src/components/vehiclesetup/overview/PingInfo.vue
 msgid "Ping Sensors"
-msgstr ""
+msgstr "Ping センサー"
 
 #: src/menus.ts
 msgid "Ping Sonar Devices"
-msgstr ""
+msgstr "Ping ソナーデバイス"
 
 #: src/views/SettingsView.vue
 msgid "Pirate Mode"
-msgstr ""
+msgstr "Pirate モード"
 
 #: src/components/vehiclesetup/configuration/compass/LevelHorizonCalibration.vue
 #, javascript-format
 msgid "Pitch: ${ 0 }°"
-msgstr ""
+msgstr "ピッチ: ${ 0 }°"
 
 #: src/components/parameter-editor/ServoFunctionActuatorEditor.vue
 msgid "Please configure a joystick button for this actuator using your GCS of choice."
-msgstr ""
+msgstr "お使いの GCS で、このアクチュエーター用のジョイスティックボタンを設定してください。"
 
 #: src/components/vehiclesetup/overview/ParamSets.vue
 msgid "Please reboot the vehicle to apply changes."
-msgstr ""
+msgstr "変更を適用するにはビークルを再起動してください。"
 
 #: src/components/scanner/availableServicesTable.vue
 msgid "Port"
-msgstr ""
+msgstr "ポート"
 
 #: src/components/health/GpsTrayMenu.vue
 msgid "Position coordinates"
-msgstr ""
+msgstr "位置座標"
 
 #: src/components/app/PowerMenu.vue
 #: src/components/vehiclesetup/Configure.vue
 msgid "Power"
-msgstr ""
+msgstr "電源"
 
 #.  based on https://github.com/mavlink/qgroundcontrol/blob/Stable_V4.2/src/AutoPilotPlugins/APM/APMPowerComponent.qml
 #: src/components/vehiclesetup/configuration/power/BatteryCard.vue
@@ -2306,270 +2308,271 @@ msgstr ""
 
 #: src/components/vehiclesetup/configuration/power/BatteryCard.vue
 msgid "Power Sensor"
-msgstr ""
+msgstr "電源センサー"
 
 #: src/components/app/PowerMenu.vue
 msgid "Power off"
-msgstr ""
+msgstr "電源オフ"
 
 #: src/components/video-manager/VideoThumbnail.vue
 msgid "Preview not available, add a stream to have one."
-msgstr ""
+msgstr "プレビューは利用できません。プレビューを表示するにはストリームを追加してください。"
 
 #: src/components/video-manager/VideoThumbnail.vue
 msgid "Preview not requested, use the controls to fetch one."
-msgstr ""
+msgstr "プレビューは要求されていません。コントロールを使用して取得してください。"
 
 #: src/components/app/SystemCheckerTrayMenu.vue
 msgid "Problems found"
-msgstr ""
+msgstr "問題が見つかりました"
 
 #: src/components/wizard/Wizard.vue
 msgid "Proceeding with the setup wizard is crucial for proper vehicle configuration.\n\n"
 "Are you certain that you wish to skip this step?"
-msgstr ""
+msgstr "ビークルを正しく設定するには、セットアップウィザードを進めることが非常に重要です。\n\n"
+"この手順をスキップしてもよろしいですか？"
 
 #: src/views/SystemInformationView.vue
 msgid "Processes"
-msgstr ""
+msgstr "プロセス"
 
 #: src/components/autopilot/EndpointCard.vue
 msgid "Protected"
-msgstr ""
+msgstr "保護済み"
 
 #: src/components/speedtest/InternetSpeedTest.vue
 msgid "Provider ISP rating"
-msgstr ""
+msgstr "プロバイダー ISP の評価"
 
 #: src/types/frontend_services.ts
 msgid "Provides system information, E.g: CPU, disk, network interface and etc."
-msgstr ""
+msgstr "CPU、ディスク、ネットワークインターフェースなどのシステム情報を提供します。"
 
 #: src/types/frontend_services.ts
 msgid "Publishes mDNS entries and related utilities"
-msgstr ""
+msgstr "mDNS エントリーを公開し、関連ユーティリティを提供します"
 
 #: src/components/utils/PullProgress.vue
 msgid "Pulling new version"
-msgstr ""
+msgstr "新しいバージョンを取得しています"
 
 #: src/components/vehiclesetup/configuration/accelerometer/QuickAccelerometerCalibration.vue
 msgid "Quick Calibration"
-msgstr ""
+msgstr "クイックキャリブレーション"
 
 #: src/components/vehiclesetup/configuration/compass/ArdupilotMavlinkCompassSetup.vue
 msgid "Quick Calibration is easier for large vehicles, but has worse performance - consider using log-based calibration afterwards, to refine results."
-msgstr ""
+msgstr "クイックキャリブレーションは大型ビークルでは簡単ですが、精度が劣ります。結果を改善するため、後でログベースのキャリブレーションを行うことを検討してください。"
 
 #: src/components/vehiclesetup/configuration/accelerometer/QuickAccelerometerCalibration.vue
 msgid "Quick calibration requires that you place the vehicle on a level surface and keep it still for a few seconds. It is usually enough if your vehicle is generally leveled while in use."
-msgstr ""
+msgstr "クイックキャリブレーションでは、ビークルを水平な面に置き、数秒間静止させる必要があります。使用中のビークルがおおむね水平であれば、通常はこれで十分です。"
 
 #: src/components/wizard/Wizard.vue
 msgid "ROV Setup"
-msgstr ""
+msgstr "ROV のセットアップ"
 
 #: src/components/parameter-editor/ParameterLabel.vue
 #, javascript-format
 msgid "Range: ${ 0 } to ${ 1 }"
-msgstr ""
+msgstr "範囲: ${ 0 } ～ ${ 1 }"
 
 #: src/components/system-information/Firmware.vue
 msgid "Raspberry Firmware"
-msgstr ""
+msgstr "Raspberry Pi ファームウェア"
 
 #: src/components/wifi/WifiTrayMenu.vue
 msgid "Re-enable it by removing \"wifi\" from <code>BLUEOS_DISABLE_SERVICES</code> in <code>/root/.config/bootstrap/startup.json</code>"
-msgstr ""
+msgstr "<code>/root/.config/bootstrap/startup.json</code> の <code>BLUEOS_DISABLE_SERVICES</code> から \"wifi\" を削除すると、再度有効になります"
 
 #: src/views/SettingsView.vue
 msgid "Re-run the initial vehicle setup wizard"
-msgstr ""
+msgstr "ビークルの初期セットアップウィザードを再実行します"
 
 #: src/components/app/PowerMenu.vue
 #: src/views/SettingsView.vue
 msgid "Reboot"
-msgstr ""
+msgstr "再起動"
 
 #: src/components/app/VehicleRebootMenu.vue
 #: src/components/common/rebootRequiredOverlay.vue
 #: src/components/utils/RebootButton.vue
 #: src/components/vehiclesetup/overview/ParamSets.vue
 msgid "Reboot Autopilot"
-msgstr ""
+msgstr "オートパイロットを再起動"
 
 #: src/components/parameter-editor/ParameterEditorDialog.vue
 msgid "Reboot Required"
-msgstr ""
+msgstr "再起動が必要"
 
 #: src/components/parameter-editor/ParameterEditorDialog.vue
 msgid "Reboot required for parameter to take effect"
-msgstr ""
+msgstr "パラメータを反映するには再起動が必要です"
 
 #: src/components/bridges/BridgeCard.vue
 msgid "Receiving at "
-msgstr ""
+msgstr "受信先: "
 
 #: src/components/video-manager/VideoDevice.vue
 msgid "Redirect sources can be used to redirect the video stream from another device. This is useful to publish external streams, such as RTSP from IP cameras, via MAVLink so GCSs can easily find them."
-msgstr ""
+msgstr "リダイレクトソースを使用すると、別のデバイスからのビデオストリームをリダイレクトできます。IP カメラの RTSP などの外部ストリームを MAVLink 経由で公開し、GCS から簡単に見つけられるようにするのに便利です。"
 
 #: src/components/parameter-editor/RelaySetup.vue
 msgid "Relay Off"
-msgstr ""
+msgstr "リレーオフ"
 
 #: src/components/parameter-editor/RelaySetup.vue
 msgid "Relay On"
-msgstr ""
+msgstr "リレーオン"
 
 #: src/components/version-chooser/ReleaseNotes.vue
 msgid "Release notes are not available for this version."
-msgstr ""
+msgstr "このバージョンのリリースノートはありません。"
 
 #: src/components/wizard/Wizard.vue
 msgid "Remind me later"
-msgstr ""
+msgstr "後で通知する"
 
 #: src/components/version-chooser/VersionChooser.vue
 msgid "Remote Versions"
-msgstr ""
+msgstr "リモートバージョン"
 
 #: src/components/video-manager/VideoStream.vue
 msgid "Remove stream"
-msgstr ""
+msgstr "ストリームを削除"
 
 #: src/components/app/DnsConfigurationMenu.vue
 msgid "Remove this nameserver"
-msgstr ""
+msgstr "このネームサーバーを削除"
 
 #: src/components/parameter-editor/ParameterLabel.vue
 msgid "Requires reboot"
-msgstr ""
+msgstr "再起動が必要"
 
 #: src/components/wifi/WifiManager.vue
 msgid "Rescanning..."
-msgstr ""
+msgstr "再スキャン中..."
 
 #: src/views/ExtensionManagerView.vue
 msgid "Reset"
-msgstr ""
+msgstr "リセット"
 
 #: src/components/vehiclesetup/overview/ParamSets.vue
 msgid "Reset All Parameters"
-msgstr ""
+msgstr "すべてのパラメータをリセット"
 
 #: src/components/vehiclesetup/overview/ParamSets.vue
 msgid "Reset Parameters to Firmware Defaults"
-msgstr ""
+msgstr "パラメータをファームウェアのデフォルトにリセット"
 
 #: src/components/video-manager/VideoManager.vue
 #: src/views/SettingsView.vue
 msgid "Reset Settings"
-msgstr ""
+msgstr "設定をリセット"
 
 #: src/views/SettingsView.vue
 msgid "Reset all BlueOS settings to factory defaults"
-msgstr ""
+msgstr "BlueOS のすべての設定を工場出荷時の状態にリセットします"
 
 #: src/components/kraken/modals/ExtensionCreationModal.vue
 #: src/components/kraken/modals/ExtensionDetailsModal.vue
 msgid "Reset to default permissions"
-msgstr ""
+msgstr "デフォルトの権限にリセット"
 
 #: src/types/frontend_services.ts
 msgid "Responsible for management of autopilot status and configuration."
-msgstr ""
+msgstr "オートパイロットの状態と設定の管理を担当します。"
 
 #: src/types/frontend_services.ts
 msgid "Responsible for management of ethernet adapters configuration."
-msgstr ""
+msgstr "イーサネットアダプターの設定の管理を担当します。"
 
 #: src/components/kraken/cards/InstalledExtensionCard.vue
 msgid "Restart"
-msgstr ""
+msgstr "再起動"
 
 #: src/components/app/PowerMenu.vue
 msgid "Restart Autopilot"
-msgstr ""
+msgstr "オートパイロットを再起動"
 
 #: src/components/app/PowerMenu.vue
 msgid "Restart Core container"
-msgstr ""
+msgstr "コアコンテナーを再起動"
 
 #: src/views/Autopilot.vue
 msgid "Restart autopilot"
-msgstr ""
+msgstr "オートパイロットを再起動"
 
 #: src/views/SettingsView.vue
 msgid "Restart the system to finish the settings reset."
-msgstr ""
+msgstr "設定のリセットを完了するには、システムを再起動してください。"
 
 #: src/components/app/PowerMenu.vue
 msgid "Restarts the autopilot"
-msgstr ""
+msgstr "オートパイロットを再起動します"
 
 #: src/components/app/PowerMenu.vue
 msgid "Restarts the core alone, should be enough in most cases"
-msgstr ""
+msgstr "コアのみを再起動します。ほとんどの場合はこれで十分です"
 
 #: src/views/SettingsView.vue
 msgid "Restore all BlueOS services to defaults"
-msgstr ""
+msgstr "BlueOS のすべてのサービスをデフォルトに戻します"
 
 #: src/components/autopilot/FirmwareManager.vue
 msgid "Restore default firmware"
-msgstr ""
+msgstr "デフォルトのファームウェアを復元"
 
 #: src/components/video-manager/VideoControlsDialog.vue
 msgid "Restore defaults"
-msgstr ""
+msgstr "デフォルトに戻す"
 
 #: src/components/autopilot/FirmwareManager.vue
 msgid "Retrieve from Cloud"
-msgstr ""
+msgstr "クラウドから取得"
 
 #: src/components/version-chooser/VersionChooser.vue
 #: src/components/wizard/Wizard.vue
 msgid "Retry"
-msgstr ""
+msgstr "再試行"
 
 #: src/components/wizard/Wizard.vue
 msgid "Return"
-msgstr ""
+msgstr "戻る"
 
 #: src/components/parameter-editor/ServoFunctionMotorEditor.vue
 msgid "Reverse Direction"
-msgstr ""
+msgstr "方向を反転"
 
 #: src/views/ExtensionManagerView.vue
 msgid "Review identifier, name, and permissions"
-msgstr ""
+msgstr "識別子、名前、権限を確認"
 
 #: src/components/ping/ping1d.vue
 #: src/components/ping/ping360.vue
 msgid "Revision"
-msgstr ""
+msgstr "リビジョン"
 
 #: src/components/vehiclesetup/configuration/compass/LevelHorizonCalibration.vue
 #, javascript-format
 msgid "Roll: ${ 0 }°"
-msgstr ""
+msgstr "ロール: ${ 0 }°"
 
 #: src/components/system-information/Processes.vue
 msgid "Root directory"
-msgstr ""
+msgstr "ルートディレクトリ"
 
 #: src/views/SettingsView.vue
 msgid "Run Wizard"
-msgstr ""
+msgstr "ウィザードを実行"
 
 #: src/components/version-chooser/VersionCard.vue
 msgid "Running"
-msgstr ""
+msgstr "実行中"
 
 #: src/components/system-information/Processes.vue
 msgid "Running time"
-msgstr ""
+msgstr "実行時間"
 
 #: src/components/video-manager/VideoStream.vue
 msgid "SDP"
@@ -2577,19 +2580,19 @@ msgstr ""
 
 #: src/views/Autopilot.vue
 msgid "SITL configuration"
-msgstr ""
+msgstr "SITL 設定"
 
 #: src/components/autopilot/SitlConfiguration.vue
 msgid "SITL frame set, autopilot restarted"
-msgstr ""
+msgstr "SITL フレームを設定し、オートパイロットを再起動しました"
 
 #: src/components/vehiclesetup/configuration/compass/ArdupilotMavlinkCompassSetup.vue
 msgid "Same as the Autopilot's"
-msgstr ""
+msgstr "オートパイロットと同じ"
 
 #: src/components/health/GpsTrayMenu.vue
 msgid "Satellites in view"
-msgstr ""
+msgstr "捕捉衛星数"
 
 #: src/components/app/VehicleBanner.vue
 #: src/components/kraken/modals/ExtensionCreationModal.vue
@@ -2598,170 +2601,170 @@ msgstr ""
 #: src/components/ping/PingIgnoredPorts.vue
 #: src/components/wifi/WifiSettingsDialog.vue
 msgid "Save"
-msgstr ""
+msgstr "保存"
 
 #: src/components/parameter-editor/ParameterEditor.vue
 msgid "Save all parameters to file"
-msgstr ""
+msgstr "すべてのパラメータをファイルに保存"
 
 #: src/components/parameter-editor/ParameterEditorDialog.vue
 msgid "Save and Reboot"
-msgstr ""
+msgstr "保存して再起動"
 
 #: src/components/autopilot/AutopilotSerialConfiguration.vue
 msgid "Save and restart"
-msgstr ""
+msgstr "保存して再起動"
 
 #: src/components/wifi/WifiSettingsDialog.vue
 msgid "Saving settings, please wait..."
-msgstr ""
+msgstr "設定を保存しています。しばらくお待ちください..."
 
 #: src/components/wifi/WifiManager.vue
 msgid "Scan this QR code with your phone to connect to BlueOS's hotspot."
-msgstr ""
+msgstr "この QR コードをスマートフォンでスキャンして、BlueOS のホットスポットに接続してください。"
 
 #: src/components/vehiclesetup/configuration/compass/CompassMaskPicker.vue
 msgid "Select compasses to calibrate"
-msgstr ""
+msgstr "キャリブレーションするコンパスを選択"
 
 #: src/components/autopilot/EndpointManager.vue
 msgid "Select the router to use for distributing MAVLink data."
-msgstr ""
+msgstr "MAVLink データの配信に使用するルーターを選択します。"
 
 #: src/components/ping/PingIgnoredPorts.vue
 msgid "Selected ports are not probed for Ping devices. A Ping that was already detected keeps running until it is unplugged or BlueOS reboots."
-msgstr ""
+msgstr "選択したポートでは Ping デバイスの検出を行いません。すでに検出された Ping は、取り外されるか BlueOS が再起動するまで動作し続けます。"
 
 #: src/components/ping/ping1d.vue
 msgid "Send MAVLink DISTANCE_SENSOR messages to the vehicle. This allows ground stations such as QGroundControl to display the information on the telemetry overlay."
-msgstr ""
+msgstr "MAVLink の DISTANCE_SENSOR メッセージをビークルに送信します。これにより、QGroundControl などのグラウンドステーションがテレメトリーオーバーレイに情報を表示できます。"
 
 #: src/components/bridges/BridgeCard.vue
 #, javascript-format
 msgid "Sending to ${ 0 }:${ 1 }"
-msgstr ""
+msgstr "送信先: ${ 0 }:${ 1 }"
 
 #: src/components/vehiclesetup/overview/BaroCalib.vue
 #: src/components/vehiclesetup/overview/OnboardSensors.vue
 msgid "Sensor"
-msgstr ""
+msgstr "センサー"
 
 #: src/components/vehiclesetup/configuration/accelerometer/ArdupilotAccelerometerSetup.vue
 msgid "Sensor is calibrated and good to use"
-msgstr ""
+msgstr "センサーはキャリブレーション済みで使用できます"
 
 #: src/components/vehiclesetup/overview/OnboardSensors.vue
 msgid "Sensor is callibrated and good to use"
-msgstr ""
+msgstr "センサーはキャリブレーション済みで使用できます"
 
 #: src/components/vehiclesetup/configuration/accelerometer/ArdupilotAccelerometerSetup.vue
 #: src/components/vehiclesetup/overview/OnboardSensors.vue
 msgid "Sensor needs to be calibrated"
-msgstr ""
+msgstr "センサーのキャリブレーションが必要です"
 
 #: src/components/vehiclesetup/overview/OnboardSensors.vue
 msgid "Sensor thermometer is calibrated and good to use"
-msgstr ""
+msgstr "センサーの温度計はキャリブレーション済みで使用できます"
 
 #: src/components/vehiclesetup/configuration/accelerometer/ArdupilotAccelerometerSetup.vue
 #: src/components/vehiclesetup/overview/OnboardSensors.vue
 msgid "Sensor thermometer needs to be calibrated"
-msgstr ""
+msgstr "センサーの温度計のキャリブレーションが必要です"
 
 #: src/components/vehiclesetup/configuration/accelerometer/ArdupilotAccelerometerSetup.vue
 #, javascript-format
 msgid "Sensor was calibrated at ${ 0 } ºC"
-msgstr ""
+msgstr "センサーは ${ 0 } ºC でキャリブレーションされました"
 
 #: src/components/autopilot/AutopilotSerialConfiguration.vue
 msgid "Serial"
-msgstr ""
+msgstr "シリアル"
 
 #: src/menus.ts
 msgid "Serial Bridges"
-msgstr ""
+msgstr "シリアルブリッジ"
 
 #: src/views/Autopilot.vue
 msgid "Serial Port Configuration"
-msgstr ""
+msgstr "シリアルポートの設定"
 
 #: src/components/bridges/BridgeCreationDialog.vue
 msgid "Server Mode"
-msgstr ""
+msgstr "サーバーモード"
 
 #: src/components/bridges/BridgeCard.vue
 #, javascript-format
 msgid "Server listening at ${ 0 }"
-msgstr ""
+msgstr "${ 0 } で待ち受け中のサーバー"
 
 #: src/components/bridges/BridgeCreationDialog.vue
 #, javascript-format
 msgid "Server mode will bind to the given port at the BlueOS device. This means it will receive data from the topside computer at port <B>${ 0 }</B>, and will send data back to the topside computer at the port where the data originated at the topside computer."
-msgstr ""
+msgstr "サーバーモードでは、BlueOS デバイス上の指定されたポートにバインドします。つまり、トップサイドコンピューターからのデータをポート <B>${ 0 }</B> で受信し、トップサイドコンピューター側でデータの送信元となったポートにデータを返信します。"
 
 #: src/components/speedtest/InternetSpeedTest.vue
 msgid "Server to test internet speed"
-msgstr ""
+msgstr "インターネット速度テスト用のサーバー"
 
 #: src/components/scanner/availableServicesTable.vue
 msgid "Service Name"
-msgstr ""
+msgstr "サービス名"
 
 #: src/types/frontend_services.ts
 msgid "Service Scanner"
-msgstr ""
+msgstr "サービススキャナー"
 
 #: src/types/frontend_services.ts
 msgid "Service responsible for managing wifi configuration on BlueOS."
-msgstr ""
+msgstr "BlueOS の Wi-Fi 設定の管理を担当するサービスです。"
 
 #: src/types/frontend_services.ts
 msgid "Service to manage BlueOS extensions"
-msgstr ""
+msgstr "BlueOS の拡張機能を管理するサービスです"
 
 #: src/types/frontend_services.ts
 msgid "Service to manage Pardal"
-msgstr ""
+msgstr "Pardal を管理するサービスです"
 
 #: src/types/frontend_services.ts
 msgid "Service to manage json database for the vehicle"
-msgstr ""
+msgstr "ビークル用の JSON データベースを管理するサービスです"
 
 #: src/types/frontend_services.ts
 msgid "Service to manage ping devices"
-msgstr ""
+msgstr "Ping デバイスを管理するサービスです"
 
 #: src/types/frontend_services.ts
 msgid "Service to manage vehicle Parameters"
-msgstr ""
+msgstr "ビークルのパラメータを管理するサービスです"
 
 #: src/types/frontend_services.ts
 msgid "Service to test network speed"
-msgstr ""
+msgstr "ネットワーク速度をテストするサービスです"
 
 #: src/types/frontend_services.ts
 msgid "Service to update system time"
-msgstr ""
+msgstr "システム時刻を更新するサービスです"
 
 #: src/components/parameter-editor/ServoFunctionRangeEditor.vue
 msgid "Servo Range Configuration"
-msgstr ""
+msgstr "サーボ範囲の設定"
 
 #: src/components/autopilot/BoardChangeDialog.vue
 msgid "Set"
-msgstr ""
+msgstr "設定"
 
 #: src/components/wizard/Wizard.vue
 msgid "Set custom vehicle name"
-msgstr ""
+msgstr "カスタムビークル名を設定"
 
 #: src/components/wizard/Wizard.vue
 msgid "Set vehicle hostname"
-msgstr ""
+msgstr "ビークルのホスト名を設定"
 
 #: src/components/wizard/Wizard.vue
 msgid "Set vehicle image"
-msgstr ""
+msgstr "ビークルの画像を設定"
 
 #: src/components/kraken/cards/InstalledExtensionCard.vue
 #: src/components/vehiclesetup/configuration/compass/ArdupilotMavlinkCompassSetup.vue
@@ -2769,495 +2772,495 @@ msgstr ""
 #: src/views/ExtensionManagerView.vue
 #: src/views/SettingsView.vue
 msgid "Settings"
-msgstr ""
+msgstr "設定"
 
 #: src/views/SettingsView.vue
 msgid "Settings Reset Complete"
-msgstr ""
+msgstr "設定のリセットが完了しました"
 
 #: src/components/cloud/CloudTrayMenu.vue
 msgid "Setup is complete!"
-msgstr ""
+msgstr "セットアップが完了しました！"
 
 #: src/components/vehiclesetup/configuration/power/BatteryCard.vue
 msgid "Show"
-msgstr ""
+msgstr "表示"
 
 #: src/views/SettingsView.vue
 msgid "Show hidden pages and advanced settings"
-msgstr ""
+msgstr "非表示のページと詳細設定を表示します"
 
 #: src/components/notifications/NotificationCard.vue
 msgid "Show in event log"
-msgstr ""
+msgstr "イベントログに表示"
 
 #: src/components/video-manager/VideoStream.vue
 msgid "Show less"
-msgstr ""
+msgstr "表示を減らす"
 
 #: src/components/video-manager/VideoStream.vue
 msgid "Show more"
-msgstr ""
+msgstr "さらに表示"
 
 #: src/components/notifications/ConfigMenu.vue
 msgid "Show old messages"
-msgstr ""
+msgstr "古いメッセージを表示"
 
 #: src/components/scanner/availableServicesTable.vue
 msgid "Shows all available services running on BlueOS, including the service port, name, webpage, REST API endpoint, and swagger documentation per version. API endpoint links provide direct manual access to the APIs, and can be used to test how a service responds to a given request."
-msgstr ""
+msgstr "BlueOS 上で実行中の利用可能なすべてのサービスを、サービスのポート、名前、Web ページ、REST API エンドポイント、バージョンごとの Swagger ドキュメントとともに表示します。API エンドポイントのリンクから API に直接手動でアクセスでき、特定のリクエストに対するサービスの応答をテストできます。"
 
 #: src/components/app/PowerMenu.vue
 msgid "Shuts down the onboard computer"
-msgstr ""
+msgstr "オンボードコンピューターをシャットダウンします"
 
 #: src/types/frontend_services.ts
 msgid "Simple helper service for the frontend and simple features"
-msgstr ""
+msgstr "フロントエンドと簡単な機能のためのシンプルなヘルパーサービスです"
 
 #: src/components/logs/LogManager.vue
 msgid "Size"
-msgstr ""
+msgstr "サイズ"
 
 #: src/components/wizard/Wizard.vue
 msgid "Skip Wizard"
-msgstr ""
+msgstr "ウィザードをスキップ"
 
 #: src/components/app/PowerMenu.vue
 msgid "Soft restart"
-msgstr ""
+msgstr "ソフト再起動"
 
 #: src/components/vehiclesetup/MotorDetection.vue
 msgid "Solutions"
-msgstr ""
+msgstr "解決策"
 
 #: src/alerts/rules/network.ts
 msgid "Some features are unavailable"
-msgstr ""
+msgstr "一部の機能が利用できません"
 
 #: src/components/parameter-editor/ServoFunctionGpioEditor.vue
 msgid "Some flight controller servo channels are capable of digital (GPIO) functionalities. Available options include relays, leak detection (input-capable pins only), and other functions not yet supported by this UI."
-msgstr ""
+msgstr "フライトコントローラーの一部のサーボチャンネルは、デジタル（GPIO）機能に対応しています。利用可能なオプションには、リレー、浸水検知（入力対応ピンのみ）、およびこの UI でまだサポートされていないその他の機能があります。"
 
 #: src/App.vue
 msgid "Some functionality is not available while the vehicle is armed"
-msgstr ""
+msgstr "ビークルがアーム中は一部の機能が利用できません"
 
 #: src/alerts/rules/autopilot.ts
 msgid "Some sensors not calibrated"
-msgstr ""
+msgstr "一部のセンサーがキャリブレーションされていません"
 
 #: src/components/video-manager/VideoDiagnosticHelper.vue
 msgid "Some streams use MJPEG or uncompressed video. Cockpit can't play these formats, and they require more network bandwidth. We recommend switching to H.264 or H.265."
-msgstr ""
+msgstr "一部のストリームは MJPEG または非圧縮ビデオを使用しています。Cockpit はこれらの形式を再生できず、より多くのネットワーク帯域幅を必要とします。H.264 または H.265 に切り替えることをお勧めします。"
 
 #: src/components/kraken/BackAlleyTab.vue
 msgid "Sort By"
-msgstr ""
+msgstr "並べ替え"
 
 #: src/components/video-manager/VideoStream.vue
 msgid "Source:"
-msgstr ""
+msgstr "ソース:"
 
 #: src/components/speedtest/Graph.vue
 msgid "Speed Mb/s"
-msgstr ""
+msgstr "速度 Mb/s"
 
 #: src/components/vehiclesetup/configuration/compass/FullCompassCalibrator.vue
 msgid "Spin your vehicle around all of its axes until the progress bar completes."
-msgstr ""
+msgstr "プログレスバーが完了するまで、ビークルをすべての軸周りに回転させてください。"
 
 #: src/components/autopilot/FirmwareManager.vue
 msgid "Stable - A production-ready release. Suitable for most users."
-msgstr ""
+msgstr "Stable - 本番環境向けのリリースです。ほとんどのユーザーに適しています。"
 
 #: src/components/vehiclesetup/configuration/compass/CompassLearn.vue
 #: src/components/wizard/Wizard.vue
 msgid "Start"
-msgstr ""
+msgstr "開始"
 
 #: src/components/vehiclesetup/configuration/accelerometer/FullAccelerometerCalibration.vue
 #: src/components/vehiclesetup/configuration/accelerometer/QuickAccelerometerCalibration.vue
 msgid "Start Calibration"
-msgstr ""
+msgstr "キャリブレーションを開始"
 
 #: src/components/vehiclesetup/configuration/compass/CompassLearn.vue
 msgid "Start Compass Learn"
-msgstr ""
+msgstr "Compass Learn を開始"
 
 #: src/components/vehiclesetup/MotorDetection.vue
 msgid "Start Detection"
-msgstr ""
+msgstr "検出を開始"
 
 #: src/components/vehiclesetup/configuration/accelerometer/FullAccelerometerCalibration.vue
 #: src/components/vehiclesetup/configuration/compass/FullCompassCalibrator.vue
 msgid "Start Full Calibration"
-msgstr ""
+msgstr "完全キャリブレーションを開始"
 
 #: src/components/vehiclesetup/configuration/compass/LargeVehicleCompassCalibrator.vue
 msgid "Start Large Vehicle Calibration"
-msgstr ""
+msgstr "大型ビークルのキャリブレーションを開始"
 
 #: src/views/Autopilot.vue
 msgid "Start autopilot"
-msgstr ""
+msgstr "オートパイロットを起動"
 
 #: src/components/video-manager/VideoThumbnail.vue
 msgid "Start continuous thumbnails (1s)"
-msgstr ""
+msgstr "サムネイルの連続取得を開始（1 秒）"
 
 #: src/views/SettingsView.vue
 msgid "Start the configuration wizard"
-msgstr ""
+msgstr "設定ウィザードを開始します"
 
 #: src/components/kraken/cards/InstalledExtensionCard.vue
 #: src/components/system-information/Processes.vue
 #: src/components/vehiclesetup/overview/BaroCalib.vue
 #: src/components/vehiclesetup/overview/OnboardSensors.vue
 msgid "Status"
-msgstr ""
+msgstr "状態"
 
 #: src/components/video-manager/VideoStream.vue
 msgid "Status:"
-msgstr ""
+msgstr "状態:"
 
 #: src/components/vehiclesetup/configuration/camera.vue
 msgid "Step 1: Find the physical limits"
-msgstr ""
+msgstr "ステップ 1: 物理的な限界を確認する"
 
 #: src/components/vehiclesetup/configuration/camera.vue
 msgid "Step 2: Measure the actual angles"
-msgstr ""
+msgstr "ステップ 2: 実際の角度を測定する"
 
 #: src/views/Autopilot.vue
 msgid "Stop autopilot"
-msgstr ""
+msgstr "オートパイロットを停止"
 
 #: src/components/video-manager/VideoThumbnail.vue
 msgid "Stop continuous thumbnails"
-msgstr ""
+msgstr "サムネイルの連続取得を停止"
 
 #: src/views/ExtensionManagerView.vue
 msgid "Store"
-msgstr ""
+msgstr "ストア"
 
 #: src/components/video-manager/VideoStream.vue
 msgid "Stream Name:"
-msgstr ""
+msgstr "ストリーム名:"
 
 #: src/components/video-manager/VideoStreamCreationDialog.vue
 msgid "Stream creation"
-msgstr ""
+msgstr "ストリームの作成"
 
 #: src/components/video-manager/VideoDevice.vue
 msgid "Streams active"
-msgstr ""
+msgstr "ストリーム稼働中"
 
 #: src/components/video-manager/VideoDevice.vue
 msgid "Streams stopped, see the errors for more information"
-msgstr ""
+msgstr "ストリームが停止しました。詳細はエラーを確認してください"
 
 #: src/components/wifi/ConnectionDialog.vue
 #, javascript-format
 msgid "Successfully connected to '${ 0 }'"
-msgstr ""
+msgstr "'${ 0 }' に正常に接続しました"
 
 #: src/components/wifi/WifiManager.vue
 msgid "Successfully toggled hotspot state."
-msgstr ""
+msgstr "ホットスポットの状態を切り替えました。"
 
 #: src/components/wifi/WifiSettingsDialog.vue
 msgid "Successfully updated hotspot credentials."
-msgstr ""
+msgstr "ホットスポットの認証情報を更新しました。"
 
 #: src/components/wifi/WifiSettingsDialog.vue
 msgid "Successfully updated smart-hotspot configuration."
-msgstr ""
+msgstr "スマートホットスポットの設定を更新しました。"
 
 #: src/components/beacon/BeaconTrayMenu.vue
 #, javascript-format
 msgid "Switch to ${ 0 }.local"
-msgstr ""
+msgstr "${ 0 }.local に切り替え"
 
 #: src/views/SettingsView.vue
 msgid "System"
-msgstr ""
+msgstr "システム"
 
 #: src/menus.ts
 msgid "System Information"
-msgstr ""
+msgstr "システム情報"
 
 #: src/views/SettingsView.vue
 msgid "System Logs"
-msgstr ""
+msgstr "システムログ"
 
 #: src/views/SystemInformationView.vue
 msgid "System Monitor"
-msgstr ""
+msgstr "システムモニター"
 
 #: src/views/SettingsView.vue
 msgid "System configuration and maintenance"
-msgstr ""
+msgstr "システムの設定とメンテナンス"
 
 #: src/components/app/SystemCheckerTrayMenu.vue
 msgid "System problems detected. Click to view details."
-msgstr ""
+msgstr "システムの問題が検出されました。クリックして詳細を表示します。"
 
 #: src/components/app/DnsConfigurationMenu.vue
 msgid "TRY AGAIN"
-msgstr ""
+msgstr "再試行"
 
 #: src/views/ExtensionManagerView.vue
 msgid "Tag"
-msgstr ""
+msgstr "タグ"
 
 #: src/components/autopilot/EndpointManager.vue
 msgid "Telemetry Logs (.tlog)"
-msgstr ""
+msgstr "テレメトリーログ (.tlog)"
 
 #: src/components/vehiclesetup/overview/OnboardSensors.vue
 msgid "Temperature"
-msgstr ""
+msgstr "温度"
 
 #: src/menus.ts
 msgid "Terminal"
-msgstr ""
+msgstr "ターミナル"
 
 #: src/menus.ts
 msgid "Test link speed between topside computer and your vehicle."
-msgstr ""
+msgstr "トップサイドコンピューターとビークル間の通信速度をテストします。"
 
 #: src/components/vehiclesetup/MotorDetection.vue
 msgid "Tests whether any of the motors are wired to spin backwards, and automatically reverses their control signals as relevant."
-msgstr ""
+msgstr "逆回転するように配線されたモーターがないかをテストし、必要に応じて制御信号を自動的に反転します。"
 
 #: src/components/video-manager/VideoDiagnosticHelper.vue
 msgid "That should be fine if you are using this wi-fi connection for something other than piloting."
-msgstr ""
+msgstr "この Wi-Fi 接続を操縦以外の目的で使用している場合は問題ありません。"
 
 #: src/components/vehiclesetup/overview/GyroCalib.vue
 msgid "The Gyroscopes can be automatically calibrated at startup. Be mindful that this is not recommended for vehicles that start up on moving platforms (such as boats)."
-msgstr ""
+msgstr "ジャイロスコープは起動時に自動的にキャリブレーションできます。ただし、動いている場所（ボート上など）で起動するビークルにはお勧めしません。"
 
 #: src/components/nmea-injector/NMEAInjector.vue
 msgid "The NMEA Injector receives NMEA via UDP or TCP and transforms it into MAVLink data that is forwarded to the autopilot. It currently supports the sentences"
-msgstr ""
+msgstr "NMEA インジェクターは UDP または TCP 経由で NMEA を受信し、オートパイロットに転送される MAVLink データに変換します。現在サポートしているセンテンス:"
 
 #: src/alerts/rules/autopilot.ts
 msgid "The autopilot cannot start until a board is connected."
-msgstr ""
+msgstr "ボードが接続されるまで、オートパイロットを起動できません。"
 
 #: src/components/nmea-injector/NMEAInjector.vue
 #, javascript-format
 msgid "The autopilot will not use injected position until ${ 0 } is MAV (14). It is currently ${ 1 }. Reboot the autopilot after changing the parameter."
-msgstr ""
+msgstr "${ 0 } が MAV (14) になるまで、オートパイロットは注入された位置を使用しません。現在の値は ${ 1 } です。パラメータを変更したらオートパイロットを再起動してください。"
 
 #: src/components/vehiclesetup/configuration/compass/ArdupilotMavlinkCompassSetup.vue
 msgid "The compass is not calibrated - please calibrate it."
-msgstr ""
+msgstr "コンパスがキャリブレーションされていません。キャリブレーションしてください。"
 
 #: src/components/vehiclesetup/configuration/camera.vue
 msgid "The gimbal will move to the new PWM values as you adjust them."
-msgstr ""
+msgstr "PWM 値を調整すると、ジンバルが新しい値に合わせて動きます。"
 
 #: src/components/wizard/Wizard.vue
 msgid "The operation failed!"
-msgstr ""
+msgstr "操作に失敗しました！"
 
 #: src/components/vehiclesetup/configuration/lights.vue
 msgid "The output pin for the primary set of lights:"
-msgstr ""
+msgstr "メインライトの出力ピン:"
 
 #: src/components/vehiclesetup/configuration/lights.vue
 msgid "The output pin for the secondary set of lights:"
-msgstr ""
+msgstr "サブライトの出力ピン:"
 
 #: src/components/vehiclesetup/MotorDetection.vue
 msgid "The test is running. The vehicle will move slightly as each motor is tested."
-msgstr ""
+msgstr "テストを実行中です。各モーターのテスト中、ビークルがわずかに動きます。"
 
 #: src/components/vehiclesetup/MotorDetection.vue
 msgid "The test relies on the <b>motors being correctly connected</b> according to the selected vehicle frame, and spins each motor individually to check whether it generates thrust in the expected direction. The vehicle should be in calm water and far from walls and objects."
-msgstr ""
+msgstr "このテストは、選択したビークルフレームに従って<b>モーターが正しく接続されている</b>ことを前提としており、各モーターを個別に回転させて、想定どおりの方向に推力が発生するかを確認します。ビークルは穏やかな水中で、壁や物体から離れた場所に置いてください。"
 
 #: src/components/wizard/Wizard.vue
 msgid "The wizard will only show if BlueOS is updated and further configuration is necessary"
-msgstr ""
+msgstr "ウィザードは、BlueOS が更新されて追加の設定が必要な場合にのみ表示されます"
 
 #: src/components/wizard/Wizard.vue
 msgid "The wizard will show again during BlueOS usage"
-msgstr ""
+msgstr "ウィザードは BlueOS の使用中に再度表示されます"
 
 #: src/components/vehiclesetup/overview/ParamSets.vue
 #, javascript-format
 msgid "These are the recommended parameter sets for your vehicle and firmware version. Curated by ${ 0 }"
-msgstr ""
+msgstr "お使いのビークルとファームウェアバージョンに推奨されるパラメータセットです。提供: ${ 0 }"
 
 #: src/components/app/DnsConfigurationMenu.vue
 msgid "These nameservers are fetched from and applied to the host resolv configuration (<i>/etc/resolv.conf</i>), which are synchronized with the container's resolv configuration."
-msgstr ""
+msgstr "これらのネームサーバーはホストの resolv 設定（<i>/etc/resolv.conf</i>）から取得され、そこに適用されます。この設定はコンテナーの resolv 設定と同期されます。"
 
 #: src/components/vehiclesetup/configuration/compass/ArdupilotMavlinkCompassSetup.vue
 msgid "This Compass is not in use, drag it higher (by the dots) to be able to use it."
-msgstr ""
+msgstr "このコンパスは使用されていません。使用するには、ドットをつかんで上にドラッグしてください。"
 
 #: src/components/wifi/DisconnectionDialog.vue
 msgid "This IP address is currently being used to access BlueOS. Deleting it could prevent you from accessing your vehicle. Are you sure you want to disconnect?"
-msgstr ""
+msgstr "この IP アドレスは現在 BlueOS へのアクセスに使用されています。削除するとビークルにアクセスできなくなる可能性があります。切断してもよろしいですか？"
 
 #: src/components/vehiclesetup/viewers/GenericViewer.vue
 msgid "This browser does not support the required WebGL features."
-msgstr ""
+msgstr "このブラウザーは必要な WebGL 機能をサポートしていません。"
 
 #: src/components/kraken/cards/InstalledExtensionCard.vue
 msgid "This extension is enabled but the container is not running."
-msgstr ""
+msgstr "この拡張機能は有効ですが、コンテナーが実行されていません。"
 
 #: src/components/kraken/cards/StoreExtensionCard.vue
 msgid "This extension is not compatible with current machine architecture running BlueOS."
-msgstr ""
+msgstr "この拡張機能は、BlueOS を実行している現在のマシンのアーキテクチャと互換性がありません。"
 
 #: src/components/common/NotSafeOverlay.vue
 msgid "This feature is disabled because the vehicle is armed."
-msgstr ""
+msgstr "ビークルがアーム中のため、この機能は無効になっています。"
 
 #: src/App.vue
 #: src/views/MainView.vue
 msgid "This is an advanced feature"
-msgstr ""
+msgstr "これは高度な機能です"
 
 #: src/App.vue
 msgid "This is an installed extension"
-msgstr ""
+msgstr "これはインストール済みの拡張機能です"
 
 #: src/components/autopilot/FirmwareManager.vue
 msgid "This option will restore the default firmware for your platform."
-msgstr ""
+msgstr "このオプションは、お使いのプラットフォームのデフォルトファームウェアを復元します。"
 
 #: src/components/vehiclesetup/configuration/camera.vue
 msgid "This represents how much the PWM value changes per degree. Use this to verify against your servo specs. One that reaches +-45º with 1100-1900 PWM (all current BlueRobotics servos), has a ratio of 8.88µs per degree. This can help you make sure you measured the angles correctly."
-msgstr ""
+msgstr "これは 1 度あたりの PWM 値の変化量を表します。サーボの仕様と照合するために使用してください。1100-1900 PWM で ±45º に達するサーボ（現在のすべての Blue Robotics サーボ）の比率は 1 度あたり 8.88µs です。角度を正しく測定できたかの確認に役立ちます。"
 
 #: src/components/parameter-editor/ServoFunctionGpioEditor.vue
 #, javascript-format
 msgid "This servo's GPIO (<strong>${ 0 }</strong>) is currently in use by <strong>${ 1 }</strong>."
-msgstr ""
+msgstr "このサーボの GPIO（<strong>${ 0 }</strong>）は現在 <strong>${ 1 }</strong> によって使用されています。"
 
 #: src/components/kraken/modals/ExtensionSettingsModal.vue
 msgid "This source contains an invalid manifest URL."
-msgstr ""
+msgstr "このソースには無効なマニフェスト URL が含まれています。"
 
 #: src/components/video-manager/VideoStreamCreationDialog.vue
 msgid "This stream uses MJPEG or uncompressed video. Cockpit can't play these formats, and they require more network bandwidth. We recommend switching to H.264 or H.265."
-msgstr ""
+msgstr "このストリームは MJPEG または非圧縮ビデオを使用しています。Cockpit はこれらの形式を再生できず、より多くのネットワーク帯域幅を必要とします。H.264 または H.265 に切り替えることをお勧めします。"
 
 #: src/components/health/SelfHealthTest.vue
 msgid "This vehicle is running its \"factory\" version of BlueOS. This generally means something went wrong, and the system reverted to this version in order to recover. Please file an issue at <a href='https://github.com/bluerobotics/BlueOS/issues' target='_blank'>BlueOS/issues</a> or post on our <a href='https://discuss.bluerobotics.com/c/bluerobotics-software/blue-os/85' target='_blank'>forum</a>. Please include the <a href='#' class='js-download-logs'>System logs</a> if possible, and what you were doing when this happened."
-msgstr ""
+msgstr "このビークルは BlueOS の「factory」バージョンで動作しています。通常これは何らかの問題が発生し、復旧のためにシステムがこのバージョンに戻ったことを意味します。<a href='https://github.com/bluerobotics/BlueOS/issues' target='_blank'>BlueOS/issues</a> で issue を作成するか、<a href='https://discuss.bluerobotics.com/c/bluerobotics-software/blue-os/85' target='_blank'>フォーラム</a>に投稿してください。可能であれば<a href='#' class='js-download-logs'>システムログ</a>と、問題発生時に行っていた操作を添えてください。"
 
 #: src/components/kraken/modals/ExtensionDetailsModal.vue
 msgid "This version is not compatible with current machine running BlueOS"
-msgstr ""
+msgstr "このバージョンは、BlueOS を実行している現在のマシンと互換性がありません"
 
 #: src/components/vehiclesetup/overview/ParamSets.vue
 msgid "This will effectively wipe your \"eeprom\". You will lose all your parameters, vehicle setup, and calibrations. Use this if you don't know which parameters you changed and need a clean start."
-msgstr ""
+msgstr "これにより \"eeprom\" が実質的に消去されます。すべてのパラメータ、ビークルのセットアップ、キャリブレーションが失われます。どのパラメータを変更したかわからず、最初からやり直す必要がある場合に使用してください。"
 
 #: src/components/video-manager/VideoThumbnail.vue
 msgid "Thumbnails disabled for this source."
-msgstr ""
+msgstr "このソースではサムネイルが無効になっています。"
 
 #: src/components/system-information/AboutThisSystem.vue
 msgid "Time"
-msgstr ""
+msgstr "時刻"
 
 #: src/components/vehiclesetup/configuration/camera.vue
 msgid "To find the physical limits of the servo, move the camera to the minimum and maximum positions, then adjust the minimum/maximum PWMs values until it reaches the furthest it can move without hitting other components."
-msgstr ""
+msgstr "サーボの物理的な限界を確認するには、カメラを最小位置と最大位置に動かし、他の部品に当たらずに動かせる最も遠い位置に達するまで最小/最大 PWM 値を調整してください。"
 
 #: src/components/cloud/CloudTrayMenu.vue
 msgid "To use the cloud features of the Ground Control you need to install it."
-msgstr ""
+msgstr "Ground Control のクラウド機能を使用するには、インストールが必要です。"
 
 #: src/components/wifi/WifiManager.vue
 msgid "Toggle hotspot"
-msgstr ""
+msgstr "ホットスポットを切り替え"
 
 #: src/components/kraken/modals/ExtensionSettingsModal.vue
 msgid "Top ones have higher priority."
-msgstr ""
+msgstr "上にあるものほど優先度が高くなります。"
 
 #: src/components/health/HealthTrayMenu.vue
 msgid "Total:"
-msgstr ""
+msgstr "合計:"
 
 #: src/components/app/ReportMenu.vue
 msgid "Track changes, contribute, and get notified when fixed"
-msgstr ""
+msgstr "変更を追跡し、貢献し、修正時に通知を受け取れます"
 
 #: src/components/vehiclesetup/configuration/failsafes/Failsafes.vue
 msgid "Triggers when a crash has occurred."
-msgstr ""
+msgstr "衝突が発生したときに作動します。"
 
 #: src/components/vehiclesetup/configuration/failsafes/Failsafes.vue
 msgid "Triggers when a leak is detected. We recommend keeping control electronics dry."
-msgstr ""
+msgstr "浸水が検知されたときに作動します。制御用電子機器は乾燥した状態に保つことをお勧めします。"
 
 #: src/components/vehiclesetup/configuration/failsafes/Failsafes.vue
 msgid "Triggers when the EKF variances surpass a given threshold, so it loses trust in its state estimates."
-msgstr ""
+msgstr "EKF の分散が所定のしきい値を超え、状態推定の信頼性が失われたときに作動します。"
 
 #: src/components/vehiclesetup/configuration/failsafes/Failsafes.vue
 msgid "Triggers when the internal pressure is too high. This may help to detect a leak, and to avoid rapid unplanned disassembly."
-msgstr ""
+msgstr "内部圧力が高すぎるときに作動します。浸水の検知や、予期しない急激な破損の防止に役立つ場合があります。"
 
 #: src/components/vehiclesetup/configuration/failsafes/Failsafes.vue
 msgid "Triggers when the internal temperature is too high. This may help to prevent damage to electronics due to overheating."
-msgstr ""
+msgstr "内部温度が高すぎるときに作動します。過熱による電子機器の損傷を防ぐのに役立つ場合があります。"
 
 #: src/components/vehiclesetup/configuration/failsafes/Failsafes.vue
 msgid "Triggers when the vehicle does not receive a heartbeat from the GCS within the timeout (default 3 seconds)."
-msgstr ""
+msgstr "タイムアウト時間（デフォルト 3 秒）内に GCS からハートビートを受信しなかったときに作動します。"
 
 #: src/components/vehiclesetup/configuration/failsafes/Failsafes.vue
 msgid "Triggers when the vehicle does not receive any pilot input for a given amount of time."
-msgstr ""
+msgstr "一定時間パイロットからの入力を受信しなかったときに作動します。"
 
 #: src/components/vehiclesetup/configuration/failsafes/Failsafes.vue
 msgid "Triggers when the voltage goes below specified thresholds. This can help to avoid damage to the battery and potentially loss of the vehicle."
-msgstr ""
+msgstr "電圧が指定したしきい値を下回ったときに作動します。バッテリーの損傷やビークルの喪失を防ぐのに役立ちます。"
 
 #: src/components/kraken/BackAlleyTab.vue
 msgid "Try Again"
-msgstr ""
+msgstr "再試行"
 
 #: src/components/app/DnsConfigurationMenu.vue
 msgid "Try to fetch DNS namservers from the host"
-msgstr ""
+msgstr "ホストから DNS ネームサーバーの取得を試みます"
 
 #: src/components/version-chooser/VersionChooser.vue
 #, javascript-format
 msgid "Turn on Pirate mode to view all available BlueOS versions, including previous installs stored onboard, as well as past and current stable, beta, and development releases downloadable from ${ 0 }."
-msgstr ""
+msgstr "Pirate モードをオンにすると、オンボードに保存されている以前のインストールや、${ 0 } からダウンロード可能な過去および現在の stable、beta、development リリースなど、利用可能なすべての BlueOS バージョンを表示できます。"
 
 #: src/components/parameter-editor/RelaySetup.vue
 msgid "Turn relay off"
-msgstr ""
+msgstr "リレーをオフにする"
 
 #: src/components/parameter-editor/RelaySetup.vue
 msgid "Turn relay on"
-msgstr ""
+msgstr "リレーをオンにする"
 
 #: src/components/logs/LogManager.vue
 #: src/components/vehiclesetup/overview/BaroCalib.vue
 #: src/components/vehiclesetup/overview/OnboardSensors.vue
 msgid "Type"
-msgstr ""
+msgstr "タイプ"
 
 #: src/components/vehiclesetup/overview/BaroCalib.vue
 #: src/components/vehiclesetup/overview/OnboardSensors.vue
 msgid "UNKNOWN"
-msgstr ""
+msgstr "不明"
 
 #: src/views/SystemInformationView.vue
 msgid "USB"
@@ -3266,401 +3269,401 @@ msgstr ""
 #: src/components/system-information/Usb.vue
 #, javascript-format
 msgid "USB Bus ${ 0 }"
-msgstr ""
+msgstr "USB バス ${ 0 }"
 
 #: src/components/vehiclesetup/configuration/compass/ArdupilotMavlinkCompassSetup.vue
 msgid "Unable to get calibration status - something went wrong."
-msgstr ""
+msgstr "キャリブレーションの状態を取得できません。問題が発生しました。"
 
 #: src/components/kraken/cards/InstalledExtensionCard.vue
 #: src/components/kraken/modals/ExtensionDetailsModal.vue
 msgid "Uninstall"
-msgstr ""
+msgstr "アンインストール"
 
 #: src/components/parameter-editor/ParameterLabel.vue
 #, javascript-format
 msgid "Units: ${ 0 }"
-msgstr ""
+msgstr "単位: ${ 0 }"
 
 #: src/components/system-information/Usb.vue
 msgid "Unknown error"
-msgstr ""
+msgstr "不明なエラー"
 
 #: src/components/system-information/Firmware.vue
 #: src/components/version-chooser/VersionCard.vue
 msgid "Up to date"
-msgstr ""
+msgstr "最新"
 
 #: src/components/system-information/Firmware.vue
 #: src/components/version-chooser/VersionCard.vue
 msgid "Update"
-msgstr ""
+msgstr "更新"
 
 #: src/components/version-chooser/VersionCard.vue
 msgid "Update Bootstrap"
-msgstr ""
+msgstr "ブートストラップを更新"
 
 #: src/components/kraken/modals/ExtensionSettingsModal.vue
 msgid "Update Source"
-msgstr ""
+msgstr "ソースを更新"
 
 #: src/components/wizard/Wizard.vue
 msgid "Update boat firmware"
-msgstr ""
+msgstr "ボートのファームウェアを更新"
 
 #: src/components/autopilot/EndpointCreationDialog.vue
 msgid "Update endpoint"
-msgstr ""
+msgstr "エンドポイントを更新"
 
 #: src/menus.ts
 msgid "Update flight controller firmware, select the active autopilot, and start/stop ArduPilot (if using Navigator or SITL)."
-msgstr ""
+msgstr "フライトコントローラーのファームウェアの更新、使用するオートパイロットの選択、ArduPilot の起動/停止（Navigator または SITL 使用時）を行います。"
 
 #: src/components/app/NewVersionNotificator.vue
 #: src/components/kraken/cards/InstalledExtensionCard.vue
 #, javascript-format
 msgid "Update to ${ 0 }"
-msgstr ""
+msgstr "${ 0 } に更新"
 
 #: src/components/kraken/cards/StoreExtensionCard.vue
 #, javascript-format
 msgid "Update to <strong style='white-space: nowrap;'>${ 0 }</strong>"
-msgstr ""
+msgstr "<strong style='white-space: nowrap;'>${ 0 }</strong> に更新"
 
 #: src/components/version-chooser/VersionCard.vue
 #, javascript-format
 msgid "Update to latest ${ 0 }"
-msgstr ""
+msgstr "最新の ${ 0 } に更新"
 
 #: src/components/version-chooser/VersionCard.vue
 msgid "Updating bootstrap is only recommended between stable versions."
-msgstr ""
+msgstr "ブートストラップの更新は、stable バージョン間でのみ推奨されます。"
 
 #: src/components/version-chooser/VersionChooser.vue
 msgid "Upload"
-msgstr ""
+msgstr "アップロード"
 
 #: src/views/ExtensionManagerView.vue
 msgid "Upload a Kraken-compatible .tar archive to sideload an extension."
-msgstr ""
+msgstr "Kraken 互換の .tar アーカイブをアップロードして、拡張機能をサイドロードします。"
 
 #: src/views/ExtensionManagerView.vue
 msgid "Upload extension .tar file to onboard computer"
-msgstr ""
+msgstr "拡張機能の .tar ファイルをオンボードコンピューターにアップロード"
 
 #: src/views/ExtensionManagerView.vue
 msgid "Upload file"
-msgstr ""
+msgstr "ファイルをアップロード"
 
 #: src/components/autopilot/FirmwareManager.vue
 msgid "Upload firmware file"
-msgstr ""
+msgstr "ファームウェアファイルをアップロード"
 
 #: src/components/speedtest/InternetSpeedTest.vue
 msgid "Upload speed to internet"
-msgstr ""
+msgstr "インターネットへのアップロード速度"
 
 #: src/components/speedtest/NetworkSpeedTest.vue
 msgid "Upload speed to vehicle"
-msgstr ""
+msgstr "ビークルへのアップロード速度"
 
 #: src/components/vehiclesetup/configuration/compass/AutoCoordinateDetector.vue
 msgid "Use GeoIP coordinates"
-msgstr ""
+msgstr "GeoIP 座標を使用"
 
 #: src/components/app/PirateModeMenu.vue
 msgid "Use Pirate Mode to show hidden pages and advanced settings. Pirate powers should be used with care."
-msgstr ""
+msgstr "Pirate モードを使用すると、非表示のページと詳細設定が表示されます。Pirate の力は慎重に使用してください。"
 
 #: src/components/kraken/BazaarTab.vue
 msgid "Use the cloud icon in the top right corner to configure Major Tom."
-msgstr ""
+msgstr "右上のクラウドアイコンから Major Tom を設定してください。"
 
 #: src/components/vehiclesetup/configuration/compass/AutoCoordinateDetector.vue
 msgid "Use these coordinates"
-msgstr ""
+msgstr "この座標を使用"
 
 #: src/components/app/DnsConfigurationMenu.vue
 msgid "Use this to prevent other Linux services (like dnsmasq or dhcpcd) from automatically changing the nameservers"
-msgstr ""
+msgstr "他の Linux サービス（dnsmasq や dhcpcd など）がネームサーバーを自動的に変更しないようにします"
 
 #: src/components/version-chooser/DockerLogin.vue
 msgid "Used by root user"
-msgstr ""
+msgstr "root ユーザーが使用中"
 
 #: src/menus.ts
 msgid "Used for forwarding UDP NMEA streams into ArduPilot."
-msgstr ""
+msgstr "UDP の NMEA ストリームを ArduPilot に転送するために使用します。"
 
 #: src/components/vehiclesetup/overview/BaroCalib.vue
 #: src/components/vehiclesetup/overview/OnboardSensors.vue
 msgid "Used to estimate altitude/depth"
-msgstr ""
+msgstr "高度/深度の推定に使用されます"
 
 #: src/components/kraken/cards/InstalledExtensionCard.vue
 msgid "User Custom Settings"
-msgstr ""
+msgstr "ユーザーカスタム設定"
 
 #: src/components/system-information/Firmware.vue
 msgid "VL085 Firmware (USB Controller):"
-msgstr ""
+msgstr "VL085 ファームウェア（USB コントローラー）:"
 
 #: src/components/vehiclesetup/configuration/compass/AutoCoordinateDetector.vue
 msgid "Valid GPS position"
-msgstr ""
+msgstr "有効な GPS 位置"
 
 #: src/components/parameter-editor/ParameterLoader.vue
 #: src/components/vehiclesetup/PwmSetup.vue
 #: src/components/vehiclesetup/configuration/compass/CompassParams.vue
 #: src/components/wizard/DefaultParamLoader.vue
 msgid "Value"
-msgstr ""
+msgstr "値"
 
 #: src/components/vehiclesetup/overview/VehicleInfo.vue
 msgid "Vehicle"
-msgstr ""
+msgstr "ビークル"
 
 #: src/components/vehiclesetup/Configure.vue
 msgid "Vehicle Body"
-msgstr ""
+msgstr "ビークル本体"
 
 #: src/components/vehiclesetup/configuration/power/BatteryCard.vue
 msgid "Vehicle Current:"
-msgstr ""
+msgstr "ビークルの電流:"
 
 #: src/menus.ts
 msgid "Vehicle Setup"
-msgstr ""
+msgstr "ビークルのセットアップ"
 
 #: src/components/vehiclesetup/configuration/power/BatteryCard.vue
 msgid "Vehicle Voltage:"
-msgstr ""
+msgstr "ビークルの電圧:"
 
 #: src/menus.ts
 msgid "Vehicle and Peripherals setup. Includes sensor calibrations and Motors/Peripherals mapping."
-msgstr ""
+msgstr "ビークルと周辺機器のセットアップです。センサーのキャリブレーションとモーター/周辺機器のマッピングが含まれます。"
 
 #: src/components/vehiclesetup/configuration/compass/AutoCoordinateDetector.vue
 msgid "Vehicle coordinates:"
-msgstr ""
+msgstr "ビークルの座標:"
 
 #: src/components/kraken/BackAlleyTab.vue
 #: src/components/kraken/BazaarTab.vue
 msgid "Vehicle is not connected to the internet."
-msgstr ""
+msgstr "ビークルがインターネットに接続されていません。"
 
 #: src/components/vehiclesetup/viewers/GenericViewer.vue
 msgid "Vehicle model not found"
-msgstr ""
+msgstr "ビークルモデルが見つかりません"
 
 #: src/components/app/VehicleRebootRequiredTrayMenu.vue
 msgid "Vehicle reboot required. Click to reboot."
-msgstr ""
+msgstr "ビークルの再起動が必要です。クリックして再起動します。"
 
 #: src/components/system-information/Firmware.vue
 msgid "Version:"
-msgstr ""
+msgstr "バージョン:"
 
 #: src/components/scanner/availableServicesTable.vue
 msgid "Versions"
-msgstr ""
+msgstr "バージョン"
 
 #: src/components/health/GpsTrayMenu.vue
 msgid "Vertical Accuracy"
-msgstr ""
+msgstr "垂直精度"
 
 #: src/components/health/GpsTrayMenu.vue
 msgid "Vertical position uncertainty"
-msgstr ""
+msgstr "垂直位置の不確かさ"
 
 #: src/components/vehiclesetup/overview/VideoOverview.vue
 msgid "Video"
-msgstr ""
+msgstr "ビデオ"
 
 #: src/components/video-manager/VideoManager.vue
 msgid "Video Manager Settings"
-msgstr ""
+msgstr "ビデオマネージャーの設定"
 
 #: src/menus.ts
 msgid "Video Streams"
-msgstr ""
+msgstr "ビデオストリーム"
 
 #: src/types/frontend_services.ts
 msgid "Video management service for BlueOS."
-msgstr ""
+msgstr "BlueOS 用のビデオ管理サービスです。"
 
 #: src/components/video-manager/VideoDevice.vue
 msgid "Video source is blocked"
-msgstr ""
+msgstr "ビデオソースはブロックされています"
 
 #: src/components/kraken/cards/InstalledExtensionCard.vue
 msgid "View Logs"
-msgstr ""
+msgstr "ログを表示"
 
 #: src/menus.ts
 msgid "View and modify vehicle parameters."
-msgstr ""
+msgstr "ビークルのパラメータを表示・変更します。"
 
 #: src/menus.ts
 msgid "View detailed MAVLink traffic coming from your vehicle."
-msgstr ""
+msgstr "ビークルからの MAVLink トラフィックを詳細に表示します。"
 
 #: src/components/system-information/Processes.vue
 msgid "Virt. Memory (kB)"
-msgstr ""
+msgstr "仮想メモリ (kB)"
 
 #: src/components/vehiclesetup/overview/PowerInfo.vue
 msgid "Voltage Multiplier:"
-msgstr ""
+msgstr "電圧乗数:"
 
 #: src/components/vehiclesetup/overview/PowerInfo.vue
 msgid "Voltage Pin:"
-msgstr ""
+msgstr "電圧ピン:"
 
 #: src/components/health/HealthTrayMenu.vue
 #: src/components/vehiclesetup/overview/PowerInfo.vue
 msgid "Voltage:"
-msgstr ""
+msgstr "電圧:"
 
 #: src/components/common/WarningDialog.vue
 msgid "WARNING"
-msgstr ""
+msgstr "警告"
 
 #: src/components/speedtest/InternetSpeedTest.vue
 msgid "Waiting for internet connection.."
-msgstr ""
+msgstr "インターネット接続を待機しています.."
 
 #: src/components/parameter-editor/ParameterEditor.vue
 msgid "Waiting for metadata.."
-msgstr ""
+msgstr "メタデータを待機しています.."
 
 #: src/components/parameter-editor/ParameterEditor.vue
 msgid "Waiting for parameters.."
-msgstr ""
+msgstr "パラメータを待機しています.."
 
 #: src/components/scanner/availableServicesTable.vue
 msgid "Webpage"
-msgstr ""
+msgstr "Web ページ"
 
 #: src/App.vue
 #: src/components/wizard/Wizard.vue
 #: src/views/MainView.vue
 msgid "Welcome to BlueOS!"
-msgstr ""
+msgstr "BlueOS へようこそ！"
 
 #: src/components/wizard/Wizard.vue
 msgid "Welcome to BlueOS! In this setup wizard we will guide you through the initial configuration of your vehicle, including setting up the vehicle name, hostname, and <b>firmware</b>. If your vehicle is already set up, you can skip this wizard."
-msgstr ""
+msgstr "BlueOS へようこそ！このセットアップウィザードでは、ビークル名、ホスト名、<b>ファームウェア</b>の設定など、ビークルの初期設定をご案内します。ビークルのセットアップがすでに完了している場合は、このウィザードをスキップできます。"
 
 #: src/components/version-chooser/VersionCard.vue
 msgid "What's new?"
-msgstr ""
+msgstr "新機能"
 
 #: src/alerts/rules/network.ts
 msgid "WiFi is unavailable"
-msgstr ""
+msgstr "Wi-Fi が利用できません"
 
 #: src/App.vue
 msgid "Widgets"
-msgstr ""
+msgstr "ウィジェット"
 
 #: src/components/wifi/WifiManager.vue
 msgid "Wifi"
-msgstr ""
+msgstr "Wi-Fi"
 
 #: src/components/wifi/WifiTrayMenu.vue
 msgid "Wifi is disabled"
-msgstr ""
+msgstr "Wi-Fi は無効です"
 
 #: src/components/wifi/WifiTrayMenu.vue
 msgid "Wifi is disabled via environment variable."
-msgstr ""
+msgstr "Wi-Fi は環境変数によって無効化されています。"
 
 #: src/components/wifi/WifiSettingsDialog.vue
 msgid "Wifi settings"
-msgstr ""
+msgstr "Wi-Fi 設定"
 
 #: src/components/app/ReportMenu.vue
 msgid "With GitHub"
-msgstr ""
+msgstr "GitHub で報告"
 
 #: src/components/app/ReportMenu.vue
 msgid "With Simple Report"
-msgstr ""
+msgstr "簡易レポートで報告"
 
 #: src/components/system-information/Processes.vue
 msgid "Working directory"
-msgstr ""
+msgstr "作業ディレクトリ"
 
 #: src/components/parameter-editor/ParameterLoader.vue
 msgid "Write Parameters"
-msgstr ""
+msgstr "パラメータを書き込む"
 
 #: src/components/kraken/modals/ExtensionDetailsModal.vue
 msgid "Written by:"
-msgstr ""
+msgstr "作成者:"
 
 #: src/components/health/GpsTrayMenu.vue
 msgid "Yaw"
-msgstr ""
+msgstr "ヨー"
 
 #: src/components/parameter-editor/ParameterLoader.vue
 msgid "Yellow parameters are not available on your vehicle. They may not exist in your firmware version or may be disabled by a corresponding _ENABLE parameter."
-msgstr ""
+msgstr "黄色のパラメータはお使いのビークルでは利用できません。お使いのファームウェアバージョンに存在しないか、対応する _ENABLE パラメータによって無効化されている可能性があります。"
 
 #: src/components/kraken/modals/ExtensionDetailsModal.vue
 msgid "You are using a custom docker configuration"
-msgstr ""
+msgstr "カスタムの Docker 設定を使用しています"
 
 #: src/components/wizard/Wizard.vue
 msgid "Your vehicle is ready to use!"
-msgstr ""
+msgstr "ビークルの準備ができました！"
 
 #: src/components/cloud/CloudTrayMenu.vue
 msgid "already have a token"
-msgstr ""
+msgstr "すでにトークンをお持ちの"
 
 #: src/components/bridges/BridgeCreationDialog.vue
 msgid "an automatically assigned port"
-msgstr ""
+msgstr "自動的に割り当てられたポート"
 
 #: src/components/ethernet/InterfaceCard.vue
 msgid "dynamic IP"
-msgstr ""
+msgstr "動的 IP"
 
 #: src/components/vehiclesetup/MotorDetection.vue
 msgid "external movement"
-msgstr ""
+msgstr "外部からの動き"
 
 #: src/components/video-manager/VideoThumbnail.vue
 msgid "fetching..."
-msgstr ""
+msgstr "取得中..."
 
 #: src/components/vehiclesetup/MotorDetection.vue
 msgid "incorrect frame selection"
-msgstr ""
+msgstr "フレームの選択ミス"
 
 #: src/components/vehiclesetup/MotorDetection.vue
 msgid "incorrect motor mapping"
-msgstr ""
+msgstr "モーターマッピングの誤り"
 
 #: src/components/vehiclesetup/MotorDetection.vue
 msgid "no movement"
-msgstr ""
+msgstr "動きなし"
 
 #: src/components/parameter-editor/ServoFunctionGpioEditor.vue
 msgid "nothing"
-msgstr ""
+msgstr "なし"
 
 #: src/components/vehiclesetup/MotorDetection.vue
 msgid "poor movement estimation"
-msgstr ""
+msgstr "動きの推定が不十分"
 
 #: src/components/ethernet/InterfaceCard.vue
 msgid "static IP"
-msgstr ""
+msgstr "静的 IP"
 
 #: src/components/cloud/CloudTrayMenu.vue
 msgid "want to change your token"
-msgstr ""
+msgstr "トークンを変更したい"
 
