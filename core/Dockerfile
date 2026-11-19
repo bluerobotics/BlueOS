@@ -147,6 +147,9 @@ set -e
     RCFILE_PATH="/etc/blueosrc"
     echo "export GIT_DESCRIBE_TAGS=$GIT_DESCRIBE_TAGS" >> $RCFILE_PATH
     echo "export HISTFILE=/etc/blueos/.bash_history" >> $RCFILE_PATH
+    # The terminal shell lives in tmux and never exits cleanly, so write history on every command
+    echo "shopt -s histappend" >> $RCFILE_PATH
+    echo "export PROMPT_COMMAND='history -a'" >> $RCFILE_PATH
     echo "export PATH=/usr/blueos/venv/bin:/usr/blueos/bin:$PATH" >> $RCFILE_PATH
     echo "export RUST_BACKTRACE=1" >> $RCFILE_PATH
 
