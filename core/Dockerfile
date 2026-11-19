@@ -150,6 +150,8 @@ set -e
     # The terminal shell lives in tmux and never exits cleanly, so write history on every command
     echo "shopt -s histappend" >> $RCFILE_PATH
     echo "export PROMPT_COMMAND='history -a'" >> $RCFILE_PATH
+    # start-blueos-core types run-service into the tmux shells on every boot
+    echo "export HISTIGNORE='run-service *'" >> $RCFILE_PATH
     echo "export PATH=/usr/blueos/venv/bin:/usr/blueos/bin:$PATH" >> $RCFILE_PATH
     echo "export RUST_BACKTRACE=1" >> $RCFILE_PATH
 
