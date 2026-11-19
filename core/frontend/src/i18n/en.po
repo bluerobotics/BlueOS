@@ -196,7 +196,6 @@ msgstr ""
 
 #: src/components/ethernet/AddressDeletionDialog.vue
 #: src/components/vehiclesetup/configuration/compass/CompassLearn.vue
-#: src/components/version-chooser/VersionCard.vue
 #: src/components/wizard/Wizard.vue
 msgid "Abort"
 msgstr ""
@@ -531,6 +530,10 @@ msgstr ""
 
 #: src/components/system-information/Processes.vue
 msgid "CPU (%)"
+msgstr ""
+
+#: src/widgets/CpuPie.vue
+msgid "CPU Usage"
 msgstr ""
 
 #: src/components/health/HealthTrayMenu.vue
@@ -1008,6 +1011,10 @@ msgstr ""
 msgid "Device: ${ 0 }"
 msgstr ""
 
+#: src/views/MainView.vue
+msgid "Digital Twin"
+msgstr ""
+
 #: src/components/ethernet/InterfaceCard.vue
 #: src/components/kraken/cards/InstalledExtensionCard.vue
 msgid "Disable"
@@ -1042,6 +1049,14 @@ msgstr ""
 
 #: src/components/app/ReportMenu.vue
 msgid "Discuss ideas with the community"
+msgstr ""
+
+#: src/menus.ts
+msgid "Disk"
+msgstr ""
+
+#: src/widgets/CpuPie.vue
+msgid "Disk Usage"
 msgstr ""
 
 #: src/components/kraken/cards/InstalledExtensionCard.vue
@@ -1216,6 +1231,10 @@ msgstr ""
 msgid "Errors:"
 msgstr ""
 
+#: src/views/MainView.vue
+msgid "Ethernet Status"
+msgstr ""
+
 #: src/components/notifications/EventLogModal.vue
 #: src/components/notifications/NotificationManager.vue
 msgid "Event log"
@@ -1364,10 +1383,6 @@ msgstr ""
 msgid "Free up space by removing old logs"
 msgstr ""
 
-#: src/components/health/HealthTrayMenu.vue
-msgid "Free:"
-msgstr ""
-
 #: src/views/SettingsView.vue
 #, javascript-format
 msgid "Freed: ${ 0 }"
@@ -1422,10 +1437,6 @@ msgstr ""
 msgid "GeoIP coordinates:"
 msgstr ""
 
-#: src/components/version-chooser/VersionChooser.vue
-msgid "Github's CI"
-msgstr ""
-
 #: src/components/cloud/CloudTrayMenu.vue
 msgid "Go to BlueOS Cloud"
 msgstr ""
@@ -1452,6 +1463,11 @@ msgstr ""
 
 #: src/components/version-chooser/VersionCard.vue
 msgid "Hide release notes"
+msgstr ""
+
+#: src/components/health/HealthTrayMenu.vue
+#, javascript-format
+msgid "High disk usage! (${ 0 }%) please clean up the disk"
 msgstr ""
 
 #: src/components/vehiclesetup/configuration/compass/LevelHorizonCalibration.vue
@@ -1555,10 +1571,6 @@ msgstr ""
 
 #: src/components/vehiclesetup/overview/OnboardSensors.vue
 msgid "Inertial Measurement Unit"
-msgstr ""
-
-#: src/components/version-chooser/VersionCard.vue
-msgid "Info"
 msgstr ""
 
 #: src/components/bridges/BridgeCard.vue
@@ -1870,7 +1882,7 @@ msgid "Manage your video devices and video streams."
 msgstr ""
 
 #: src/components/version-chooser/VersionChooser.vue
-msgid "Manual upload"
+msgid "Manual Upload"
 msgstr ""
 
 #: src/types/frontend_services.ts
@@ -1903,6 +1915,10 @@ msgstr ""
 
 #: src/components/system-information/Processes.vue
 msgid "Memory (kB)"
+msgstr ""
+
+#: src/widgets/CpuPie.vue
+msgid "Memory Usage"
 msgstr ""
 
 #: src/components/kraken/cards/InstalledExtensionCard.vue
@@ -2240,6 +2256,10 @@ msgstr ""
 msgid "Open Settings"
 msgstr ""
 
+#: src/views/Autopilot.vue
+msgid "Open documentation"
+msgstr ""
+
 #: src/components/logs/LogManager.vue
 msgid "Open log in UAV Log Viewer"
 msgstr ""
@@ -2332,10 +2352,6 @@ msgstr ""
 
 #: src/views/ExtensionManagerView.vue
 msgid "Pending"
-msgstr ""
-
-#: src/components/health/HealthTrayMenu.vue
-msgid "Percentage (Full):"
 msgstr ""
 
 #: src/components/vehiclesetup/configuration/compass/ArdupilotMavlinkCompassSetup.vue
@@ -3130,7 +3146,12 @@ msgstr ""
 msgid "System"
 msgstr ""
 
+#: src/components/vehiclesetup/overview/VehicleInfo.vue
+msgid "System ID"
+msgstr ""
+
 #: src/menus.ts
+#: src/views/MainView.vue
 msgid "System Information"
 msgstr ""
 
@@ -3299,7 +3320,6 @@ msgid "This feature is disabled because the vehicle is armed."
 msgstr ""
 
 #: src/App.vue
-#: src/views/MainView.vue
 msgid "This is an advanced feature"
 msgstr ""
 
@@ -3386,10 +3406,6 @@ msgstr ""
 
 #: src/components/kraken/modals/ExtensionSettingsModal.vue
 msgid "Top ones have higher priority."
-msgstr ""
-
-#: src/components/health/HealthTrayMenu.vue
-msgid "Total:"
 msgstr ""
 
 #: src/components/app/ReportMenu.vue
@@ -3510,7 +3526,6 @@ msgid "Up to date"
 msgstr ""
 
 #: src/components/system-information/Firmware.vue
-#: src/components/version-chooser/VersionCard.vue
 msgid "Update"
 msgstr ""
 
@@ -3550,10 +3565,6 @@ msgstr ""
 #: src/components/version-chooser/VersionCard.vue
 #, javascript-format
 msgid "Update to latest ${ 0 }"
-msgstr ""
-
-#: src/components/version-chooser/VersionCard.vue
-msgid "Updating bootstrap is only recommended between stable versions."
 msgstr ""
 
 #: src/components/version-chooser/VersionChooser.vue
@@ -3652,6 +3663,10 @@ msgstr ""
 msgid "Vehicle Current:"
 msgstr ""
 
+#: src/components/vehiclesetup/Configure.vue
+msgid "Vehicle ID"
+msgstr ""
+
 #: src/menus.ts
 msgid "Vehicle Setup"
 msgstr ""
@@ -3735,6 +3750,10 @@ msgstr ""
 msgid "Virt. Memory (kB)"
 msgstr ""
 
+#: src/menus.ts
+msgid "Visualize disk usage and delete files/folders."
+msgstr ""
+
 #: src/components/vehiclesetup/overview/PowerInfo.vue
 msgid "Voltage Multiplier:"
 msgstr ""
@@ -3784,6 +3803,16 @@ msgstr ""
 
 #: src/components/version-chooser/VersionCard.vue
 msgid "What's new?"
+msgstr ""
+
+#: src/components/version-chooser/VersionChooser.vue
+msgid ""
+"When selecting the .tar artifact, make sure it matches your hardware "
+"architecture (armv7, arm64, or amd64)"
+msgstr ""
+
+#: src/views/MainView.vue
+msgid "WiFi Status"
 msgstr ""
 
 #: src/alerts/rules/network.ts
