@@ -15,6 +15,7 @@ from loguru import logger
 from utils.dockerhub import (
     DNS_FAILURE_MESSAGE,
     TagFetcher,
+    get_current_arch,
     is_name_resolution_error,
     remote_tags_error_message,
 )
@@ -113,19 +114,17 @@ class VersionChooser:
 
     async def is_valid_version(self, image: str) -> Tuple[bool, str]:
         """
-        Check if the image exists locally.
+        Check if the image exists locally and runs on this vehicle.
 
         Args:
             image (str): the repository of the image
 
         Returns:
-            Tuple[bool, str]: (True, image) if the image exists, (False, error_msg) otherwise
+            Tuple[bool, str]: (True, image) if the image is valid, (False, error_msg) otherwise
         """
 
         try:
-            await self.client.images.inspect(image)
-
-            return True, image
+            image_info = await self.client.images.inspect(image)
         except Exception:
             error_msg = (
                 f"Trying to update to {image} but this image doesn't exist locally. "
@@ -133,6 +132,14 @@ class VersionChooser:
             )
             logger.critical(error_msg)
             return False, error_msg
+
+        # docker load and private pulls skip the architecture filter of the remote tags
+        if image_info["Architecture"] != get_current_arch():
+            error_msg = f"{image} is built for {image_info['Architecture']}, this vehicle runs {get_current_arch()}."
+            logger.critical(error_msg)
+            return False, error_msg
+
+        return True, image
 
     async def pull_version(self, request: web.Request, repository: str, tag: str) -> web.StreamResponse:
         """Applies a new version.
