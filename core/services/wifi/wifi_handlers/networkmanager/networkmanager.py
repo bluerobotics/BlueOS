@@ -337,6 +337,7 @@ class NetworkManagerWifi(AbstractWifiManager):
             "create_ap",
             "-n",  # self._ap_interface,  # Uncomment for routing internet (seemed to cause communication issues when starting hotspot)
             "uap0",  # Use physical interface for internet
+            "--no-virt",  # Default for Pi's brcmfmac; other chips get an extra AP on uap0 that breaks wlan0
             "-g",
             "192.168.42.1",  # IPv4 Gateway for the Access Point
             "--redirect-to-localhost",  # Redirect all traffic to localhost, captive-portal style
