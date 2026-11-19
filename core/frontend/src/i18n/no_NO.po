@@ -10,7 +10,7 @@ msgstr ""
 "X-Crowdin-File-ID: 24\n"
 "Project-Id-Version: blueos\n"
 "Language-Team: Norwegian\n"
-"PO-Revision-Date: 2026-11-19 00:33\n"
+"PO-Revision-Date: 2026-11-19 01:54\n"
 
 #: src/components/notifications/NotificationGroupCard.vue
 #, javascript-format
@@ -187,7 +187,6 @@ msgstr "BRUK"
 
 #: src/components/ethernet/AddressDeletionDialog.vue
 #: src/components/vehiclesetup/configuration/compass/CompassLearn.vue
-#: src/components/version-chooser/VersionCard.vue
 #: src/components/wizard/Wizard.vue
 msgid "Abort"
 msgstr "Avbryt"
@@ -501,6 +500,10 @@ msgstr "SELSKAPER"
 
 #: src/components/system-information/Processes.vue
 msgid "CPU (%)"
+msgstr ""
+
+#: src/widgets/CpuPie.vue
+msgid "CPU Usage"
 msgstr ""
 
 #: src/components/health/HealthTrayMenu.vue
@@ -957,6 +960,10 @@ msgstr "Enhetskontroller"
 msgid "Device: ${ 0 }"
 msgstr "Enhet: ${ 0 }"
 
+#: src/views/MainView.vue
+msgid "Digital Twin"
+msgstr ""
+
 #: src/components/ethernet/InterfaceCard.vue
 #: src/components/kraken/cards/InstalledExtensionCard.vue
 msgid "Disable"
@@ -992,6 +999,14 @@ msgstr "Koble fra"
 #: src/components/app/ReportMenu.vue
 msgid "Discuss ideas with the community"
 msgstr "Diskuter ideer med fellesskapet"
+
+#: src/menus.ts
+msgid "Disk"
+msgstr ""
+
+#: src/widgets/CpuPie.vue
+msgid "Disk Usage"
+msgstr ""
 
 #: src/components/kraken/cards/InstalledExtensionCard.vue
 msgid "Disk usage"
@@ -1165,6 +1180,10 @@ msgstr "Feil: ${ 0 }"
 msgid "Errors:"
 msgstr "Feil:"
 
+#: src/views/MainView.vue
+msgid "Ethernet Status"
+msgstr ""
+
 #: src/components/notifications/EventLogModal.vue
 #: src/components/notifications/NotificationManager.vue
 msgid "Event log"
@@ -1311,10 +1330,6 @@ msgstr "Frigjør plass ved å fjerne MAVLink-logger"
 msgid "Free up space by removing old logs"
 msgstr "Frigjør plass ved å fjerne gamle logger"
 
-#: src/components/health/HealthTrayMenu.vue
-msgid "Free:"
-msgstr "Ledig:"
-
 #: src/views/SettingsView.vue
 #, javascript-format
 msgid "Freed: ${ 0 }"
@@ -1364,10 +1379,6 @@ msgstr "GeoIP-koordinater estimeres ut fra IP-adressen din."
 msgid "GeoIP coordinates:"
 msgstr "GeoIP-koordinater:"
 
-#: src/components/version-chooser/VersionChooser.vue
-msgid "Github's CI"
-msgstr "GitHubs CI"
-
 #: src/components/cloud/CloudTrayMenu.vue
 msgid "Go to BlueOS Cloud"
 msgstr "Gå til BlueOS Cloud"
@@ -1395,6 +1406,11 @@ msgstr "Skjul"
 #: src/components/version-chooser/VersionCard.vue
 msgid "Hide release notes"
 msgstr "Skjul versjonsmerknader"
+
+#: src/components/health/HealthTrayMenu.vue
+#, javascript-format
+msgid "High disk usage! (${ 0 }%) please clean up the disk"
+msgstr ""
 
 #: src/components/vehiclesetup/configuration/compass/LevelHorizonCalibration.vue
 msgid "Horizon calibration trims the pitch and roll of the vehicle's inertial sensors to adjust for small deviations from level."
@@ -1487,10 +1503,6 @@ msgstr "Steg"
 #: src/components/vehiclesetup/overview/OnboardSensors.vue
 msgid "Inertial Measurement Unit"
 msgstr "Treghetsmåleenhet"
-
-#: src/components/version-chooser/VersionCard.vue
-msgid "Info"
-msgstr ""
 
 #: src/components/bridges/BridgeCard.vue
 #: src/components/bridges/BridgeCreationDialog.vue
@@ -1786,8 +1798,8 @@ msgid "Manage your video devices and video streams."
 msgstr "Administrer videoenhetene og videostrømmene dine."
 
 #: src/components/version-chooser/VersionChooser.vue
-msgid "Manual upload"
-msgstr "Manuell opplasting"
+msgid "Manual Upload"
+msgstr ""
 
 #: src/types/frontend_services.ts
 msgid "MavLink communication layer over REST API."
@@ -1817,6 +1829,10 @@ msgstr "Mål grensevinklene for rotasjon og skriv dem inn nedenfor. Dette lar Ar
 #: src/components/system-information/Processes.vue
 msgid "Memory (kB)"
 msgstr "Minne (kB)"
+
+#: src/widgets/CpuPie.vue
+msgid "Memory Usage"
+msgstr ""
 
 #: src/components/kraken/cards/InstalledExtensionCard.vue
 msgid "Memory usage"
@@ -2136,6 +2152,10 @@ msgstr "Bare når armert"
 msgid "Open Settings"
 msgstr "Åpne innstillinger"
 
+#: src/views/Autopilot.vue
+msgid "Open documentation"
+msgstr ""
+
 #: src/components/logs/LogManager.vue
 msgid "Open log in UAV Log Viewer"
 msgstr "Åpne loggen i UAV Log Viewer"
@@ -2227,10 +2247,6 @@ msgstr "Sti: ${ 0 }"
 #: src/views/ExtensionManagerView.vue
 msgid "Pending"
 msgstr "Venter"
-
-#: src/components/health/HealthTrayMenu.vue
-msgid "Percentage (Full):"
-msgstr "Prosent (full):"
 
 #: src/components/vehiclesetup/configuration/compass/ArdupilotMavlinkCompassSetup.vue
 msgid "Perform a full calibration of the selected compass(es) by manually spinning the vehicle around multiple times, about all 3 rotation axes."
@@ -2986,7 +3002,12 @@ msgstr "Bytt til ${ 0 }.local"
 msgid "System"
 msgstr ""
 
+#: src/components/vehiclesetup/overview/VehicleInfo.vue
+msgid "System ID"
+msgstr ""
+
 #: src/menus.ts
+#: src/views/MainView.vue
 msgid "System Information"
 msgstr "Systeminformasjon"
 
@@ -3125,7 +3146,6 @@ msgid "This feature is disabled because the vehicle is armed."
 msgstr "Denne funksjonen er deaktivert fordi fartøyet er armert."
 
 #: src/App.vue
-#: src/views/MainView.vue
 msgid "This is an advanced feature"
 msgstr "Dette er en avansert funksjon"
 
@@ -3189,10 +3209,6 @@ msgstr "Slå hotspot av/på"
 #: src/components/kraken/modals/ExtensionSettingsModal.vue
 msgid "Top ones have higher priority."
 msgstr "De øverste har høyest prioritet."
-
-#: src/components/health/HealthTrayMenu.vue
-msgid "Total:"
-msgstr "Totalt:"
 
 #: src/components/app/ReportMenu.vue
 msgid "Track changes, contribute, and get notified when fixed"
@@ -3295,7 +3311,6 @@ msgid "Up to date"
 msgstr "Oppdatert"
 
 #: src/components/system-information/Firmware.vue
-#: src/components/version-chooser/VersionCard.vue
 msgid "Update"
 msgstr "Oppdater"
 
@@ -3334,10 +3349,6 @@ msgstr "Oppdater til <strong style='white-space: nowrap;'>${ 0 }</strong>"
 #, javascript-format
 msgid "Update to latest ${ 0 }"
 msgstr "Oppdater til nyeste ${ 0 }"
-
-#: src/components/version-chooser/VersionCard.vue
-msgid "Updating bootstrap is only recommended between stable versions."
-msgstr "Oppdatering av bootstrap anbefales bare mellom stabile versjoner."
 
 #: src/components/version-chooser/VersionChooser.vue
 msgid "Upload"
@@ -3431,6 +3442,10 @@ msgstr "Fartøyskrog"
 msgid "Vehicle Current:"
 msgstr "Fartøyets strøm:"
 
+#: src/components/vehiclesetup/Configure.vue
+msgid "Vehicle ID"
+msgstr ""
+
 #: src/menus.ts
 msgid "Vehicle Setup"
 msgstr "Fartøyoppsett"
@@ -3512,6 +3527,10 @@ msgstr "Vis detaljert MAVLink-trafikk fra fartøyet ditt."
 msgid "Virt. Memory (kB)"
 msgstr "Virt. minne (kB)"
 
+#: src/menus.ts
+msgid "Visualize disk usage and delete files/folders."
+msgstr ""
+
 #: src/components/vehiclesetup/overview/PowerInfo.vue
 msgid "Voltage Multiplier:"
 msgstr "Spenningsmultiplikator:"
@@ -3558,6 +3577,14 @@ msgstr "Velkommen til BlueOS! I denne oppsettsveiviseren hjelper vi deg gjennom 
 #: src/components/version-chooser/VersionCard.vue
 msgid "What's new?"
 msgstr "Hva er nytt?"
+
+#: src/components/version-chooser/VersionChooser.vue
+msgid "When selecting the .tar artifact, make sure it matches your hardware architecture (armv7, arm64, or amd64)"
+msgstr ""
+
+#: src/views/MainView.vue
+msgid "WiFi Status"
+msgstr ""
 
 #: src/alerts/rules/network.ts
 msgid "WiFi is unavailable"
