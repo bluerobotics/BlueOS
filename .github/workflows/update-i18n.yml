@@ -1,0 +1,52 @@
+on:
+  schedule:
+    # Run at midnight in Brazil (03:00 UTC) every day
+    - cron: '0 3 * * *'
+  workflow_dispatch:
+
+name: Update i18n source
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    if: github.repository == 'bluerobotics/BlueOS'
+
+    permissions:
+      contents: write
+      pull-requests: write
+
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - branch: master
+            title: 'i18n: Update english source'
+          - branch: 1.4-dev
+            title: '[1.4] i18n: Update english source'
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v6
+      with:
+        ref: ${{ matrix.branch }}
+        submodules: recursive
+
+    - uses: oven-sh/setup-bun@v2
+      with:
+        bun-version: 1.3.14
+
+    - name: Bun install
+      run: bun install --frozen-lockfile --cwd ./core/frontend
+
+    - name: Extract strings
+      run: bun run --cwd ./core/frontend i18n:extract
+
+    - name: Create pull request
+      uses: peter-evans/create-pull-request@v8
+      with:
+        branch: crowdin/update-i18n-source-${{ matrix.branch }}
+        base: ${{ matrix.branch }}
+        add-paths: core/frontend/src/i18n/en.po
+        commit-message: 'i18n: Update english source'
+        title: ${{ matrix.title }}
+        body: ''
+        delete-branch: true
