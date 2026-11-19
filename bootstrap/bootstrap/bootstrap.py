@@ -196,6 +196,8 @@ class Bootstrapper:
             except docker.errors.APIError as error:
                 warn(f"Error trying to pull an update image: {error}")
                 return False
+            # The pull can take longer than the core timeout
+            self.core_last_response_time = time.monotonic()
 
         logger.info(f"Starting {image_name}")
         # Remove image if name already exist
@@ -223,8 +225,6 @@ class Bootstrapper:
             return False
 
         logger.info(f"{component_name} ({docker_name}) started")
-        # Restart counter with new core
-        self.core_last_response_time = time.monotonic()
         return True
 
     def is_running(self, component: str) -> bool:
