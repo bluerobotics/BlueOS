@@ -138,6 +138,21 @@ async def test_set_version(write_mock: AsyncMock) -> None:
 
 
 @pytest.mark.asyncio
+async def test_set_version_other_architecture() -> None:
+    client = mock.AsyncMock()
+    client.images.inspect.return_value = {"Architecture": "mips64le"}
+    chooser = VersionChooser(client)
+
+    with mock.patch("builtins.open", mock.mock_open(read_data=SAMPLE_JSON)) as open_mock:
+        result = await chooser.set_version("bluerobotics/blueos-core", "master")
+
+    assert result.status_code == 412
+    assert "mips64le" in json.loads(result.body)["error"]
+    open_mock.assert_not_called()
+    client.containers.get.assert_not_called()
+
+
+@pytest.mark.asyncio
 @mock.patch("json.load", return_value={})
 async def test_set_version_invalid_settings(json_mock: mock.MagicMock) -> None:
     client = mock.MagicMock()
