@@ -10,72 +10,72 @@ msgstr ""
 "X-Crowdin-File-ID: 12\n"
 "Project-Id-Version: blueos\n"
 "Language-Team: Chinese Simplified\n"
-"PO-Revision-Date: 2026-11-14 03:47\n"
+"PO-Revision-Date: 2026-11-19 00:33\n"
 
 #: src/views/ExtensionManagerView.vue
 #, javascript-format
 msgid "${ 0 } ${ 1 } successfully."
-msgstr ""
+msgstr "${ 0 } ${ 1 }成功。"
 
 #: src/components/notifications/NotificationGroupCard.vue
 #, javascript-format
 msgid "${ 0 } (${ 1 } notifications)"
-msgstr ""
+msgstr "${ 0 }（${ 1 } 条通知）"
 
 #: src/components/health/GpsTrayMenu.vue
 #, javascript-format
 msgid "${ 0 } (Number of satellites: ${ 1 })"
-msgstr ""
+msgstr "${ 0 }（卫星数：${ 1 }）"
 
 #: src/components/system-information/NetworkCard.vue
 #, javascript-format
 msgid "${ 0 } / ${ 1 } total"
-msgstr ""
+msgstr "${ 0 } / 共 ${ 1 }"
 
 #: src/components/vehiclesetup/configuration/power/BatteryCard.vue
 #, javascript-format
 msgid "${ 0 } Advanced"
-msgstr ""
+msgstr "${ 0 } 高级"
 
 #: src/components/kraken/modals/ExtensionCreationModal.vue
 #, javascript-format
 msgid "${ 0 } Extension"
-msgstr ""
+msgstr "${ 0 }扩展"
 
 #: src/components/system-information/Usb.vue
 #, javascript-format
 msgid "${ 0 } device(s)"
-msgstr ""
+msgstr "${ 0 } 个设备"
 
 #: src/views/ExtensionManagerView.vue
 #, javascript-format
 msgid "${ 0 } installed successfully."
-msgstr ""
+msgstr "${ 0 } 安装成功。"
 
 #: src/components/vehiclesetup/configuration/lights.vue
 #, javascript-format
 msgid "${ 0 } steps result in a ${ 1 }% increase per button press."
-msgstr ""
+msgstr "每次按键 ${ 0 } 步，增加 ${ 1 }%。"
 
 #: src/components/parameter-editor/ParameterLoader.vue
 #, javascript-format
 msgid "${ 0 } to go"
-msgstr ""
+msgstr "还剩 ${ 0 }"
 
 #: src/views/ExtensionManagerView.vue
 #, javascript-format
 msgid "${ 0 } uninstalled successfully."
-msgstr ""
+msgstr "${ 0 } 卸载成功。"
 
 #: src/views/ExtensionManagerView.vue
 #, javascript-format
 msgid "${ 0 } updated successfully."
-msgstr ""
+msgstr "${ 0 } 更新成功。"
 
 #: src/components/cloud/CloudSyncStatusTab.vue
 #, javascript-format
 msgid "${ 0 } uploading • ${ 1 } waiting"
-msgstr ""
+msgstr "${ 0 } 个上传中 • ${ 1 } 个等待中"
 
 #: src/components/health/HealthTrayMenu.vue
 #: src/components/vehiclesetup/overview/OnboardSensors.vue
@@ -90,41 +90,43 @@ msgstr ""
 
 #: src/components/vehiclesetup/MotorDetection.vue
 msgid "- choose the frame that matches your vehicle (or make a custom one)"
-msgstr ""
+msgstr "- 选择与您的载具匹配的机架（或创建自定义机架）"
 
 #: src/components/vehiclesetup/MotorDetection.vue
 msgid "- ensure the ESC is powered and receiving valid signals"
-msgstr ""
+msgstr "- 确保电调已通电并接收到有效信号"
 
 #: src/components/vehiclesetup/MotorDetection.vue
 msgid "- ensure the frame's motion contribution factors suit the positions and orientations of your thrusters relative to the vehicle's centers of mass and volume (you may need to trim with ballast and/or buoyancy)"
-msgstr ""
+msgstr "- 确保机架的运动贡献系数与推进器相对于载具质心和浮心的位置及朝向相符（可能需要通过配重和/或浮力进行配平）"
 
 #: src/components/vehiclesetup/MotorDetection.vue
 msgid "- ensure the sensors are well calibrated"
-msgstr ""
+msgstr "- 确保传感器已正确校准"
 
 #: src/components/vehiclesetup/MotorDetection.vue
 msgid "- ensure the thruster is connected to the ESC"
-msgstr ""
+msgstr "- 确保推进器已连接到电调"
 
 #: src/components/vehiclesetup/MotorDetection.vue
 msgid "- ensure the thrusters are connected to the correct output channels of the flight controller, and in the correct order to match the frame numbering\n"
 "- load the recommended parameters for your frame"
-msgstr ""
+msgstr "- 确保推进器连接到飞控的正确输出通道，且顺序与机架编号一致\n"
+"- 为您的机架加载推荐参数"
 
 #: src/components/vehiclesetup/MotorDetection.vue
 msgid "- ensure the vehicle is in calm water\n"
 "- ensure the vehicle is not colliding with other objects"
-msgstr ""
+msgstr "- 确保载具处于平静水域\n"
+"- 确保载具未与其他物体碰撞"
 
 #: src/components/vehiclesetup/MotorDetection.vue
 msgid "- ensure the vehicle is in the water"
-msgstr ""
+msgstr "- 确保载具在水中"
 
 #: src/components/customization/ThemeCustomization.vue
 msgid ".glb file"
-msgstr ""
+msgstr ".glb 文件"
 
 #: src/components/vehiclesetup/viewers/GenericViewer.vue
 msgid "0deg 0deg 0deg"
@@ -136,11 +138,11 @@ msgstr ""
 
 #: src/components/customization/ThemeCustomization.vue
 msgid "3D model overrides"
-msgstr ""
+msgstr "3D 模型覆盖"
 
 #: src/components/vehiclesetup/viewers/GenericViewer.vue
 msgid "3D viewer unavailable"
-msgstr ""
+msgstr "3D 查看器不可用"
 
 #.  based on https://github.com/mavlink/qgroundcontrol/blob/Stable_V4.2/src/AutoPilotPlugins/APM/APMPowerComponent.qml
 #: src/components/vehiclesetup/configuration/power/BatteryCard.vue
@@ -154,39 +156,39 @@ msgstr ""
 
 #: src/components/vehiclesetup/configuration/compass/FullCompassCalibrator.vue
 msgid "<strong>Onboard Compass Calibration</strong> is the regular calibration used for ArduPilot vehicles. It requires spinning the vehicle around all axes, which allows it to calibrate the readings to the expected local magnetic field."
-msgstr ""
+msgstr "<strong>机载罗盘校准</strong>是 ArduPilot 载具使用的常规校准方式。它需要将载具绕所有轴旋转，从而将读数校准到预期的本地磁场。"
 
 #: src/components/vehiclesetup/overview/GyroCalib.vue
 msgid "A calibrated gyro should display a value of 0 on all axes when the vehicle is stationary. Symptoms of a mis-calibrated gyro include yaw drift and small attitude offsets."
-msgstr ""
+msgstr "载具静止时，已校准的陀螺仪在所有轴上应显示为 0。陀螺仪校准不当的症状包括偏航漂移和轻微的姿态偏差。"
 
 #: src/components/app/NewVersionNotificator.vue
 msgid "A new version is available!"
-msgstr ""
+msgstr "有新版本可用！"
 
 #: src/components/vehiclesetup/configuration/compass/CompassLearn.vue
 msgid "A valid global region is required for Compass Learn to estimate the local world magnetic field."
-msgstr ""
+msgstr "罗盘学习需要有效的全球区域来估算本地地磁场。"
 
 #: src/components/vehiclesetup/configuration/compass/FullCompassCalibrator.vue
 msgid "A valid global region/position is <strong>recomended</strong> for Onboard Calibration to estimate the local world magnetic field."
-msgstr ""
+msgstr "<strong>建议</strong>为机载校准提供有效的全球区域/位置，以估算本地地磁场。"
 
 #: src/components/vehiclesetup/configuration/compass/LargeVehicleCompassCalibrator.vue
 msgid "A valid global region/position is required to estimate the local world magnetic field."
-msgstr ""
+msgstr "需要有效的全球区域/位置来估算本地地磁场。"
 
 #: src/menus.ts
 msgid "A web-based console. Used mainly for debugging and development."
-msgstr ""
+msgstr "基于网页的控制台，主要用于调试和开发。"
 
 #: src/components/beacon/BeaconTrayMenu.vue
 msgid "A wired connection is available:"
-msgstr ""
+msgstr "有可用的有线连接："
 
 #: src/components/app/DnsConfigurationMenu.vue
 msgid "ADD DNS"
-msgstr ""
+msgstr "添加 DNS"
 
 #: src/components/vehiclesetup/OrientationPicker.vue
 msgid "AHRS_ORIENTATION"
@@ -194,159 +196,159 @@ msgstr ""
 
 #: src/components/scanner/availableServicesTable.vue
 msgid "API Documentation"
-msgstr ""
+msgstr "API 文档"
 
 #: src/components/app/DnsConfigurationMenu.vue
 msgid "APPLY"
-msgstr ""
+msgstr "应用"
 
 #: src/components/ethernet/AddressDeletionDialog.vue
 #: src/components/vehiclesetup/configuration/compass/CompassLearn.vue
 #: src/components/version-chooser/VersionCard.vue
 #: src/components/wizard/Wizard.vue
 msgid "Abort"
-msgstr ""
+msgstr "中止"
 
 #: src/components/wizard/Wizard.vue
 msgid "Abort wizard"
-msgstr ""
+msgstr "中止向导"
 
 #: src/components/wizard/Wizard.vue
 msgid "Aborting wizard"
-msgstr ""
+msgstr "正在中止向导"
 
 #: src/views/SystemInformationView.vue
 msgid "About"
-msgstr ""
+msgstr "关于"
 
 #: src/components/vehiclesetup/Configure.vue
 msgid "Accelerometer"
-msgstr ""
+msgstr "加速度计"
 
 #: src/components/vehiclesetup/configuration/accelerometer/FullAccelerometerCalibration.vue
 #: src/components/vehiclesetup/configuration/accelerometer/QuickAccelerometerCalibration.vue
 #: src/components/vehiclesetup/configuration/compass/LevelHorizonCalibration.vue
 msgid "Accelerometer Calibration"
-msgstr ""
+msgstr "加速度计校准"
 
 #: src/views/SettingsView.vue
 msgid "Access advanced features and hidden pages"
-msgstr ""
+msgstr "访问高级功能和隐藏页面"
 
 #: src/components/cloud/CloudTrayMenu.vue
 msgid "Account"
-msgstr ""
+msgstr "账户"
 
 #: src/components/version-chooser/DockerLogin.vue
 msgid "Accounts"
-msgstr ""
+msgstr "账户"
 
 #: src/components/logs/LogManager.vue
 msgid "Actions"
-msgstr ""
+msgstr "操作"
 
 #: src/components/ethernet/InterfaceCard.vue
 msgid "Active"
-msgstr ""
+msgstr "有效"
 
 #: src/types/frontend_services.ts
 msgid "Actual scanner for running services."
-msgstr ""
+msgstr "运行中服务的扫描器。"
 
 #: src/components/ethernet/InterfaceCard.vue
 msgid "Add"
-msgstr ""
+msgstr "添加"
 
 #: src/components/kraken/modals/ExtensionSettingsModal.vue
 msgid "Add a new source"
-msgstr ""
+msgstr "添加新源"
 
 #: src/components/app/DnsConfigurationMenu.vue
 msgid "Add one more DNS entry"
-msgstr ""
+msgstr "再添加一条 DNS 条目"
 
 #: src/components/video-manager/VideoDevice.vue
 msgid "Add stream"
-msgstr ""
+msgstr "添加视频流"
 
 #: src/components/autopilot/EndpointCreationDialog.vue
 #: src/components/vehiclesetup/overview/BaroCalib.vue
 #: src/components/vehiclesetup/overview/OnboardSensors.vue
 msgid "Address"
-msgstr ""
+msgstr "地址"
 
 #: src/components/vehiclesetup/configuration/power/BatteryCard.vue
 msgid "Adjust if the vehicle reports current draw when there is none flowing."
-msgstr ""
+msgstr "如果载具在没有电流时仍报告有电流消耗，请调整此项。"
 
 #: src/components/parameter-editor/ServoFunctionRangeEditor.vue
 msgid "Adjust the minimum, trim, and maximum PWM values for this servo"
-msgstr ""
+msgstr "调整此舵机的最小、中立和最大 PWM 值"
 
 #: src/views/SettingsView.vue
 msgid "Advanced Mode"
-msgstr ""
+msgstr "高级模式"
 
 #: src/components/zenoh-inspector/ZenohInspector.vue
 msgid "Alive"
-msgstr ""
+msgstr "存活"
 
 #.  eslint-disable-next-line max-len
 #: src/components/kraken/cards/InstalledExtensionCard.vue
 msgid "All cloud related services and some telemetry features may not be available if Major Tom extension is disabled."
-msgstr ""
+msgstr "如果禁用 Major Tom 扩展，所有云相关服务和部分遥测功能可能无法使用。"
 
 #: src/menus.ts
 msgid "Allow browsing the Telemetry (.tlog) and Binary (.bin) logs generated by your vehicle. Bin logs are currently only supported for Navigator boards."
-msgstr ""
+msgstr "允许浏览载具生成的遥测日志（.tlog）和二进制日志（.bin）。目前仅 Navigator 板卡支持 Bin 日志。"
 
 #: src/menus.ts
 msgid "Allows creating UDP/TCP to Serial bridges, used for communication to serial devices from your Control Station Computer."
-msgstr ""
+msgstr "允许创建 UDP/TCP 到串口的桥接，用于从控制站计算机与串口设备通信。"
 
 #: src/types/frontend_services.ts
 msgid "Allows management of sockets for NMEA data injectior."
-msgstr ""
+msgstr "允许管理用于 NMEA 数据注入器的套接字。"
 
 #: src/components/health/GpsTrayMenu.vue
 msgid "Altitude estimate"
-msgstr ""
+msgstr "高度估计"
 
 #: src/components/autopilot/EndpointManager.vue
 msgid "Always"
-msgstr ""
+msgstr "始终"
 
 #: src/components/vehiclesetup/configuration/power/BatteryCard.vue
 msgid "Amps Offset"
-msgstr ""
+msgstr "电流偏移"
 
 #: src/components/vehiclesetup/configuration/power/BatteryCard.vue
 msgid "Amps per Volt"
-msgstr ""
+msgstr "每伏安培数"
 
 #: src/components/common/rebootRequiredOverlay.vue
 msgid "An autopilot Reboot is required."
-msgstr ""
+msgstr "需要重启飞控。"
 
 #: src/components/vehiclesetup/overview/GyroCalib.vue
 msgid "Angular speed (mrad/s)"
-msgstr ""
+msgstr "角速度（mrad/s）"
 
 #: src/alerts/rules/network.ts
 msgid "Another interface is faster. Check the connection or change the interfaces priority."
-msgstr ""
+msgstr "另一个接口速度更快。请检查连接或更改接口优先级。"
 
 #: src/alerts/rules/network.ts
 msgid "Another interface is online. Check the connection or change the interfaces priority."
-msgstr ""
+msgstr "另一个接口在线。请检查连接或更改接口优先级。"
 
 #: src/views/SettingsView.vue
 msgid "Appearance"
-msgstr ""
+msgstr "外观"
 
 #: src/components/app/NetworkInterfacePriorityMenu.vue
 msgid "Applied changes require a <b>system reboot</b>."
-msgstr ""
+msgstr "已应用的更改需要<b>重启系统</b>。"
 
 #: src/components/app/NetworkInterfacePriorityMenu.vue
 #: src/components/customization/ThemeCustomization.vue
@@ -354,80 +356,80 @@ msgstr ""
 #: src/components/version-chooser/VersionCard.vue
 #: src/components/wizard/Wizard.vue
 msgid "Apply"
-msgstr ""
+msgstr "应用"
 
 #: src/App.vue
 msgid "Armed"
-msgstr ""
+msgstr "已解锁"
 
 #: src/components/ethernet/InterfaceCard.vue
 msgid "Ask for"
-msgstr ""
+msgstr "请求"
 
 #: src/components/vehiclesetup/configuration/compass/ArdupilotMavlinkCompassSetup.vue
 msgid "Auto Declination"
-msgstr ""
+msgstr "自动磁偏角"
 
 #: src/components/wifi/WifiSettingsDialog.vue
 msgid "Auto-start hotspot when not connected to a wifi network for some time."
-msgstr ""
+msgstr "在一段时间未连接 Wi-Fi 网络时自动启动热点。"
 
 #: src/components/vehiclesetup/MotorDetection.vue
 msgid "Automatic Motor Reversal Detection"
-msgstr ""
+msgstr "电机反转自动检测"
 
 #: src/components/vehiclesetup/configuration/compass/ArdupilotMavlinkCompassSetup.vue
 msgid "Automatically \"learn\" compass calibration offsets by driving the vehicle around until enough data has been collected, and <b>\"CompassLearn: finished\"</b> is displayed. A valid global region estimate is required."
-msgstr ""
+msgstr "通过驾驶载具四处移动来自动“学习”罗盘校准偏移，直到收集到足够数据并显示 <b>\"CompassLearn: finished\"</b>。需要有效的全球区域估计。"
 
 #: src/views/Autopilot.vue
 msgid "Autopilot"
-msgstr ""
+msgstr "飞控"
 
 #: src/components/autopilot/EndpointManager.vue
 #: src/menus.ts
 msgid "Autopilot Firmware"
-msgstr ""
+msgstr "飞控固件"
 
 #: src/types/frontend_services.ts
 msgid "Autopilot Manager"
-msgstr ""
+msgstr "飞控管理器"
 
 #: src/menus.ts
 msgid "Autopilot Parameters"
-msgstr ""
+msgstr "飞控参数"
 
 #: src/components/vehiclesetup/overview/OnboardSensors.vue
 msgid "Autopilot Sensors"
-msgstr ""
+msgstr "飞控传感器"
 
 #: src/alerts/rules/autopilot.ts
 msgid "Autopilot firmware is not installed"
-msgstr ""
+msgstr "未安装飞控固件"
 
 #: src/views/SettingsView.vue
 msgid "Autopilot flight logs"
-msgstr ""
+msgstr "飞控飞行日志"
 
 #: src/components/logs/LogManager.vue
 msgid "Autopilot logs"
-msgstr ""
+msgstr "飞控日志"
 
 #: src/components/autopilot/EndpointManager.vue
 msgid "Autopilot must be running to create endpoints."
-msgstr ""
+msgstr "飞控必须处于运行状态才能创建端点。"
 
 #: src/components/app/VehicleRebootMenu.vue
 msgid "Autopilot reboot is necessary for new settings to take effect."
-msgstr ""
+msgstr "需要重启飞控才能使新设置生效。"
 
 #: src/menus.ts
 msgid "Available Services"
-msgstr ""
+msgstr "可用服务"
 
 #: src/components/autopilot/BoardChangeDialog.vue
 msgid "Available boards"
-msgstr ""
+msgstr "可用板卡"
 
 #: src/views/ExtensionManagerView.vue
 msgid "Back Alley"
@@ -435,15 +437,15 @@ msgstr ""
 
 #: src/alerts/rules/backend.ts
 msgid "Backend is offline"
-msgstr ""
+msgstr "后端离线"
 
 #: src/components/ethernet/DHCPServerDialog.vue
 msgid "Backup Server"
-msgstr ""
+msgstr "备用服务器"
 
 #: src/menus.ts
 msgid "Bag Editor"
-msgstr ""
+msgstr "Bag 编辑器"
 
 #: src/types/frontend_services.ts
 msgid "Bag Of Holding"
@@ -451,32 +453,32 @@ msgstr ""
 
 #: src/components/vehiclesetup/Configure.vue
 msgid "Baro"
-msgstr ""
+msgstr "气压计"
 
 #: src/widgets/Battery.vue
 msgid "Battery"
-msgstr ""
+msgstr "电池"
 
 #: src/components/vehiclesetup/configuration/power/PowerConfiguration.vue
 msgid "Battery 1"
-msgstr ""
+msgstr "电池 1"
 
 #: src/components/vehiclesetup/configuration/power/PowerConfiguration.vue
 msgid "Battery 2"
-msgstr ""
+msgstr "电池 2"
 
 #: src/components/vehiclesetup/configuration/power/BatteryCard.vue
 msgid "Battery Capacity"
-msgstr ""
+msgstr "电池容量"
 
 #: src/components/vehiclesetup/configuration/power/BatteryCard.vue
 #: src/components/vehiclesetup/overview/PowerInfo.vue
 msgid "Battery Monitor"
-msgstr ""
+msgstr "电池监测"
 
 #: src/components/vehiclesetup/configuration/failsafes/Failsafes.vue
 msgid "Battery monitoring is disabled (BATT_MONITOR = 0). to use the low-battery failsafe."
-msgstr ""
+msgstr "电池监测已禁用（BATT_MONITOR = 0）。如需使用低电量失效保护，请启用电池监测。"
 
 #: src/views/ExtensionManagerView.vue
 msgid "Bazaar"
@@ -484,7 +486,7 @@ msgstr ""
 
 #: src/components/video-manager/VideoStreamCreationDialog.vue
 msgid "Be aware that \"Fake source\" streams consume a lot of computing power. If you just need it for connection tests we recommend you to use small resolutions and low framerates."
-msgstr ""
+msgstr "请注意，“Fake source”视频流会消耗大量计算资源。如果仅用于连接测试，建议使用较小的分辨率和较低的帧率。"
 
 #: src/types/frontend_services.ts
 msgid "Beacon"
@@ -492,7 +494,7 @@ msgstr ""
 
 #: src/views/MainView.vue
 msgid "Before you start, we highly recommend <a href='https://blueos.cloud/docs/stable/usage/getting-started/#connect-internet' target='_blank'>connecting to the internet</a> and performing a <a href='https://blueos.cloud/docs/stable/usage/getting-started/#select-version' target='_blank'>system update to the latest available BlueOS version</a>."
-msgstr ""
+msgstr "开始之前，强烈建议<a href='https://blueos.cloud/docs/stable/usage/getting-started/#connect-internet' target='_blank'>连接到互联网</a>，并<a href='https://blueos.cloud/docs/stable/usage/getting-started/#select-version' target='_blank'>将系统更新到最新可用的 BlueOS 版本</a>。"
 
 #: src/App.vue
 msgid "Beta"
@@ -500,72 +502,72 @@ msgstr ""
 
 #: src/components/autopilot/FirmwareManager.vue
 msgid "Beta - In-testing, with new features and improvements, aiming to become stable. May have bugs."
-msgstr ""
+msgstr "Beta - 测试中，包含新功能和改进，目标是成为稳定版。可能存在缺陷。"
 
 #: src/views/SettingsView.vue
 msgid "Better visibility in bright environments"
-msgstr ""
+msgstr "在明亮环境下可见性更佳"
 
 #: src/components/video-manager/VideoDevice.vue
 msgid "Block source"
-msgstr ""
+msgstr "屏蔽源"
 
 #: src/components/vehiclesetup/viewers/GenericViewer.vue
 msgid "BlueOS Documentation"
-msgstr ""
+msgstr "BlueOS 文档"
 
 #: src/types/frontend_services.ts
 msgid "BlueOS Frontend"
-msgstr ""
+msgstr "BlueOS 前端"
 
 #: src/menus.ts
 msgid "BlueOS Version"
-msgstr ""
+msgstr "BlueOS 版本"
 
 #: src/App.vue
 msgid "BlueOS Version:"
-msgstr ""
+msgstr "BlueOS 版本："
 
 #: src/alerts/rules/network.ts
 msgid "BlueOS cannot reach the WiFi manager. Check the WiFi adapter."
-msgstr ""
+msgstr "BlueOS 无法连接到 Wi-Fi 管理器。请检查 Wi-Fi 适配器。"
 
 #: src/components/app/ReportMenu.vue
 msgid "BlueOS feedback - (Please add a title here)"
-msgstr ""
+msgstr "BlueOS 反馈 -（请在此处添加标题）"
 
 #: src/components/version-chooser/VersionChooser.vue
 msgid "BlueOS is taking too long to restart"
-msgstr ""
+msgstr "BlueOS 重启时间过长"
 
 #: src/views/SettingsView.vue
 msgid "BlueOS service logs"
-msgstr ""
+msgstr "BlueOS 服务日志"
 
 #: src/components/autopilot/FirmwareManager.vue
 msgid "Board"
-msgstr ""
+msgstr "板卡"
 
 #: src/components/vehiclesetup/OrientationPicker.vue
 msgid "Board Orientation"
-msgstr ""
+msgstr "板卡方向"
 
 #: src/components/wizard/Wizard.vue
 msgid "Boat Setup"
-msgstr ""
+msgstr "船只设置"
 
 #: src/components/system-information/Firmware.vue
 msgid "Bootloader Version"
-msgstr ""
+msgstr "引导加载程序版本"
 
 #: src/components/ping/ping1d.vue
 #: src/components/ping/ping360.vue
 msgid "Bridge"
-msgstr ""
+msgstr "桥接"
 
 #: src/types/frontend_services.ts
 msgid "Bridges management service for BlueOS."
-msgstr ""
+msgstr "BlueOS 的桥接管理服务。"
 
 #: src/types/frontend_services.ts
 msgid "Bridget"
@@ -573,41 +575,41 @@ msgstr ""
 
 #: src/components/zenoh-inspector/RawVideoPlayer.vue
 msgid "Broadway Decoder"
-msgstr ""
+msgstr "Broadway 解码器"
 
 #: src/menus.ts
 msgid "Browse all the files in BlueOS. Useful for fetching logs, tweaking configurations, and development."
-msgstr ""
+msgstr "浏览 BlueOS 中的所有文件。适用于获取日志、调整配置和开发。"
 
 #: src/components/app/ReportMenu.vue
 msgid "Bug report / Feature request"
-msgstr ""
+msgstr "错误报告 / 功能请求"
 
 #: src/components/vehiclesetup/overview/BaroCalib.vue
 #: src/components/vehiclesetup/overview/OnboardSensors.vue
 msgid "Bus"
-msgstr ""
+msgstr "总线"
 
 #: src/components/vehiclesetup/configuration/compass/ArdupilotMavlinkCompassSetup.vue
 #, javascript-format
 msgid "Bus: 0x${ 0 } @ ${ 1 }${ 2 }"
-msgstr ""
+msgstr "总线：0x${ 0 } @ ${ 1 }${ 2 }"
 
 #: src/components/system-information/NetworkCard.vue
 msgid "Bytes received:"
-msgstr ""
+msgstr "接收字节数："
 
 #: src/components/system-information/NetworkCard.vue
 msgid "Bytes transmitted:"
-msgstr ""
+msgstr "发送字节数："
 
 #: src/components/kraken/BackAlleyTab.vue
 msgid "CATEGORIES"
-msgstr ""
+msgstr "分类"
 
 #: src/components/kraken/BackAlleyTab.vue
 msgid "COMPANIES"
-msgstr ""
+msgstr "公司"
 
 #: src/components/system-information/Processes.vue
 msgid "CPU (%)"
@@ -615,44 +617,44 @@ msgstr ""
 
 #: src/widgets/CpuPie.vue
 msgid "CPU Usage"
-msgstr ""
+msgstr "CPU 使用率"
 
 #: src/components/health/HealthTrayMenu.vue
 msgid "CPU has reported low voltage. Please check your power supply!"
-msgstr ""
+msgstr "CPU 报告电压过低。请检查电源！"
 
 #: src/components/health/HealthTrayMenu.vue
 msgid "CPU is throttled. Performance may be affected. Please check your power supply and cooling!"
-msgstr ""
+msgstr "CPU 已降频，性能可能受到影响。请检查电源和散热！"
 
 #: src/components/health/HealthTrayMenu.vue
 #, javascript-format
 msgid "CPU temperature too high (${ 0 } ºC), please cool down your vehicle!"
-msgstr ""
+msgstr "CPU 温度过高（${ 0 } ºC），请为载具降温！"
 
 #: src/components/kraken/cards/InstalledExtensionCard.vue
 msgid "CPU usage"
-msgstr ""
+msgstr "CPU 使用率"
 
 #: src/components/vehiclesetup/configuration/power/BatteryCard.vue
 msgid "Calculate"
-msgstr ""
+msgstr "计算"
 
 #: src/components/vehiclesetup/configuration/power/BatteryCard.vue
 msgid "Calculate & Set"
-msgstr ""
+msgstr "计算并设置"
 
 #: src/components/vehiclesetup/configuration/power/BatteryCard.vue
 msgid "Calculate Amps per Volt"
-msgstr ""
+msgstr "计算每伏安培数"
 
 #: src/components/vehiclesetup/configuration/power/BatteryCard.vue
 msgid "Calculate Voltage Multiplier"
-msgstr ""
+msgstr "计算电压倍率"
 
 #: src/components/vehiclesetup/configuration/camera.vue
 msgid "Calculated PWM/degree:"
-msgstr ""
+msgstr "计算得出的 PWM/度："
 
 #: src/components/health/HealthTrayMenu.vue
 #: src/components/vehiclesetup/configuration/compass/FullCompassCalibrator.vue
@@ -660,65 +662,65 @@ msgstr ""
 #: src/components/vehiclesetup/configuration/compass/LevelHorizonCalibration.vue
 #: src/components/vehiclesetup/overview/BaroCalib.vue
 msgid "Calibrate"
-msgstr ""
+msgstr "校准"
 
 #: src/components/vehiclesetup/overview/BaroCalib.vue
 msgid "Calibrate Barometer"
-msgstr ""
+msgstr "校准气压计"
 
 #: src/components/vehiclesetup/overview/GyroCalib.vue
 msgid "Calibrate Gyroscopes"
-msgstr ""
+msgstr "校准陀螺仪"
 
 #: src/components/vehiclesetup/overview/BaroCalib.vue
 msgid "Calibrate all barometers to ground level"
-msgstr ""
+msgstr "将所有气压计校准到地面高度"
 
 #: src/components/vehiclesetup/overview/GyroCalib.vue
 msgid "Calibrate gyroscopes automatically"
-msgstr ""
+msgstr "自动校准陀螺仪"
 
 #: src/components/vehiclesetup/configuration/compass/ArdupilotMavlinkCompassSetup.vue
 msgid "Calibrate the compass(es) using a previous flight log. This usually gives the best results. While it is not currently implemented here, the compass offset information can be determined in the Log Browser page. Press the green play button on a log file, click the three vertical dots in the sidebar, open the <b>Mag Fit Tool</b>, specify the general global region where the log was created, then click \"Fit\" for each compass you wish to calibrate. Resulting values can be copied across to the COMPASS_* autopilot parameters."
-msgstr ""
+msgstr "使用以往的飞行日志校准罗盘。这通常能获得最佳效果。虽然此处尚未实现该功能，但可以在日志浏览器页面中确定罗盘偏移信息。点击日志文件上的绿色播放按钮，点击侧边栏中的三个竖点，打开 <b>Mag Fit Tool</b>，指定日志记录时所在的大致全球区域，然后对每个要校准的罗盘点击“Fit”。所得数值可复制到 COMPASS_* 飞控参数中。"
 
 #: src/components/health/HealthTrayMenu.vue
 #: src/components/vehiclesetup/configuration/accelerometer/ArdupilotAccelerometerSetup.vue
 msgid "Calibrated"
-msgstr ""
+msgstr "已校准"
 
 #: src/components/vehiclesetup/overview/BaroCalib.vue
 msgid "Calibrated at"
-msgstr ""
+msgstr "校准时间"
 
 #.  eslint-disable-next-line max-len
 #: src/components/vehiclesetup/configuration/compass/ArdupilotMavlinkCompassSetup.vue
 msgid "Calibrated, but without a known (detected or specified) global region, Consider retrying with a valid position to improve compass performance."
-msgstr ""
+msgstr "已校准，但没有已知（检测到或指定）的全球区域。建议使用有效位置重试，以提升罗盘性能。"
 
 #: src/components/vehiclesetup/configuration/accelerometer/ArdupilotAccelerometerSetup.vue
 msgid "Calibration"
-msgstr ""
+msgstr "校准"
 
 #: src/components/vehiclesetup/configuration/accelerometer/QuickAccelerometerCalibration.vue
 msgid "Calibration Successful"
-msgstr ""
+msgstr "校准成功"
 
 #: src/components/vehiclesetup/overview/GyroCalib.vue
 msgid "Calibration temperature (°C)"
-msgstr ""
+msgstr "校准温度（°C）"
 
 #: src/components/vehiclesetup/Configure.vue
 msgid "Camera Gimbal"
-msgstr ""
+msgstr "相机云台"
 
 #: src/components/vehiclesetup/configuration/camera.vue
 msgid "Camera Gimbal Configuration"
-msgstr ""
+msgstr "相机云台配置"
 
 #: src/components/vehiclesetup/configuration/camera.vue
 msgid "Camera mount setup is not supported on this firmware (MNT1_TYPE param not found). Please update to a newer autopilot firmware version."
-msgstr ""
+msgstr "此固件不支持相机云台设置（未找到 MNT1_TYPE 参数）。请将飞控固件更新到较新版本。"
 
 #: src/components/app/NetworkInterfacePriorityMenu.vue
 #: src/components/app/VehicleBanner.vue
@@ -735,99 +737,99 @@ msgstr ""
 #: src/components/version-chooser/VersionChooser.vue
 #: src/components/video-manager/VideoStreamCreationDialog.vue
 msgid "Cancel"
-msgstr ""
+msgstr "取消"
 
 #: src/components/wizard/Wizard.vue
 msgid "Cancel wizard"
-msgstr ""
+msgstr "取消向导"
 
 #: src/views/RecordsView.vue
 msgid "Captions not available"
-msgstr ""
+msgstr "字幕不可用"
 
 #: src/components/vehiclesetup/MotorDetection.vue
 msgid "Cause"
-msgstr ""
+msgstr "原因"
 
 #: src/views/Autopilot.vue
 msgid "Change board"
-msgstr ""
+msgstr "更换板卡"
 
 #: src/components/autopilot/BoardChangeDialog.vue
 msgid "Change running board"
-msgstr ""
+msgstr "更换运行中的板卡"
 
 #: src/components/app/ThemeTrayMenu.vue
 msgid "Change theme between dark and light mode."
-msgstr ""
+msgstr "在深色和浅色模式之间切换主题。"
 
 #: src/components/system-information/Firmware.vue
 msgid "Changes applied, please do a <b>system reboot</b>."
-msgstr ""
+msgstr "更改已应用，请<b>重启系统</b>。"
 
 #: src/components/wizard/Wizard.vue
 msgid "Check internet"
-msgstr ""
+msgstr "检查互联网"
 
 #: src/alerts/rules/network.ts
 msgid "Check this computer's DNS settings"
-msgstr ""
+msgstr "检查本计算机的 DNS 设置"
 
 #: src/components/wizard/Wizard.vue
 msgid "Choose Vehicle"
-msgstr ""
+msgstr "选择载具"
 
 #: src/views/SettingsView.vue
 msgid "Choose the interface language"
-msgstr ""
+msgstr "选择界面语言"
 
 #: src/components/kraken/BackAlleyTab.vue
 #: src/views/SettingsView.vue
 msgid "Clear"
-msgstr ""
+msgstr "清除"
 
 #: src/views/SettingsView.vue
 msgid "Clear logs"
-msgstr ""
+msgstr "清除日志"
 
 #: src/components/cloud/CloudSettingsTab.vue
 #, javascript-format
 msgid "Click here if you ${ 0 }"
-msgstr ""
+msgstr "如果您${ 0 }，请点击此处"
 
 #: src/views/Autopilot.vue
 msgid "Click to activate wizard"
-msgstr ""
+msgstr "点击启动向导"
 
 #: src/views/Disk.vue
 msgid "Click to start"
-msgstr ""
+msgstr "点击开始"
 
 #: src/components/app/ImagePicker.vue
 msgid "Click to upload an image"
-msgstr ""
+msgstr "点击上传图片"
 
 #: src/components/vehiclesetup/configuration/compass/ArdupilotMavlinkCompassSetup.vue
 msgid "Click-and-drag the dots to change the priority of the compass options. Adjusted compass priorities are applied once the autopilot restarts."
-msgstr ""
+msgstr "点击并拖动圆点以更改罗盘选项的优先级。调整后的罗盘优先级将在飞控重启后生效。"
 
 #: src/components/zenoh-inspector/ZenohNetwork.vue
 #, javascript-format
 msgid "Client (${ 0 })"
-msgstr ""
+msgstr "客户端（${ 0 }）"
 
 #: src/components/bridges/BridgeCreationDialog.vue
 msgid "Client Mode"
-msgstr ""
+msgstr "客户端模式"
 
 #: src/components/bridges/BridgeCreationDialog.vue
 #, javascript-format
 msgid "Client mode will send data to the given IP address and port. This means it will send data to the topside computer at IP <B>${ 0 }</B> and port <B>${ 1 }</B>. It will receive data back from the topside computer at <b>${ 2 }</b>."
-msgstr ""
+msgstr "客户端模式会将数据发送到指定的 IP 地址和端口。即数据将发送到 IP 为 <B>${ 0 }</B>、端口为 <B>${ 1 }</B> 的水面计算机，并从 <b>${ 2 }</b> 的水面计算机接收返回数据。"
 
 #: src/components/speedtest/InternetSpeedTest.vue
 msgid "Client provider"
-msgstr ""
+msgstr "客户端提供方"
 
 #: src/components/app/Alerter.vue
 #: src/components/app/SystemCheckerTrayMenu.vue
@@ -840,27 +842,27 @@ msgstr ""
 #: src/views/ExtensionManagerView.vue
 #: src/views/SettingsView.vue
 msgid "Close"
-msgstr ""
+msgstr "关闭"
 
 #: src/components/cloud/CloudTrayMenu.vue
 msgid "Cloud"
-msgstr ""
+msgstr "云"
 
 #: src/components/cloud/CloudSyncStatusTab.vue
 msgid "Cloud file sync"
-msgstr ""
+msgstr "云文件同步"
 
 #: src/components/cloud/CloudTrayMenu.vue
 msgid "Cloud sync status"
-msgstr ""
+msgstr "云同步状态"
 
 #: src/components/health/GpsTrayMenu.vue
 msgid "Combined 3D position uncertainty"
-msgstr ""
+msgstr "综合 3D 位置不确定度"
 
 #: src/components/system-information/Processes.vue
 msgid "Command"
-msgstr ""
+msgstr "命令"
 
 #: src/types/frontend_services.ts
 msgid "Commander"
@@ -869,127 +871,127 @@ msgstr ""
 #: src/components/version-chooser/VersionCard.vue
 #: src/components/version-chooser/VersionChooser.vue
 msgid "Commit"
-msgstr ""
+msgstr "提交"
 
 #: src/components/version-chooser/VersionChooser.vue
 msgid "Commit running version"
-msgstr ""
+msgstr "提交当前运行版本"
 
 #: src/components/vehiclesetup/Configure.vue
 #: src/components/vehiclesetup/configuration/compass/FullCompassCalibrator.vue
 msgid "Compass"
-msgstr ""
+msgstr "罗盘"
 
 #: src/components/vehiclesetup/configuration/compass/ArdupilotMavlinkCompassSetup.vue
 msgid "Compass Calibration"
-msgstr ""
+msgstr "罗盘校准"
 
 #: src/components/vehiclesetup/configuration/compass/CompassLearn.vue
 msgid "Compass Calibration Learning"
-msgstr ""
+msgstr "罗盘校准学习"
 
 #: src/components/vehiclesetup/configuration/compass/ArdupilotMavlinkCompassSetup.vue
 msgid "Compass Learn"
-msgstr ""
+msgstr "罗盘学习"
 
 #: src/components/cloud/CloudSyncStatusTab.vue
 #, javascript-format
 msgid "Completed • ${ 0 }"
-msgstr ""
+msgstr "已完成 • ${ 0 }"
 
 #: src/views/SettingsView.vue
 msgid "Configuration Wizard"
-msgstr ""
+msgstr "配置向导"
 
 #: src/components/wizard/Wizard.vue
 msgid "Configuration was aborted, some settings have failed to apply."
-msgstr ""
+msgstr "配置已中止，部分设置未能应用。"
 
 #: src/components/wizard/Wizard.vue
 msgid "Configuration was skipped."
-msgstr ""
+msgstr "已跳过配置。"
 
 #: src/components/wizard/Wizard.vue
 #: src/views/VehicleSetupView.vue
 msgid "Configure"
-msgstr ""
+msgstr "配置"
 
 #: src/views/ExtensionManagerView.vue
 msgid "Configure & Install"
-msgstr ""
+msgstr "配置并安装"
 
 #: src/views/SettingsView.vue
 msgid "Configure BlueOS system preferences and manage data"
-msgstr ""
+msgstr "配置 BlueOS 系统偏好并管理数据"
 
 #: src/components/vehiclesetup/overview/SystemId.vue
 msgid "Configure MAVLink system ID"
-msgstr ""
+msgstr "配置 MAVLink 系统 ID"
 
 #: src/components/kraken/modals/ExtensionCreationModal.vue
 msgid "Configure Uploaded"
-msgstr ""
+msgstr "配置已上传项"
 
 #: src/views/ExtensionManagerView.vue
 msgid "Configure metadata"
-msgstr ""
+msgstr "配置元数据"
 
 #: src/components/ethernet/AddressDeletionDialog.vue
 msgid "Confirm"
-msgstr ""
+msgstr "确认"
 
 #: src/components/wifi/ConnectionDialog.vue
 msgid "Connect"
-msgstr ""
+msgstr "连接"
 
 #: src/components/wifi/WifiManager.vue
 msgid "Connect to the hotspot"
-msgstr ""
+msgstr "连接到热点"
 
 #: src/components/wifi/ConnectionDialog.vue
 msgid "Connecting to network, please wait..."
-msgstr ""
+msgstr "正在连接网络，请稍候……"
 
 #: src/components/autopilot/MasterEndpointManager.vue
 msgid "Connection Type"
-msgstr ""
+msgstr "连接类型"
 
 #: src/components/health/GpsTrayMenu.vue
 msgid "Connection type and status"
-msgstr ""
+msgstr "连接类型和状态"
 
 #: src/components/wizard/Wizard.vue
 msgid "Continue"
-msgstr ""
+msgstr "继续"
 
 #: src/components/kraken/modals/ExtensionSettingsModal.vue
 msgid "Continue anyway"
-msgstr ""
+msgstr "仍然继续"
 
 #: src/components/video-manager/VideoStream.vue
 msgid "Copy"
-msgstr ""
+msgstr "复制"
 
 #: src/components/video-manager/VideoStream.vue
 msgid "Copy SDP file URL"
-msgstr ""
+msgstr "复制 SDP 文件 URL"
 
 #: src/components/autopilot/EndpointCard.vue
 #, javascript-format
 msgid "Copy command line string (${ 0 })"
-msgstr ""
+msgstr "复制命令行字符串（${ 0 }）"
 
 #: src/components/kraken/modals/ExtensionCreationModal.vue
 msgid "Copy configuration"
-msgstr ""
+msgstr "复制配置"
 
 #: src/components/health/HealthTrayMenu.vue
 msgid "Core Temperature:"
-msgstr ""
+msgstr "核心温度："
 
 #: src/components/vehiclesetup/overview/SystemId.vue
 msgid "Core container is restarting, please wait."
-msgstr ""
+msgstr "Core 容器正在重启，请稍候。"
 
 #: src/components/bridges/BridgeCreationDialog.vue
 #: src/components/ethernet/AddressCreationDialog.vue
@@ -997,307 +999,307 @@ msgstr ""
 #: src/components/nmea-injector/NMEASocketCreationDialog.vue
 #: src/components/video-manager/VideoStreamCreationDialog.vue
 msgid "Create"
-msgstr ""
+msgstr "创建"
 
 #: src/components/autopilot/EndpointCreationDialog.vue
 #: src/components/autopilot/EndpointManager.vue
 msgid "Create endpoint"
-msgstr ""
+msgstr "创建端点"
 
 #: src/views/ExtensionManagerView.vue
 msgid "Create from scratch"
-msgstr ""
+msgstr "从头创建"
 
 #: src/components/bridges/BridgeCreationDialog.vue
 #, javascript-format
 msgid "Created: ${ 0 }"
-msgstr ""
+msgstr "创建于：${ 0 }"
 
 #: src/components/vehiclesetup/overview/PowerInfo.vue
 msgid "Critical Voltage Failsafe:"
-msgstr ""
+msgstr "临界电压失效保护："
 
 #: src/components/vehiclesetup/configuration/power/BatteryCard.vue
 msgid "Current Amps/Volt:"
-msgstr ""
+msgstr "当前安培/伏特："
 
 #: src/components/vehiclesetup/configuration/compass/ArdupilotMavlinkCompassSetup.vue
 msgid "Current Declination"
-msgstr ""
+msgstr "当前磁偏角"
 
 #: src/components/vehiclesetup/configuration/power/BatteryCard.vue
 msgid "Current Multiplier:"
-msgstr ""
+msgstr "电流倍率："
 
 #: src/components/vehiclesetup/overview/PowerInfo.vue
 msgid "Current Offset:"
-msgstr ""
+msgstr "电流偏移："
 
 #: src/components/vehiclesetup/configuration/power/BatteryCard.vue
 msgid "Current Pin"
-msgstr ""
+msgstr "电流引脚"
 
 #: src/components/vehiclesetup/overview/PowerInfo.vue
 msgid "Current Pin:"
-msgstr ""
+msgstr "电流引脚："
 
 #: src/components/version-chooser/VersionChooser.vue
 msgid "Current Version"
-msgstr ""
+msgstr "当前版本"
 
 #: src/components/vehiclesetup/overview/PowerInfo.vue
 msgid "Current per Volt:"
-msgstr ""
+msgstr "每伏电流："
 
 #: src/components/health/HealthTrayMenu.vue
 #: src/components/system-information/Firmware.vue
 #: src/components/vehiclesetup/overview/PowerInfo.vue
 msgid "Current:"
-msgstr ""
+msgstr "电流："
 
 #: src/components/parameter-editor/InlineParameterEditor.vue
 msgid "Custom"
-msgstr ""
+msgstr "自定义"
 
 #: src/components/version-chooser/DockerLogin.vue
 msgid "Custom Registry"
-msgstr ""
+msgstr "自定义镜像仓库"
 
 #: src/components/version-chooser/DockerLogin.vue
 msgid "Custom registry"
-msgstr ""
+msgstr "自定义镜像仓库"
 
 #: src/components/customization/ThemeCustomization.vue
 #: src/types/frontend_services.ts
 msgid "Customization"
-msgstr ""
+msgstr "个性化"
 
 #: src/components/wizard/Wizard.vue
 msgid "Customize"
-msgstr ""
+msgstr "自定义"
 
 #: src/views/SettingsView.vue
 msgid "Customize how BlueOS looks"
-msgstr ""
+msgstr "自定义 BlueOS 外观"
 
 #: src/components/ethernet/DHCPServerDialog.vue
 #, javascript-format
 msgid "DHCP Server for interface '${ 0 }'"
-msgstr ""
+msgstr "接口“${ 0 }”的 DHCP 服务器"
 
 #: src/components/ethernet/InterfaceCard.vue
 msgid "DHCP Server in backup"
-msgstr ""
+msgstr "备用 DHCP 服务器"
 
 #: src/components/ethernet/InterfaceCard.vue
 msgid "DHCP leases"
-msgstr ""
+msgstr "DHCP 租约"
 
 #: src/components/ethernet/InterfaceCard.vue
 msgid "DHCP server"
-msgstr ""
+msgstr "DHCP 服务器"
 
 #: src/alerts/rules/network.ts
 msgid "DNS is not resolving names"
-msgstr ""
+msgstr "DNS 无法解析域名"
 
 #: src/views/SettingsView.vue
 msgid "Dark Theme"
-msgstr ""
+msgstr "深色主题"
 
 #: src/views/SettingsView.vue
 msgid "Data Management"
-msgstr ""
+msgstr "数据管理"
 
 #: src/components/zenoh-inspector/ZenohInspector.vue
 msgid "Dead"
-msgstr ""
+msgstr "已失效"
 
 #: src/components/vehiclesetup/configuration/compass/ArdupilotMavlinkCompassSetup.vue
 msgid "Declination"
-msgstr ""
+msgstr "磁偏角"
 
 #: src/components/version-chooser/VersionChooser.vue
 msgid "Decompressing file, this usually takes up to one minute, please stand by..."
-msgstr ""
+msgstr "正在解压文件，通常需要约一分钟，请稍候……"
 
 #: src/components/version-chooser/VersionChooser.vue
 msgid "Decompressing file..."
-msgstr ""
+msgstr "正在解压文件……"
 
 #: src/components/version-chooser/VersionCard.vue
 msgid "Delete"
-msgstr ""
+msgstr "删除"
 
 #: src/components/autopilot/EndpointCard.vue
 msgid "Delete endpoint"
-msgstr ""
+msgstr "删除端点"
 
 #: src/components/logs/LogManager.vue
 msgid "Delete logs"
-msgstr ""
+msgstr "删除日志"
 
 #: src/components/logs/LogManager.vue
 msgid "Delete selected logs"
-msgstr ""
+msgstr "删除所选日志"
 
 #: src/components/logs/LogManager.vue
 msgid "Deleting logs is an operation that cannot be undone."
-msgstr ""
+msgstr "删除日志操作无法撤销。"
 
 #: src/views/SettingsView.vue
 msgid "Deleting:"
-msgstr ""
+msgstr "正在删除："
 
 #: src/components/parameter-editor/ParameterEditor.vue
 msgid "Description"
-msgstr ""
+msgstr "描述"
 
 #: src/components/parameter-editor/ParameterLabel.vue
 #: src/components/system-information/NetworkCard.vue
 #, javascript-format
 msgid "Description: ${ 0 }"
-msgstr ""
+msgstr "描述：${ 0 }"
 
 #: src/components/customization/ThemeCustomization.vue
 msgid "Destination name"
-msgstr ""
+msgstr "目标名称"
 
 #: src/menus.ts
 msgid "Detailed system status information, CPU, memory, disk, and ethernet status."
-msgstr ""
+msgstr "详细的系统状态信息，包括 CPU、内存、磁盘和以太网状态。"
 
 #: src/components/utils/PullProgress.vue
 #: src/components/vehiclesetup/configuration/compass/ArdupilotMavlinkCompassSetup.vue
 msgid "Details"
-msgstr ""
+msgstr "详情"
 
 #: src/components/vehiclesetup/MotorDetection.vue
 msgid "Detect Reversed Motors"
-msgstr ""
+msgstr "检测反转电机"
 
 #: src/views/ExtensionManagerView.vue
 msgid "Detected metadata"
-msgstr ""
+msgstr "检测到的元数据"
 
 #: src/components/wizard/DefaultParamLoader.vue
 #: src/components/wizard/ScriptLoader.vue
 msgid "Determining current board..."
-msgstr ""
+msgstr "正在确定当前板卡……"
 
 #: src/components/autopilot/FirmwareManager.vue
 msgid "Dev - Development branch, with all the newest features. Intentionally unstable (changes quickly), and possibly untested/dangerous."
-msgstr ""
+msgstr "Dev - 开发分支，包含所有最新功能。刻意不稳定（变化频繁），可能未经测试或存在风险。"
 
 #: src/components/kraken/modals/ExtensionDetailsModal.vue
 #, javascript-format
 msgid "Developed by <strong>${ 0 }</strong>"
-msgstr ""
+msgstr "由 <strong>${ 0 }</strong> 开发"
 
 #: src/views/SettingsView.vue
 msgid "Developer Mode"
-msgstr ""
+msgstr "开发者模式"
 
 #: src/components/autopilot/AutopilotSerialConfiguration.vue
 #: src/components/ping/ping1d.vue
 #: src/components/ping/ping360.vue
 msgid "Device"
-msgstr ""
+msgstr "设备"
 
 #: src/components/video-manager/VideoControlsDialog.vue
 #: src/components/video-manager/VideoDevice.vue
 msgid "Device Controls"
-msgstr ""
+msgstr "设备控制"
 
 #: src/components/bridges/BridgeCreationDialog.vue
 #, javascript-format
 msgid "Device: ${ 0 }"
-msgstr ""
+msgstr "设备：${ 0 }"
 
 #: src/views/MainView.vue
 msgid "Digital Twin"
-msgstr ""
+msgstr "数字孪生"
 
 #: src/components/ethernet/InterfaceCard.vue
 #: src/components/kraken/cards/InstalledExtensionCard.vue
 msgid "Disable"
-msgstr ""
+msgstr "禁用"
 
 #: src/components/video-manager/VideoStreamCreationDialog.vue
 msgid "Disable Lazy"
-msgstr ""
+msgstr "禁用延迟加载"
 
 #: src/components/video-manager/VideoStreamCreationDialog.vue
 msgid "Disable Mavlink"
-msgstr ""
+msgstr "禁用 MAVLink"
 
 #: src/components/app/PirateModeMenu.vue
 msgid "Disable Pirate Mode"
-msgstr ""
+msgstr "禁用海盗模式"
 
 #: src/components/video-manager/VideoStreamCreationDialog.vue
 msgid "Disable Thumbnails"
-msgstr ""
+msgstr "禁用缩略图"
 
 #: src/components/wizard/Wizard.vue
 msgid "Disable Wi-Fi hotspot"
-msgstr ""
+msgstr "禁用 Wi-Fi 热点"
 
 #: src/components/video-manager/VideoStreamCreationDialog.vue
 msgid "Disable Zenoh"
-msgstr ""
+msgstr "禁用 Zenoh"
 
 #: src/App.vue
 msgid "Disable dev mode"
-msgstr ""
+msgstr "禁用开发者模式"
 
 #: src/components/wizard/Wizard.vue
 msgid "Disable smart Wi-Fi hotspot"
-msgstr ""
+msgstr "禁用智能 Wi-Fi 热点"
 
 #: src/components/autopilot/EndpointManager.vue
 #: src/components/kraken/cards/InstalledExtensionCard.vue
 #: src/components/system-information/NetworkCard.vue
 #: src/components/vehiclesetup/overview/LeakInfo.vue
 msgid "Disabled"
-msgstr ""
+msgstr "已禁用"
 
 #: src/components/wifi/DisconnectionDialog.vue
 msgid "Disconnect"
-msgstr ""
+msgstr "断开连接"
 
 #: src/components/app/ReportMenu.vue
 msgid "Discuss ideas with the community"
-msgstr ""
+msgstr "与社区讨论想法"
 
 #: src/menus.ts
 msgid "Disk"
-msgstr ""
+msgstr "磁盘"
 
 #: src/views/Disk.vue
 msgid "Disk Speed Test"
-msgstr ""
+msgstr "磁盘速度测试"
 
 #: src/views/Disk.vue
 #: src/widgets/CpuPie.vue
 msgid "Disk Usage"
-msgstr ""
+msgstr "磁盘使用情况"
 
 #: src/components/kraken/cards/InstalledExtensionCard.vue
 msgid "Disk usage"
-msgstr ""
+msgstr "磁盘使用情况"
 
 #: src/components/vehiclesetup/configuration/compass/FullCompassCalibrator.vue
 msgid "Dismiss"
-msgstr ""
+msgstr "忽略"
 
 #: src/components/app/NetworkInterfaceMenu.vue
 msgid "Dns Configuration"
-msgstr ""
+msgstr "DNS 配置"
 
 #: src/components/autopilot/FirmwareManager.vue
 msgid "Do not warn me again"
-msgstr ""
+msgstr "不再提醒"
 
 #: src/views/ExtensionManagerView.vue
 msgid "Docker"
@@ -1305,491 +1307,491 @@ msgstr ""
 
 #: src/components/version-chooser/VersionChooser.vue
 msgid "Docker Login"
-msgstr ""
+msgstr "Docker 登录"
 
 #: src/components/version-chooser/DockerLogin.vue
 msgid "Docker Password or PAT"
-msgstr ""
+msgstr "Docker 密码或 PAT"
 
 #: src/components/version-chooser/DockerLogin.vue
 msgid "Docker Username"
-msgstr ""
+msgstr "Docker 用户名"
 
 #: src/components/kraken/modals/ExtensionCreationModal.vue
 msgid "Docker image"
-msgstr ""
+msgstr "Docker 镜像"
 
 #: src/components/kraken/modals/ExtensionCreationModal.vue
 msgid "Docker tag"
-msgstr ""
+msgstr "Docker 标签"
 
 #: src/components/version-chooser/VersionCard.vue
 msgid "Documentation for this version"
-msgstr ""
+msgstr "此版本的文档"
 
 #: src/components/wizard/Wizard.vue
 msgid "Done"
-msgstr ""
+msgstr "完成"
 
 #: src/views/SettingsView.vue
 msgid "Download"
-msgstr ""
+msgstr "下载"
 
 #: src/views/SettingsView.vue
 msgid "Download MAVLink logs"
-msgstr ""
+msgstr "下载 MAVLink 日志"
 
 #: src/components/video-manager/VideoStream.vue
 msgid "Download SDP to file"
-msgstr ""
+msgstr "将 SDP 下载为文件"
 
 #: src/components/version-chooser/VersionCard.vue
 msgid "Download and Apply"
-msgstr ""
+msgstr "下载并应用"
 
 #: src/components/logs/LogManager.vue
 msgid "Download log"
-msgstr ""
+msgstr "下载日志"
 
 #: src/views/SettingsView.vue
 msgid "Download logs for all BlueOS services"
-msgstr ""
+msgstr "下载所有 BlueOS 服务的日志"
 
 #: src/components/logs/LogManager.vue
 msgid "Download selected logs"
-msgstr ""
+msgstr "下载所选日志"
 
 #: src/components/speedtest/InternetSpeedTest.vue
 msgid "Download speed from internet"
-msgstr ""
+msgstr "从互联网的下载速度"
 
 #: src/components/speedtest/NetworkSpeedTest.vue
 msgid "Download speed from vehicle"
-msgstr ""
+msgstr "从载具的下载速度"
 
 #: src/components/utils/PullProgress.vue
 #, javascript-format
 msgid "Downloading: ${ 0 }%"
-msgstr ""
+msgstr "正在下载：${ 0 }%"
 
 #: src/components/app/ImagePicker.vue
 msgid "Drag and drop an image file here to upload"
-msgstr ""
+msgstr "将图片文件拖放到此处上传"
 
 #: src/components/kraken/modals/ExtensionSettingsModal.vue
 msgid "Drag manifest sources to set priority."
-msgstr ""
+msgstr "拖动清单源以设置优先级。"
 
 #: src/components/app/NetworkInterfacePriorityMenu.vue
 msgid "Drag the network interfaces to move the highest priority to the top."
-msgstr ""
+msgstr "拖动网络接口，将最高优先级的接口移到顶部。"
 
 #: src/components/autopilot/AutopilotSerialConfiguration.vue
 msgid "Driver"
-msgstr ""
+msgstr "驱动"
 
 #: src/components/customization/ThemeCustomization.vue
 msgid "Drives the gradient and scrollbar"
-msgstr ""
+msgstr "用于渐变和滚动条"
 
 #: src/views/SettingsView.vue
 msgid "Easier on the eyes in low-light environments"
-msgstr ""
+msgstr "在弱光环境下更护眼"
 
 #: src/components/kraken/cards/InstalledExtensionCard.vue
 #: src/components/kraken/modals/ExtensionCreationModal.vue
 msgid "Edit"
-msgstr ""
+msgstr "编辑"
 
 #: src/components/app/VehicleBanner.vue
 msgid "Edit Vehicle Details"
-msgstr ""
+msgstr "编辑载具详情"
 
 #: src/components/autopilot/EndpointCard.vue
 msgid "Edit endpoint"
-msgstr ""
+msgstr "编辑端点"
 
 #: src/components/video-manager/VideoStream.vue
 msgid "Edit stream"
-msgstr ""
+msgstr "编辑视频流"
 
 #: src/menus.ts
 msgid "Editor for Bag Of Holding service."
-msgstr ""
+msgstr "Bag Of Holding 服务的编辑器。"
 
 #: src/components/ethernet/DHCPServerDialog.vue
 #: src/components/ethernet/InterfaceCard.vue
 msgid "Enable"
-msgstr ""
+msgstr "启用"
 
 #: src/components/app/PirateModeMenu.vue
 msgid "Enable Pirate Mode"
-msgstr ""
+msgstr "启用海盗模式"
 
 #: src/views/SettingsView.vue
 msgid "Enable additional debugging and development tools"
-msgstr ""
+msgstr "启用额外的调试和开发工具"
 
 #: src/components/kraken/cards/InstalledExtensionCard.vue
 msgid "Enable and start"
-msgstr ""
+msgstr "启用并启动"
 
 #: src/components/wifi/WifiSettingsDialog.vue
 msgid "Enable smart-hotspot"
-msgstr ""
+msgstr "启用智能热点"
 
 #: src/components/system-information/NetworkCard.vue
 msgid "Enabled"
-msgstr ""
+msgstr "已启用"
 
 #: src/views/SettingsView.vue
 msgid "Enabled - Advanced features are visible"
-msgstr ""
+msgstr "已启用 - 高级功能可见"
 
 #: src/views/SettingsView.vue
 msgid "Enabled - Development tools are active"
-msgstr ""
+msgstr "已启用 - 开发工具已激活"
 
 #: src/components/ethernet/DHCPServerDialog.vue
 msgid "Enabling DHCP server, please wait..."
-msgstr ""
+msgstr "正在启用 DHCP 服务器，请稍候……"
 
 #: src/components/video-manager/VideoStreamCreationDialog.vue
 msgid "Encoding"
-msgstr ""
+msgstr "编码"
 
 #: src/components/video-manager/VideoStream.vue
 msgid "Encoding:"
-msgstr ""
+msgstr "编码："
 
 #: src/components/autopilot/EndpointCreationDialog.vue
 msgid "Endpoint"
-msgstr ""
+msgstr "端点"
 
 #: src/components/video-manager/VideoStream.vue
 msgid "Endpoints:"
-msgstr ""
+msgstr "端点："
 
 #: src/components/vehiclesetup/configuration/compass/AutoCoordinateDetector.vue
 msgid "Enter custom coordinate"
-msgstr ""
+msgstr "输入自定义坐标"
 
 #: src/components/system-information/Processes.vue
 msgid "Environment"
-msgstr ""
+msgstr "环境"
 
 #: src/components/kraken/modals/ExtensionLogsModal.vue
 msgid "Error"
-msgstr ""
+msgstr "错误"
 
 #: src/components/zenoh-inspector/ZenohNetwork.vue
 #, javascript-format
 msgid "Error (${ 0 })"
-msgstr ""
+msgstr "错误（${ 0 }）"
 
 #: src/components/wizard/ActionStepper.vue
 #, javascript-format
 msgid "Error: ${ 0 }"
-msgstr ""
+msgstr "错误：${ 0 }"
 
 #: src/components/video-manager/VideoStream.vue
 msgid "Errors:"
-msgstr ""
+msgstr "错误："
 
 #: src/types/frontend_services.ts
 msgid "Ethernet Manager"
-msgstr ""
+msgstr "以太网管理器"
 
 #: src/views/MainView.vue
 msgid "Ethernet Status"
-msgstr ""
+msgstr "以太网状态"
 
 #: src/components/notifications/EventLogModal.vue
 #: src/components/notifications/NotificationManager.vue
 msgid "Event log"
-msgstr ""
+msgstr "事件日志"
 
 #: src/components/system-information/Processes.vue
 msgid "Executable path"
-msgstr ""
+msgstr "可执行文件路径"
 
 #: src/components/ethernet/InterfaceCard.vue
 msgid "Expired"
-msgstr ""
+msgstr "已过期"
 
 #: src/components/ethernet/InterfaceCard.vue
 msgid "Expires"
-msgstr ""
+msgstr "过期时间"
 
 #: src/components/kraken/modals/ExtensionCreationModal.vue
 msgid "Extension Identifier"
-msgstr ""
+msgstr "扩展标识符"
 
 #: src/components/kraken/modals/ExtensionCreationModal.vue
 msgid "Extension Name"
-msgstr ""
+msgstr "扩展名称"
 
 #: src/views/ExtensionManagerView.vue
 msgid "Extension installed successfully."
-msgstr ""
+msgstr "扩展安装成功。"
 
 #: src/App.vue
 msgid "Extensions"
-msgstr ""
+msgstr "扩展"
 
 #: src/components/kraken/modals/ExtensionSettingsModal.vue
 msgid "Extensions Manifest"
-msgstr ""
+msgstr "扩展清单"
 
 #: src/components/vehiclesetup/configuration/compass/ArdupilotMavlinkCompassSetup.vue
 msgid "External/Internal:"
-msgstr ""
+msgstr "外部/内部："
 
 #: src/components/video-manager/VideoStreamCreationDialog.vue
 msgid "Extra configuration"
-msgstr ""
+msgstr "额外配置"
 
 #: src/views/RecordsView.vue
 msgid "Extracting video..."
-msgstr ""
+msgstr "正在提取视频……"
 
 #: src/components/utils/PullProgress.vue
 #, javascript-format
 msgid "Extracting: ${ 0 }%"
-msgstr ""
+msgstr "正在提取：${ 0 }%"
 
 #: src/components/zenoh-inspector/RawVideoPlayer.vue
 msgid "FFmpeg Decoder"
-msgstr ""
+msgstr "FFmpeg 解码器"
 
 #: src/components/ping/ping1d.vue
 #: src/components/ping/ping360.vue
 msgid "FW"
-msgstr ""
+msgstr "固件"
 
 #: src/components/kraken/modals/ExtensionSettingsModal.vue
 msgid "Factory sources can only be enabled/disabled."
-msgstr ""
+msgstr "出厂源只能启用/禁用。"
 
 #: src/components/kraken/BackAlleyTab.vue
 #: src/components/kraken/BazaarTab.vue
 msgid "Failed to fetch extension manifest."
-msgstr ""
+msgstr "获取扩展清单失败。"
 
 #: src/views/ExtensionManagerView.vue
 msgid "Failed to fetch installed extensions. Make sure the vehicle has internet access and try again."
-msgstr ""
+msgstr "获取已安装的扩展失败。请确保载具可以访问互联网，然后重试。"
 
 #: src/components/wizard/DefaultParamLoader.vue
 msgid "Failed to fetch parameters, trying again..."
-msgstr ""
+msgstr "获取参数失败，正在重试……"
 
 #: src/components/wizard/ScriptLoader.vue
 msgid "Failed to fetch scripts, trying again..."
-msgstr ""
+msgstr "获取脚本失败，正在重试……"
 
 #: src/components/wizard/DefaultParamLoader.vue
 msgid "Failed to load parameters."
-msgstr ""
+msgstr "加载参数失败。"
 
 #: src/components/wizard/ScriptLoader.vue
 msgid "Failed to load scripts."
-msgstr ""
+msgstr "加载脚本失败。"
 
 #: src/components/vehiclesetup/overview/SystemId.vue
 #, javascript-format
 msgid "Failed to set system ID: ${ 0 }"
-msgstr ""
+msgstr "设置系统 ID 失败：${ 0 }"
 
 #: src/components/parameter-editor/LeakSetup.vue
 msgid "Failsafe action"
-msgstr ""
+msgstr "失效保护动作"
 
 #: src/components/vehiclesetup/overview/LeakInfo.vue
 msgid "Failsafe:"
-msgstr ""
+msgstr "失效保护："
 
 #: src/components/vehiclesetup/Configure.vue
 msgid "Failsafes"
-msgstr ""
+msgstr "失效保护"
 
 #: src/components/video-manager/VideoThumbnail.vue
 msgid "Fetch a single thumbnail"
-msgstr ""
+msgstr "获取单张缩略图"
 
 #: src/components/logs/LogManager.vue
 msgid "Fetch available logs"
-msgstr ""
+msgstr "获取可用日志"
 
 #: src/components/kraken/BazaarTab.vue
 msgid "Fetching Bazaar!"
-msgstr ""
+msgstr "正在获取 Bazaar！"
 
 #: src/components/app/DnsConfigurationMenu.vue
 msgid "Fetching Host DNS nameservers..."
-msgstr ""
+msgstr "正在获取主机 DNS 服务器……"
 
 #: src/components/nmea-injector/NMEAInjector.vue
 msgid "Fetching available NMEA sockets..."
-msgstr ""
+msgstr "正在获取可用的 NMEA 套接字……"
 
 #: src/components/bridges/Bridget.vue
 msgid "Fetching available bridges..."
-msgstr ""
+msgstr "正在获取可用的桥接……"
 
 #: src/components/autopilot/EndpointManager.vue
 msgid "Fetching available endpoints..."
-msgstr ""
+msgstr "正在获取可用的端点……"
 
 #: src/components/ethernet/EthernetManager.vue
 msgid "Fetching available ethernet interfaces..."
-msgstr ""
+msgstr "正在获取可用的以太网接口……"
 
 #: src/components/logs/LogManager.vue
 msgid "Fetching available logs..."
-msgstr ""
+msgstr "正在获取可用的日志……"
 
 #: src/components/video-manager/VideoDevice.vue
 msgid "Fetching available streams..."
-msgstr ""
+msgstr "正在获取可用的视频流……"
 
 #: src/components/video-manager/VideoManager.vue
 msgid "Fetching available video devices..."
-msgstr ""
+msgstr "正在获取可用的视频设备……"
 
 #: src/components/kraken/BackAlleyTab.vue
 msgid "Fetching extension Manifest"
-msgstr ""
+msgstr "正在获取扩展清单"
 
 #: src/views/ExtensionManagerView.vue
 msgid "Fetching installed extensions"
-msgstr ""
+msgstr "正在获取已安装的扩展"
 
 #: src/components/video-manager/VideoThumbnail.vue
 msgid "Fetching thumbnail..."
-msgstr ""
+msgstr "正在获取缩略图……"
 
 #: src/menus.ts
 msgid "File Browser"
-msgstr ""
+msgstr "文件浏览器"
 
 #: src/components/app/ImagePicker.vue
 msgid "File browser"
-msgstr ""
+msgstr "文件浏览器"
 
 #: src/types/frontend_services.ts
 msgid "File browsing service."
-msgstr ""
+msgstr "文件浏览服务。"
 
 #: src/components/version-chooser/VersionChooser.vue
 msgid "File input"
-msgstr ""
+msgstr "文件输入"
 
 #: src/types/frontend_services.ts
 msgid "Filebrowser"
-msgstr ""
+msgstr "文件浏览器"
 
 #: src/components/kraken/BackAlleyTab.vue
 msgid "Filters"
-msgstr ""
+msgstr "筛选"
 
 #: src/views/ExtensionManagerView.vue
 msgid "Finalize extension installation"
-msgstr ""
+msgstr "完成扩展安装"
 
 #: src/components/vehiclesetup/overview/VehicleInfo.vue
 #: src/views/SystemInformationView.vue
 msgid "Firmware"
-msgstr ""
+msgstr "固件"
 
 #: src/components/autopilot/FirmwareManager.vue
 msgid "Firmware file"
-msgstr ""
+msgstr "固件文件"
 
 #: src/views/Autopilot.vue
 msgid "Firmware update"
-msgstr ""
+msgstr "固件更新"
 
 #: src/components/vehiclesetup/configuration/compass/FullCompassCalibrator.vue
 msgid "Fitness (mGauss)"
-msgstr ""
+msgstr "拟合度（mGauss）"
 
 #: src/components/vehiclesetup/overview/VehicleInfo.vue
 msgid "Flight Controller"
-msgstr ""
+msgstr "飞控"
 
 #: src/components/kraken/modals/ExtensionLogsModal.vue
 #: src/components/notifications/EventLogModal.vue
 msgid "Follow Logs"
-msgstr ""
+msgstr "跟随日志"
 
 #: src/components/parameter-editor/InlineParameterEditor.vue
 msgid "Force"
-msgstr ""
+msgstr "强制"
 
 #: src/components/wifi/ConnectionDialog.vue
 msgid "Force new password"
-msgstr ""
+msgstr "强制设置新密码"
 
 #: src/components/wifi/ConnectionDialog.vue
 msgid "Forget"
-msgstr ""
+msgstr "忘记"
 
 #: src/components/video-manager/VideoStream.vue
 msgid "Format:"
-msgstr ""
+msgstr "格式："
 
 #: src/components/vehiclesetup/configuration/ArdupilotVehicleBodySetup.vue
 #: src/components/vehiclesetup/overview/VehicleInfo.vue
 msgid "Frame"
-msgstr ""
+msgstr "机架"
 
 #: src/components/vehiclesetup/configuration/ArdupilotVehicleBodySetup.vue
 msgid "Frame Subtype"
-msgstr ""
+msgstr "机架子类型"
 
 #: src/views/SettingsView.vue
 msgid "Free up space by removing MAVLink logs"
-msgstr ""
+msgstr "删除 MAVLink 日志以释放空间"
 
 #: src/views/SettingsView.vue
 msgid "Free up space by removing old logs"
-msgstr ""
+msgstr "删除旧日志以释放空间"
 
 #: src/views/SettingsView.vue
 #, javascript-format
 msgid "Freed: ${ 0 }"
-msgstr ""
+msgstr "已释放：${ 0 }"
 
 #: src/components/system-information/Firmware.vue
 msgid "From:"
-msgstr ""
+msgstr "来自："
 
 #: src/types/frontend_services.ts
 msgid "Frontend status and logic."
-msgstr ""
+msgstr "前端状态与逻辑。"
 
 #: src/components/vehiclesetup/configuration/compass/ArdupilotMavlinkCompassSetup.vue
 msgid "Full (Onboard) Calibration"
-msgstr ""
+msgstr "完整（机载）校准"
 
 #: src/components/vehiclesetup/configuration/accelerometer/FullAccelerometerCalibration.vue
 msgid "Full accelerometer calibration requires you to place the vehicle onto all of its sides and keep it still for a few seconds. This will allow the autopilot to calibrate the accelerometer."
-msgstr ""
+msgstr "完整的加速度计校准需要将载具依次放置在各个侧面，并保持静止数秒，以便飞控校准加速度计。"
 
 #.  eslint-disable-next-line max-len
 #: src/components/vehiclesetup/configuration/compass/ArdupilotMavlinkCompassSetup.vue
 msgid "Fully calibrated, including corrections from the internal World Magnetic Model (WMM) database."
-msgstr ""
+msgstr "已完全校准，包括来自内部世界地磁模型（WMM）数据库的修正。"
 
 #: src/components/app/PowerMenu.vue
 #: src/components/autopilot/FirmwareManager.vue
 msgid "Fully restarts the onboard computer"
-msgstr ""
+msgstr "完全重启机载计算机"
 
 #: src/components/kraken/BackAlleyTab.vue
 msgid "GENERIC"
-msgstr ""
+msgstr "通用"
 
 #: src/components/nmea-injector/NMEAInjector.vue
 msgid "GPGNSS"
@@ -1797,109 +1799,109 @@ msgstr ""
 
 #: src/components/parameter-editor/ServoFunctionGpioEditor.vue
 msgid "GPIO Function:"
-msgstr ""
+msgstr "GPIO 功能："
 
 #: src/components/vehiclesetup/configuration/compass/AutoCoordinateDetector.vue
 msgid "GeoIP coordinates are estimated based on your IP address."
-msgstr ""
+msgstr "GeoIP 坐标是根据您的 IP 地址估算的。"
 
 #: src/components/vehiclesetup/configuration/compass/AutoCoordinateDetector.vue
 msgid "GeoIP coordinates:"
-msgstr ""
+msgstr "GeoIP 坐标："
 
 #: src/components/cloud/CloudSettingsTab.vue
 msgid "Go to BlueOS Cloud"
-msgstr ""
+msgstr "前往 BlueOS Cloud"
 
 #: src/components/cloud/CloudSyncStatusTab.vue
 msgid "Go to My Missions"
-msgstr ""
+msgstr "前往我的任务"
 
 #: src/components/vehiclesetup/overview/gripper.vue
 msgid "Gripper"
-msgstr ""
+msgstr "夹爪"
 
 #: src/components/notifications/ConfigMenu.vue
 msgid "Group by service"
-msgstr ""
+msgstr "按服务分组"
 
 #: src/components/vehiclesetup/Configure.vue
 msgid "Gyroscope"
-msgstr ""
+msgstr "陀螺仪"
 
 #: src/components/zenoh-inspector/RawVideoPlayer.vue
 msgid "Hardware Decoder"
-msgstr ""
+msgstr "硬件解码器"
 
 #: src/components/version-chooser/VersionChooser.vue
 msgid "Has to end in /blueos-core to be listed as a version"
-msgstr ""
+msgstr "必须以 /blueos-core 结尾才能列为版本"
 
 #: src/types/frontend_services.ts
 msgid "Helper program to provide easy access to commands via REST API."
-msgstr ""
+msgstr "通过 REST API 便捷访问命令的辅助程序。"
 
 #: src/types/frontend_services.ts
 msgid "Helper service"
-msgstr ""
+msgstr "辅助服务"
 
 #: src/components/autopilot/EndpointCreationDialog.vue
 msgid "Helps identifying who created this endpoint."
-msgstr ""
+msgstr "有助于识别此端点的创建者。"
 
 #: src/components/vehiclesetup/configuration/power/BatteryCard.vue
 msgid "Hide"
-msgstr ""
+msgstr "隐藏"
 
 #: src/components/version-chooser/VersionCard.vue
 msgid "Hide release notes"
-msgstr ""
+msgstr "隐藏发行说明"
 
 #: src/components/health/HealthTrayMenu.vue
 #, javascript-format
 msgid "High disk usage! (${ 0 }%) please clean up the disk"
-msgstr ""
+msgstr "磁盘使用率过高！（${ 0 }%）请清理磁盘"
 
 #: src/components/kraken/modals/ExtensionDetailsModal.vue
 msgid "Homepage"
-msgstr ""
+msgstr "主页"
 
 #: src/components/vehiclesetup/configuration/compass/LevelHorizonCalibration.vue
 msgid "Horizon calibration trims the pitch and roll of the vehicle's inertial sensors to adjust for small deviations from level."
-msgstr ""
+msgstr "水平校准会微调载具惯性传感器的俯仰和横滚，以修正与水平面的微小偏差。"
 
 #: src/components/health/GpsTrayMenu.vue
 msgid "Horizontal Accuracy"
-msgstr ""
+msgstr "水平精度"
 
 #: src/components/health/GpsTrayMenu.vue
 msgid "Horizontal position uncertainty"
-msgstr ""
+msgstr "水平位置不确定度"
 
 #: src/components/app/DnsConfigurationMenu.vue
 msgid "Host DNS nameservers"
-msgstr ""
+msgstr "主机 DNS 服务器"
 
 #: src/components/ethernet/InterfaceCard.vue
 #: src/components/system-information/AboutThisSystem.vue
 msgid "Hostname"
-msgstr ""
+msgstr "主机名"
 
 #: src/components/wifi/WifiManager.vue
 msgid "Hotspot QR code"
-msgstr ""
+msgstr "热点二维码"
 
 #: src/components/wifi/WifiSettingsDialog.vue
 msgid "Hotspot SSID"
-msgstr ""
+msgstr "热点 SSID"
 
 #: src/components/wifi/WifiSettingsDialog.vue
 msgid "Hotspot password"
-msgstr ""
+msgstr "热点密码"
 
 #: src/components/common/NotSafeOverlay.vue
 msgid "I know what I'm doing, let me through"
-msgstr ""
+msgstr "我知道自己在做什么，让我继续"
 
 #: src/components/ping/ping1d.vue
 #: src/components/ping/ping360.vue
@@ -1918,367 +1920,367 @@ msgstr ""
 
 #: src/components/ethernet/InterfaceCard.vue
 msgid "IP Address"
-msgstr ""
+msgstr "IP 地址"
 
 #: src/components/ethernet/AddressCreationDialog.vue
 msgid "IP address"
-msgstr ""
+msgstr "IP 地址"
 
 #: src/components/autopilot/MasterEndpointManager.vue
 msgid "IP/Device"
-msgstr ""
+msgstr "IP/设备"
 
 #: src/views/ExtensionManagerView.vue
 msgid "Identifier"
-msgstr ""
+msgstr "标识符"
 
 #: src/components/autopilot/FirmwareManager.vue
 msgid "If it fails, this is normal for some corrupted firmware. Just reboot the onboard computer and try again from this page."
-msgstr ""
+msgstr "如果失败，对于某些已损坏的固件属正常现象。只需重启机载计算机，然后在此页面重试。"
 
 #: src/components/vehiclesetup/MotorDetection.vue
 msgid "If necessary it is possible to manually test and set the motor spin directions instead."
-msgstr ""
+msgstr "如有需要，也可以手动测试并设置电机旋转方向。"
 
 #: src/components/kraken/BazaarTab.vue
 msgid "If the cloud icon is not visible, make sure Major Tom is enabled in installed extensions."
-msgstr ""
+msgstr "如果看不到云图标，请确保已在已安装的扩展中启用 Major Tom。"
 
 #: src/components/vehiclesetup/configuration/power/BatteryCard.vue
 msgid "If the reported voltage differs from a voltmeter reading, adjust the multiplier."
-msgstr ""
+msgstr "如果报告的电压与电压表读数不同，请调整倍率。"
 
 #: src/components/vehiclesetup/configuration/compass/ArdupilotMavlinkCompassSetup.vue
 msgid "If you enable this option, the autopilot will automatically set the declination based on your current location. A GPS or other absolute positioning system is required."
-msgstr ""
+msgstr "启用此选项后，飞控将根据当前位置自动设置磁偏角。需要 GPS 或其他绝对定位系统。"
 
 #: src/components/vehiclesetup/viewers/GenericViewer.vue
 msgid "If you want to add a custom 3D model please follow the instructions in"
-msgstr ""
+msgstr "如需添加自定义 3D 模型，请按照以下说明操作："
 
 #: src/components/ping/PingIgnoredPorts.vue
 msgid "Ignored serial ports"
-msgstr ""
+msgstr "已忽略的串口"
 
 #: src/components/ping/PingIgnoredPorts.vue
 msgid "Ignored serial ports saved."
-msgstr ""
+msgstr "已忽略的串口已保存。"
 
 #: src/views/ExtensionManagerView.vue
 msgid "Import extension image and inspect metadata"
-msgstr ""
+msgstr "导入扩展镜像并检查元数据"
 
 #: src/components/bridges/BridgeCreationDialog.vue
 #, javascript-format
 msgid "In use by ${ 0 }"
-msgstr ""
+msgstr "正被 ${ 0 } 使用"
 
 #: src/components/parameter-editor/ServoFunctionActuatorEditor.vue
 msgid "Increment"
-msgstr ""
+msgstr "增量"
 
 #: src/components/vehiclesetup/overview/OnboardSensors.vue
 msgid "Inertial Measurement Unit"
-msgstr ""
+msgstr "惯性测量单元"
 
 #: src/components/bridges/BridgeCard.vue
 #: src/components/bridges/BridgeCreationDialog.vue
 #, javascript-format
 msgid "Info: ${ 0 } / ${ 1 }"
-msgstr ""
+msgstr "信息：${ 0 } / ${ 1 }"
 
 #: src/components/kraken/modals/ExtensionCreationModal.vue
 #: src/components/kraken/modals/ExtensionDetailsModal.vue
 msgid "Install"
-msgstr ""
+msgstr "安装"
 
 #: src/components/cloud/CloudTrayMenu.vue
 msgid "Install Major Tom"
-msgstr ""
+msgstr "安装 Major Tom"
 
 #: src/components/autopilot/FirmwareManager.vue
 msgid "Install anyway"
-msgstr ""
+msgstr "仍然安装"
 
 #: src/views/ExtensionManagerView.vue
 msgid "Install extension"
-msgstr ""
+msgstr "安装扩展"
 
 #: src/views/ExtensionManagerView.vue
 msgid "Install extension from file"
-msgstr ""
+msgstr "从文件安装扩展"
 
 #: src/components/autopilot/FirmwareManager.vue
 msgid "Install firmware"
-msgstr ""
+msgstr "安装固件"
 
 #: src/alerts/rules/autopilot.ts
 msgid "Install firmware before starting the autopilot."
-msgstr ""
+msgstr "请在启动飞控之前安装固件。"
 
 #: src/views/ExtensionManagerView.vue
 msgid "Install from file"
-msgstr ""
+msgstr "从文件安装"
 
 #: src/components/wizard/Wizard.vue
 msgid "Install scripts"
-msgstr ""
+msgstr "安装脚本"
 
 #: src/components/wizard/Wizard.vue
 msgid "Install stable sub firmware"
-msgstr ""
+msgstr "安装稳定版 Sub 固件"
 
 #: src/components/autopilot/FirmwareManager.vue
 msgid "Installation may take a few minutes."
-msgstr ""
+msgstr "安装可能需要几分钟。"
 
 #: src/components/kraken/BackAlleyTab.vue
 #: src/views/ExtensionManagerView.vue
 msgid "Installed"
-msgstr ""
+msgstr "已安装"
 
 #: src/components/autopilot/FirmwareManager.vue
 msgid "Installing firmware. Please wait."
-msgstr ""
+msgstr "正在安装固件，请稍候。"
 
 #: src/components/kraken/modals/ExtensionDetailsModal.vue
 msgid "Installing..."
-msgstr ""
+msgstr "正在安装……"
 
 #: src/components/speedtest/InternetSpeedTest.vue
 msgid "Internet Speed and Latency Test"
-msgstr ""
+msgstr "互联网速度与延迟测试"
 
 #: src/views/NetworkTestView.vue
 msgid "Internet speed test"
-msgstr ""
+msgstr "互联网速度测试"
 
 #: src/components/parameter-editor/RelaySetup.vue
 msgid "Invert Output"
-msgstr ""
+msgstr "反转输出"
 
 #: src/components/video-manager/VideoDiagnosticHelper.vue
 #, javascript-format
 msgid "It looks like no available video streams are configured to reach your device's detected IP address (${ 0 })."
-msgstr ""
+msgstr "似乎没有可用的视频流配置为发送到您设备检测到的 IP 地址（${ 0 }）。"
 
 #: src/components/beacon/BeaconTrayMenu.vue
 msgid "It looks like you are reaching BlueOS via its wi-fi network. This can result in degraded performance."
-msgstr ""
+msgstr "您似乎正在通过 BlueOS 的 Wi-Fi 网络访问它，这可能导致性能下降。"
 
 #: src/views/SystemInformationView.vue
 msgid "Journal"
-msgstr ""
+msgstr "Journal 日志"
 
 #: src/components/parameter-editor/ServoFunctionLightsEditor.vue
 msgid "Joystick Steps"
-msgstr ""
+msgstr "摇杆步数"
 
 #: src/components/parameter-editor/ServoFunctionActuatorEditor.vue
 msgid "Joystick functions not configured for this actuator."
-msgstr ""
+msgstr "此执行器未配置摇杆功能。"
 
 #: src/components/vehiclesetup/configuration/lights.vue
 msgid "Joystick steps"
-msgstr ""
+msgstr "摇杆步数"
 
 #: src/components/system-information/AboutThisSystem.vue
 #: src/views/SystemInformationView.vue
 msgid "Kernel"
-msgstr ""
+msgstr "内核"
 
 #: src/types/frontend_services.ts
 msgid "Kraken service"
-msgstr ""
+msgstr "Kraken 服务"
 
 #: src/views/SettingsView.vue
 msgid "Language"
-msgstr ""
+msgstr "语言"
 
 #: src/components/vehiclesetup/configuration/compass/ArdupilotMavlinkCompassSetup.vue
 msgid "Large Vehicle Calibration"
-msgstr ""
+msgstr "大型载具校准"
 
 #: src/components/vehiclesetup/configuration/compass/LargeVehicleCompassCalibrator.vue
 msgid "Large Vehicle Compass Calibration"
-msgstr ""
+msgstr "大型载具罗盘校准"
 
 #: src/components/speedtest/InternetSpeedTest.vue
 #: src/components/speedtest/NetworkSpeedTest.vue
 msgid "Latency"
-msgstr ""
+msgstr "延迟"
 
 #: src/components/system-information/Firmware.vue
 msgid "Latest:"
-msgstr ""
+msgstr "最新："
 
 #: src/components/vehiclesetup/configuration/compass/AutoCoordinateDetector.vue
 msgid "Latitude"
-msgstr ""
+msgstr "纬度"
 
 #: src/components/vehiclesetup/overview/LeakInfo.vue
 msgid "Leak"
-msgstr ""
+msgstr "漏水"
 
 #: src/components/parameter-editor/LeakSetup.vue
 #, javascript-format
 msgid "Leak ${ 0 }"
-msgstr ""
+msgstr "漏水 ${ 0 }"
 
 #: src/components/vehiclesetup/overview/LeakInfo.vue
 #, javascript-format
 msgid "Leak sensor ${ 0 }:"
-msgstr ""
+msgstr "漏水传感器 ${ 0 }："
 
 #: src/components/cloud/CloudSettingsTab.vue
 msgid "Lets connect your vehicle!"
-msgstr ""
+msgstr "开始连接您的载具吧！"
 
 #: src/components/vehiclesetup/configuration/compass/LevelHorizonCalibration.vue
 msgid "Level Horizon"
-msgstr ""
+msgstr "水平校准"
 
 #: src/views/SettingsView.vue
 msgid "Light Theme"
-msgstr ""
+msgstr "浅色主题"
 
 #: src/components/vehiclesetup/Configure.vue
 #: src/components/vehiclesetup/overview/LightsInfo.vue
 msgid "Lights"
-msgstr ""
+msgstr "灯光"
 
 #: src/components/vehiclesetup/configuration/lights.vue
 msgid "Lights 1"
-msgstr ""
+msgstr "灯光 1"
 
 #: src/components/vehiclesetup/configuration/lights.vue
 msgid "Lights 2"
-msgstr ""
+msgstr "灯光 2"
 
 #: src/menus.ts
 msgid "List all available services found in BlueOS serving http interfaces, and their respective API documentations."
-msgstr ""
+msgstr "列出 BlueOS 中所有提供 HTTP 接口的可用服务及其各自的 API 文档。"
 
 #: src/components/parameter-editor/ParameterEditor.vue
 msgid "Load"
-msgstr ""
+msgstr "加载"
 
 #: src/views/ExtensionManagerView.vue
 msgid "Load Docker image"
-msgstr ""
+msgstr "加载 Docker 镜像"
 
 #: src/components/vehiclesetup/overview/ParamSets.vue
 msgid "Load Recommended Parameter sets"
-msgstr ""
+msgstr "加载推荐参数集"
 
 #: src/components/parameter-editor/ParameterEditor.vue
 msgid "Load parameter file"
-msgstr ""
+msgstr "加载参数文件"
 
 #: src/components/parameter-editor/ParameterEditor.vue
 msgid "Load parameters from file"
-msgstr ""
+msgstr "从文件加载参数"
 
 #: src/components/parameter-editor/ParameterLoader.vue
 msgid "Loading Parameters"
-msgstr ""
+msgstr "正在加载参数"
 
 #: src/components/customization/ThemeCustomization.vue
 msgid "Loading current theme..."
-msgstr ""
+msgstr "正在加载当前主题……"
 
 #: src/components/utils/BrIframe.vue
 msgid "Loading external application..."
-msgstr ""
+msgstr "正在加载外部应用……"
 
 #: src/components/version-chooser/VersionChooser.vue
 msgid "Loading local images..."
-msgstr ""
+msgstr "正在加载本地镜像……"
 
 #: src/components/wizard/DefaultParamLoader.vue
 msgid "Loading parameters..."
-msgstr ""
+msgstr "正在加载参数……"
 
 #: src/components/version-chooser/VersionChooser.vue
 msgid "Loading remote images..."
-msgstr ""
+msgstr "正在加载远程镜像……"
 
 #: src/components/wizard/ScriptLoader.vue
 msgid "Loading scripts..."
-msgstr ""
+msgstr "正在加载脚本……"
 
 #: src/components/system-information/Processes.vue
 msgid "Loading... Please wait"
-msgstr ""
+msgstr "正在加载……请稍候"
 
 #: src/components/speedtest/NetworkSpeedTest.vue
 msgid "Local Network Speed and Latency Test"
-msgstr ""
+msgstr "本地网络速度与延迟测试"
 
 #: src/components/version-chooser/VersionChooser.vue
 msgid "Local Versions"
-msgstr ""
+msgstr "本地版本"
 
 #: src/views/NetworkTestView.vue
 msgid "Local network test"
-msgstr ""
+msgstr "本地网络测试"
 
 #: src/components/app/DnsConfigurationMenu.vue
 msgid "Lock DNS nameservers configuration"
-msgstr ""
+msgstr "锁定 DNS 服务器配置"
 
 #: src/menus.ts
 msgid "Log Browser"
-msgstr ""
+msgstr "日志浏览器"
 
 #: src/components/version-chooser/DockerLogin.vue
 msgid "Log in using your Docker Hub credentials to access private repositories and benefit from an increased rate limit."
-msgstr ""
+msgstr "使用您的 Docker Hub 凭据登录，以访问私有仓库并获得更高的速率限制。"
 
 #: src/components/vehiclesetup/configuration/compass/ArdupilotMavlinkCompassSetup.vue
 msgid "Log-based Calibration (Coming soon)"
-msgstr ""
+msgstr "基于日志的校准（即将推出）"
 
 #: src/components/parameter-editor/LeakSetup.vue
 msgid "Logic when dry"
-msgstr ""
+msgstr "干燥时的逻辑电平"
 
 #: src/components/vehiclesetup/overview/LeakInfo.vue
 msgid "Logic:"
-msgstr ""
+msgstr "逻辑电平："
 
 #: src/components/version-chooser/DockerLogin.vue
 msgid "Login"
-msgstr ""
+msgstr "登录"
 
 #: src/components/version-chooser/DockerLogin.vue
 msgid "Login root user"
-msgstr ""
+msgstr "以 root 用户登录"
 
 #: src/components/kraken/modals/ExtensionLogsModal.vue
 #, javascript-format
 msgid "Logs for ${ 0 }"
-msgstr ""
+msgstr "${ 0 } 的日志"
 
 #: src/components/vehiclesetup/configuration/compass/AutoCoordinateDetector.vue
 msgid "Longitude"
-msgstr ""
+msgstr "经度"
 
 #: src/components/vehiclesetup/overview/PowerInfo.vue
 msgid "Low Voltage Failsafe:"
-msgstr ""
+msgstr "低电压失效保护："
 
 #: src/components/vehiclesetup/overview/PowerInfo.vue
 msgid "Low Voltage Level:"
-msgstr ""
+msgstr "低电压阈值："
 
 #: src/components/ethernet/InterfaceCard.vue
 msgid "MAC Address"
-msgstr ""
+msgstr "MAC 地址"
 
 #: src/components/system-information/NetworkCard.vue
 msgid "MAC:"
-msgstr ""
+msgstr "MAC："
 
 #: src/components/vehiclesetup/overview/gripper.vue
 msgid "MAVLink"
@@ -2286,99 +2288,99 @@ msgstr ""
 
 #: src/components/ping/ping1d.vue
 msgid "MAVLink Distances"
-msgstr ""
+msgstr "MAVLink 距离"
 
 #: src/menus.ts
 msgid "MAVLink Endpoints"
-msgstr ""
+msgstr "MAVLink 端点"
 
 #: src/menus.ts
 msgid "MAVLink Inspector"
-msgstr ""
+msgstr "MAVLink 检查器"
 
 #: src/views/SettingsView.vue
 msgid "MAVLink Logs"
-msgstr ""
+msgstr "MAVLink 日志"
 
 #: src/components/health/HealthTrayMenu.vue
 msgid "MAVLink heartbeat lost"
-msgstr ""
+msgstr "MAVLink 心跳丢失"
 
 #: src/components/vehiclesetup/overview/SystemId.vue
 msgid "MAVLink system ID"
-msgstr ""
+msgstr "MAVLink 系统 ID"
 
 #: src/components/autopilot/EndpointManager.vue
 msgid "MAVP2P has been presenting issues and is not currently recommended."
-msgstr ""
+msgstr "MAVP2P 存在一些问题，目前不推荐使用。"
 
 #: src/components/wizard/Wizard.vue
 msgid "MDNS Name"
-msgstr ""
+msgstr "mDNS 名称"
 
 #: src/components/kraken/BazaarTab.vue
 msgid "Major Tom is not configured."
-msgstr ""
+msgstr "Major Tom 尚未配置。"
 
 #: src/components/cloud/CloudTrayMenu.vue
 msgid "Major Tom is not installed"
-msgstr ""
+msgstr "未安装 Major Tom"
 
 #: src/components/vehiclesetup/configuration/compass/CompassLearn.vue
 msgid "Make sure you have a valid region/position specified, then click start and drive the vehicle around in manual mode until you see the message <b>\"CompassLearn: finished\"</b>."
-msgstr ""
+msgstr "请确保已指定有效的区域/位置，然后点击开始，并在手动模式下驾驶载具四处移动，直到看到消息 <b>\"CompassLearn: finished\"</b>。"
 
 #: src/App.vue
 msgid "Manage BlueOS extensions"
-msgstr ""
+msgstr "管理 BlueOS 扩展"
 
 #: src/menus.ts
 msgid "Manage BlueOS versions and update to the latest available."
-msgstr ""
+msgstr "管理 BlueOS 版本并更新到最新可用版本。"
 
 #: src/types/frontend_services.ts
 msgid "Manage BlueOS visual customization (theme color, 3D model overrides, branding)."
-msgstr ""
+msgstr "管理 BlueOS 外观自定义（主题颜色、3D 模型覆盖、品牌标识）。"
 
 #: src/menus.ts
 msgid "Manage MAVLink endpoints for internal/external systems. Use this if you need to connect additional MAVLink systems to your vehicle."
-msgstr ""
+msgstr "管理内部/外部系统的 MAVLink 端点。如需将其他 MAVLink 系统连接到载具，请使用此功能。"
 
 #: src/menus.ts
 msgid "Manage detected Ping family sonar devices, connected to either your Onboard Computer or its local network."
-msgstr ""
+msgstr "管理已检测到的 Ping 系列声呐设备，这些设备连接到机载计算机或其本地网络。"
 
 #: src/views/SettingsView.vue
 msgid "Manage logs and system data"
-msgstr ""
+msgstr "管理日志和系统数据"
 
 #: src/types/frontend_services.ts
 msgid "Manage versions of BlueOS and bootstrap"
-msgstr ""
+msgstr "管理 BlueOS 和 bootstrap 的版本"
 
 #: src/menus.ts
 msgid "Manage your video devices and video streams."
-msgstr ""
+msgstr "管理您的视频设备和视频流。"
 
 #: src/components/version-chooser/VersionChooser.vue
 msgid "Manual Upload"
-msgstr ""
+msgstr "手动上传"
 
 #: src/components/autopilot/MasterEndpointManager.vue
 msgid "Master Endpoint Configuration"
-msgstr ""
+msgstr "主端点配置"
 
 #: src/views/Autopilot.vue
 msgid "Master endpoint"
-msgstr ""
+msgstr "主端点"
 
 #: src/components/autopilot/MasterEndpointManager.vue
 msgid "Master endpoint updated successfully"
-msgstr ""
+msgstr "主端点更新成功"
 
 #: src/types/frontend_services.ts
 msgid "MavLink communication layer over REST API."
-msgstr ""
+msgstr "基于 REST API 的 MAVLink 通信层。"
 
 #: src/types/frontend_services.ts
 msgid "MavLink2Rest"
@@ -2387,115 +2389,115 @@ msgstr ""
 #: src/components/nmea-injector/NMEASocketCard.vue
 #, javascript-format
 msgid "Mavlink Component #${ 0 }"
-msgstr ""
+msgstr "MAVLink 组件 #${ 0 }"
 
 #: src/components/autopilot/EndpointManager.vue
 msgid "Mavlink Router"
-msgstr ""
+msgstr "MAVLink Router"
 
 #: src/components/nmea-injector/NMEASocketCreationDialog.vue
 msgid "Mavlink component ID"
-msgstr ""
+msgstr "MAVLink 组件 ID"
 
 #: src/components/vehiclesetup/configuration/camera.vue
 msgid "Max Angle"
-msgstr ""
+msgstr "最大角度"
 
 #: src/components/vehiclesetup/configuration/camera.vue
 msgid "Max PWM"
-msgstr ""
+msgstr "最大 PWM"
 
 #: src/components/vehiclesetup/configuration/power/BatteryCard.vue
 msgid "Measure battery voltage with an external voltmeter and enter it below."
-msgstr ""
+msgstr "使用外部电压表测量电池电压，并在下方输入。"
 
 #: src/components/vehiclesetup/configuration/power/BatteryCard.vue
 msgid "Measure current draw with an external current meter and enter it below."
-msgstr ""
+msgstr "使用外部电流表测量电流消耗，并在下方输入。"
 
 #: src/components/vehiclesetup/configuration/camera.vue
 msgid "Measure the rotation limit angles and input them below. This will allow Ardupilot to accurately report the camera rotation angle from its commanded servo PWM value."
-msgstr ""
+msgstr "测量旋转极限角度并在下方输入。这将使 ArduPilot 能够根据指令的舵机 PWM 值准确报告相机旋转角度。"
 
 #: src/components/vehiclesetup/configuration/power/BatteryCard.vue
 msgid "Measured Current (A)"
-msgstr ""
+msgstr "实测电流（A）"
 
 #: src/components/vehiclesetup/configuration/power/BatteryCard.vue
 msgid "Measured Voltage (V)"
-msgstr ""
+msgstr "实测电压（V）"
 
 #: src/components/system-information/Processes.vue
 msgid "Memory (kB)"
-msgstr ""
+msgstr "内存（kB）"
 
 #: src/widgets/CpuPie.vue
 msgid "Memory Usage"
-msgstr ""
+msgstr "内存使用率"
 
 #: src/components/kraken/cards/InstalledExtensionCard.vue
 msgid "Memory usage"
-msgstr ""
+msgstr "内存使用率"
 
 #: src/components/vehiclesetup/configuration/camera.vue
 msgid "Min Angle"
-msgstr ""
+msgstr "最小角度"
 
 #: src/components/vehiclesetup/configuration/power/BatteryCard.vue
 msgid "Min Arming Voltage"
-msgstr ""
+msgstr "最低解锁电压"
 
 #: src/components/vehiclesetup/configuration/camera.vue
 msgid "Min PWM"
-msgstr ""
+msgstr "最小 PWM"
 
 #: src/components/parameter-editor/ParameterEditorDialog.vue
 #, javascript-format
 msgid "Min: ${ 0 } Max: ${ 1 } Increment: ${ 2 }"
-msgstr ""
+msgstr "最小值：${ 0 } 最大值：${ 1 } 增量：${ 2 }"
 
 #: src/components/autopilot/AutopilotSerialConfiguration.vue
 #: src/components/ping/ping1d.vue
 #: src/components/ping/ping360.vue
 #: src/components/system-information/AboutThisSystem.vue
 msgid "Model"
-msgstr ""
+msgstr "型号"
 
 #: src/components/logs/LogManager.vue
 msgid "Modified"
-msgstr ""
+msgstr "修改时间"
 
 #: src/components/vehiclesetup/PwmSetup.vue
 msgid "Motor Test"
-msgstr ""
+msgstr "电机测试"
 
 #: src/components/vehiclesetup/MotorDetection.vue
 msgid "Motor direction detection failed. Please check the troubleshooting section below."
-msgstr ""
+msgstr "电机方向检测失败。请查看下方的故障排除部分。"
 
 #: src/components/vehiclesetup/MotorDetection.vue
 msgid "Motor direction detection is complete. The vehicle is ready for normal operation."
-msgstr ""
+msgstr "电机方向检测已完成，载具可正常运行。"
 
 #: src/components/vehiclesetup/PwmSetup.vue
 msgid "Motor test is disabled when the page is out of focus"
-msgstr ""
+msgstr "页面失去焦点时，电机测试将被禁用"
 
 #: src/components/vehiclesetup/MotorDetection.vue
 msgid "Motor testing can fail due to any unexpected motions of the vehicle. Here are some common failure causes, and potential solutions:"
-msgstr ""
+msgstr "载具的任何意外运动都可能导致电机测试失败。以下是一些常见的失败原因及可能的解决方案："
 
 #: src/components/vehiclesetup/configuration/camera.vue
 msgid "Mount 1 Pitch Servo"
-msgstr ""
+msgstr "云台 1 俯仰舵机"
 
 #: src/components/vehiclesetup/configuration/camera.vue
 msgid "Mount is disabled. Enable it by setting the 'Gimbal Type' to 'Servo'."
-msgstr ""
+msgstr "云台已禁用。请将“Gimbal Type”设置为“Servo”以启用。"
 
 #: src/components/vehiclesetup/configuration/compass/ArdupilotMavlinkCompassSetup.vue
 msgid "Mounting Rotation:"
-msgstr ""
+msgstr "安装旋转："
 
 #: src/components/kraken/cards/InstalledExtensionCard.vue
 #: src/components/parameter-editor/ParameterLoader.vue
@@ -2506,7 +2508,7 @@ msgstr ""
 #: src/menus.ts
 #: src/types/frontend_services.ts
 msgid "NMEA Injector"
-msgstr ""
+msgstr "NMEA 注入器"
 
 #: src/components/autopilot/EndpointCreationDialog.vue
 #: src/components/kraken/modals/ExtensionSettingsModal.vue
@@ -2520,353 +2522,353 @@ msgstr ""
 #: src/views/Disk.vue
 #: src/views/ExtensionManagerView.vue
 msgid "Name"
-msgstr ""
+msgstr "名称"
 
 #: src/components/vehiclesetup/configuration/accelerometer/ArdupilotAccelerometerSetup.vue
 msgid "Needs calibration"
-msgstr ""
+msgstr "需要校准"
 
 #: src/views/SystemInformationView.vue
 #: src/views/ZenohInspectorView.vue
 msgid "Network"
-msgstr ""
+msgstr "网络"
 
 #: src/components/app/NetworkInterfaceMenu.vue
 msgid "Network Interface Priority"
-msgstr ""
+msgstr "网络接口优先级"
 
 #: src/types/frontend_services.ts
 msgid "Network Speed Test"
-msgstr ""
+msgstr "网络速度测试"
 
 #: src/menus.ts
 msgid "Network Test"
-msgstr ""
+msgstr "网络测试"
 
 #: src/components/nmea-injector/NMEASocketCreationDialog.vue
 msgid "New NMEA socket"
-msgstr ""
+msgstr "新建 NMEA 套接字"
 
 #: src/components/parameter-editor/ParameterLoader.vue
 msgid "New Value"
-msgstr ""
+msgstr "新值"
 
 #: src/components/bridges/BridgeCreationDialog.vue
 msgid "New bridge"
-msgstr ""
+msgstr "新建桥接"
 
 #: src/components/ethernet/AddressCreationDialog.vue
 #, javascript-format
 msgid "New static IP address on '${ 0 }'"
-msgstr ""
+msgstr "在“${ 0 }”上新建静态 IP 地址"
 
 #: src/components/vehiclesetup/configuration/accelerometer/FullAccelerometerCalibration.vue
 msgid "Next"
-msgstr ""
+msgstr "下一步"
 
 #: src/components/scanner/availableServicesTable.vue
 msgid "No API documentation"
-msgstr ""
+msgstr "无 API 文档"
 
 #: src/components/ethernet/InterfaceCard.vue
 msgid "No DHCP leases found"
-msgstr ""
+msgstr "未找到 DHCP 租约"
 
 #: src/components/app/DnsConfigurationMenu.vue
 msgid "No DNS nameservers found on host's resolv.conf configuration. At least one nameserver is recommended for the system have access to the internet. Click on \"ADD DNS\" below to add a new nameserver."
-msgstr ""
+msgstr "主机的 resolv.conf 配置中未找到 DNS 服务器。建议至少配置一个 DNS 服务器，以便系统访问互联网。点击下方的“添加 DNS”以添加新的 DNS 服务器。"
 
 #: src/components/kraken/BackAlleyTab.vue
 msgid "No Extensions Available"
-msgstr ""
+msgstr "没有可用的扩展"
 
 #: src/views/ExtensionManagerView.vue
 msgid "No Extensions installed."
-msgstr ""
+msgstr "未安装任何扩展。"
 
 #: src/components/vehiclesetup/overview/ParamSets.vue
 msgid "No Internet connection, unable to load parameters."
-msgstr ""
+msgstr "无互联网连接，无法加载参数。"
 
 #: src/components/nmea-injector/NMEAInjector.vue
 msgid "No NMEA sockets available. You can add a connection by clicking the + symbol in the corner."
-msgstr ""
+msgstr "没有可用的 NMEA 套接字。您可以点击角落的 + 号添加连接。"
 
 #: src/views/Pings.vue
 msgid "No Ping devices available."
-msgstr ""
+msgstr "没有可用的 Ping 设备。"
 
 #: src/components/nmea-injector/NMEASocketCreationDialog.vue
 msgid "No Socket type chosen"
-msgstr ""
+msgstr "未选择套接字类型"
 
 #: src/components/system-information/Usb.vue
 msgid "No USB devices found"
-msgstr ""
+msgstr "未找到 USB 设备"
 
 #: src/views/Autopilot.vue
 msgid "No board running"
-msgstr ""
+msgstr "没有正在运行的板卡"
 
 #: src/components/bridges/Bridget.vue
 msgid "No bridges available. You can add a serial to UDP bridge by clicking the + symbol in the corner."
-msgstr ""
+msgstr "没有可用的桥接。您可以点击角落的 + 号添加串口到 UDP 的桥接。"
 
 #: src/components/version-chooser/DockerLogin.vue
 msgid "No connected accounts"
-msgstr ""
+msgstr "没有已连接的账户"
 
 #: src/components/video-manager/VideoControlsDialog.vue
 msgid "No controllers available for this device."
-msgstr ""
+msgstr "此设备没有可用的控制项。"
 
 #: src/components/parameter-editor/ParameterLoader.vue
 #: src/components/wizard/DefaultParamLoader.vue
 msgid "No description provided"
-msgstr ""
+msgstr "未提供描述"
 
 #: src/components/autopilot/EndpointManager.vue
 msgid "No endpoints available."
-msgstr ""
+msgstr "没有可用的端点。"
 
 #: src/views/Disk.vue
 msgid "No entries."
-msgstr ""
+msgstr "无条目。"
 
 #: src/components/ethernet/EthernetManager.vue
 msgid "No ethernet interfaces available"
-msgstr ""
+msgstr "没有可用的以太网接口"
 
 #: src/components/notifications/EventLogModal.vue
 msgid "No events yet"
-msgstr ""
+msgstr "暂无事件"
 
 #: src/components/customization/BrandingUploader.vue
 msgid "No file uploaded."
-msgstr ""
+msgstr "未上传文件。"
 
 #: src/components/cloud/CloudSyncStatusTab.vue
 msgid "No files in the queue."
-msgstr ""
+msgstr "队列中没有文件。"
 
 #: src/alerts/rules/autopilot.ts
 msgid "No flight controller detected"
-msgstr ""
+msgstr "未检测到飞控"
 
 #: src/components/wizard/Wizard.vue
 msgid "No flight controller detected."
-msgstr ""
+msgstr "未检测到飞控。"
 
 #: src/components/app/ImagePicker.vue
 #, javascript-format
 msgid "No images found at ${ 0 }. Please upload some images to this directory using the file browser."
-msgstr ""
+msgstr "在 ${ 0 } 中未找到图片。请使用文件浏览器向此目录上传图片。"
 
 #: src/alerts/rules/network.ts
 msgid "No internet connection"
-msgstr ""
+msgstr "无互联网连接"
 
 #: src/components/kraken/modals/ExtensionLogsModal.vue
 msgid "No logs received yet"
-msgstr ""
+msgstr "尚未收到日志"
 
 #: src/components/customization/ThemeCustomization.vue
 msgid "No model overrides uploaded."
-msgstr ""
+msgstr "未上传模型覆盖。"
 
 #: src/components/notifications/NotificationManager.vue
 msgid "No notifications to display :)"
-msgstr ""
+msgstr "没有要显示的通知 :)"
 
 #: src/components/vehiclesetup/overview/ParamSets.vue
 msgid "No parameters available for this setup"
-msgstr ""
+msgstr "此配置没有可用的参数"
 
 #: src/components/wizard/DefaultParamLoader.vue
 msgid "No parameters available for this setup."
-msgstr ""
+msgstr "此配置没有可用的参数。"
 
 #: src/components/parameter-editor/ParameterLoader.vue
 msgid "No parameters to change. This means all the parameters in this group are already set to the desired values"
-msgstr ""
+msgstr "没有需要更改的参数。这表示该组中的所有参数均已设置为目标值"
 
 #: src/views/RecordsView.vue
 msgid "No recordings found yet."
-msgstr ""
+msgstr "尚未找到录像。"
 
 #: src/components/wizard/ScriptLoader.vue
 msgid "No scripts available for this setup."
-msgstr ""
+msgstr "此配置没有可用的脚本。"
 
 #: src/components/bridges/BridgeCreationDialog.vue
 #: src/components/ping/PingIgnoredPorts.vue
 msgid "No serial ports available"
-msgstr ""
+msgstr "没有可用的串口"
 
 #: src/components/video-manager/VideoDevice.vue
 msgid "No streams added to this video source"
-msgstr ""
+msgstr "此视频源尚未添加视频流"
 
 #: src/components/vehiclesetup/configuration/compass/AutoCoordinateDetector.vue
 msgid "No valid GPS position"
-msgstr ""
+msgstr "无有效的 GPS 位置"
 
 #: src/components/vehiclesetup/configuration/compass/AutoCoordinateDetector.vue
 msgid "No valid GPS position!"
-msgstr ""
+msgstr "无有效的 GPS 位置！"
 
 #: src/components/scanner/availableServicesTable.vue
 msgid "No versions"
-msgstr ""
+msgstr "没有版本"
 
 #: src/components/kraken/modals/ExtensionDetailsModal.vue
 msgid "No versions available for this architecture"
-msgstr ""
+msgstr "此架构没有可用的版本"
 
 #: src/components/video-manager/VideoManager.vue
 msgid "No video-devices available."
-msgstr ""
+msgstr "没有可用的视频设备。"
 
 #: src/components/wifi/WifiManager.vue
 msgid "No wifi adapter"
-msgstr ""
+msgstr "无 Wi-Fi 适配器"
 
 #: src/components/wifi/WifiManager.vue
 msgid "No wifi networks available :("
-msgstr ""
+msgstr "没有可用的 Wi-Fi 网络 :("
 
 #: src/components/zenoh-inspector/ZenohNetwork.vue
 msgid "Node Types:"
-msgstr ""
+msgstr "节点类型："
 
 #: src/components/vehiclesetup/configuration/power/BatteryCard.vue
 msgid "Not available"
-msgstr ""
+msgstr "不可用"
 
 #: src/components/vehiclesetup/overview/LightsInfo.vue
 #: src/components/vehiclesetup/overview/gripper.vue
 msgid "Not configured"
-msgstr ""
+msgstr "未配置"
 
 #: src/components/ping/PingIgnoredPorts.vue
 msgid "Not connected"
-msgstr ""
+msgstr "未连接"
 
 #: src/components/vehiclesetup/overview/PingInfo.vue
 msgid "Not detected"
-msgstr ""
+msgstr "未检测到"
 
 #: src/components/vehiclesetup/overview/VideoOverview.vue
 msgid "Not detected or configured"
-msgstr ""
+msgstr "未检测到或未配置"
 
 #: src/components/autopilot/EndpointCard.vue
 msgid "Not persistent"
-msgstr ""
+msgstr "非持久"
 
 #: src/components/autopilot/EndpointCard.vue
 msgid "Not protected"
-msgstr ""
+msgstr "未保护"
 
 #: src/components/vehiclesetup/overview/SystemId.vue
 msgid "Note that it is necessary to restart the BlueOS core container in order for the vehicle ID change to fully take place."
-msgstr ""
+msgstr "请注意，需要重启 BlueOS core 容器，载具 ID 的更改才能完全生效。"
 
 #: src/components/notifications/NotificationManager.vue
 msgid "Notifications"
-msgstr ""
+msgstr "通知"
 
 #: src/components/vehiclesetup/configuration/lights.vue
 msgid "Number of button presses to step from 0% to 100% brightness:"
-msgstr ""
+msgstr "亮度从 0% 调到 100% 所需的按键次数："
 
 #: src/components/system-information/AboutThisSystem.vue
 msgid "OS Type"
-msgstr ""
+msgstr "操作系统类型"
 
 #: src/components/kraken/BackAlleyTab.vue
 msgid "OTHER"
-msgstr ""
+msgstr "其他"
 
 #: src/components/vehiclesetup/overview/GyroCalib.vue
 msgid "Offsets (mrad/s)"
-msgstr ""
+msgstr "偏移（mrad/s）"
 
 #: src/components/vehiclesetup/configuration/accelerometer/FullAccelerometerCalibration.vue
 #: src/components/vehiclesetup/configuration/compass/FullCompassCalibrator.vue
 msgid "Ok"
-msgstr ""
+msgstr "确定"
 
 #: src/components/app/ReportMenu.vue
 #, javascript-format
 msgid "On ${ 0 } forum"
-msgstr ""
+msgstr "在 ${ 0 } 论坛"
 
 #: src/components/autopilot/EndpointManager.vue
 msgid "On MAVLinkRouter, only while armed also applies to .bin logs."
-msgstr ""
+msgstr "使用 MAVLinkRouter 时，“仅在解锁时”也适用于 .bin 日志。"
 
 #: src/components/app/OnBoardComputerRebootMenu.vue
 msgid "On-board computer reboot is necessary."
-msgstr ""
+msgstr "需要重启机载计算机。"
 
 #: src/components/app/OnBoardComputerRequiredTrayMenu.vue
 msgid "On-board computer reboot required. Click to reboot."
-msgstr ""
+msgstr "需要重启机载计算机。点击以重启。"
 
 #: src/components/vehiclesetup/configuration/compass/FullCompassCalibrator.vue
 msgid "Onboard Compass Calibration"
-msgstr ""
+msgstr "机载罗盘校准"
 
 #: src/components/vehiclesetup/overview/VehicleInfo.vue
 msgid "Onboard Computer"
-msgstr ""
+msgstr "机载计算机"
 
 #: src/components/autopilot/FirmwareManager.vue
 msgid "Only bootloader boards detected."
-msgstr ""
+msgstr "仅检测到处于引导加载程序模式的板卡。"
 
 #: src/components/autopilot/EndpointManager.vue
 msgid "Only while armed"
-msgstr ""
+msgstr "仅在解锁时"
 
 #: src/components/autopilot/FirmwareManager.vue
 #, javascript-format
 msgid "Open ${ 0 } documentation"
-msgstr ""
+msgstr "打开 ${ 0 } 文档"
 
 #: src/components/app/SettingsMenu.vue
 msgid "Open Settings"
-msgstr ""
+msgstr "打开设置"
 
 #: src/views/Autopilot.vue
 msgid "Open documentation"
-msgstr ""
+msgstr "打开文档"
 
 #: src/components/logs/LogManager.vue
 msgid "Open log in UAV Log Viewer"
-msgstr ""
+msgstr "在 UAV Log Viewer 中打开日志"
 
 #: src/components/parameter-editor/ParameterLabel.vue
 #, javascript-format
 msgid "Options: ${ 0 }"
-msgstr ""
+msgstr "选项：${ 0 }"
 
 #: src/components/wizard/Wizard.vue
 msgid "Other Vehicle Setup"
-msgstr ""
+msgstr "其他载具设置"
 
 #: src/components/vehiclesetup/PwmSetup.vue
 msgid "Output"
-msgstr ""
+msgstr "输出"
 
 #: src/views/VehicleSetupView.vue
 msgid "Overview"
-msgstr ""
+msgstr "概览"
 
 #: src/components/autopilot/EndpointCreationDialog.vue
 msgid "Owner"
-msgstr ""
+msgstr "所有者"
 
 #: src/components/system-information/Processes.vue
 msgid "PID"
@@ -2874,545 +2876,546 @@ msgstr ""
 
 #: src/views/VehicleSetupView.vue
 msgid "PWM Outputs"
-msgstr ""
+msgstr "PWM 输出"
 
 #: src/components/parameter-editor/ServoFunctionMotorEditor.vue
 msgid "PWM Type"
-msgstr ""
+msgstr "PWM 类型"
 
 #: src/components/parameter-editor/ServoFunctionMotorEditor.vue
 msgid "PWM type is not supported by BlueOS."
-msgstr ""
+msgstr "BlueOS 不支持此 PWM 类型。"
 
 #: src/components/system-information/NetworkCard.vue
 msgid "Packets received:"
-msgstr ""
+msgstr "接收数据包："
 
 #: src/components/system-information/NetworkCard.vue
 msgid "Packets transmitted:"
-msgstr ""
+msgstr "发送数据包："
 
 #: src/views/PageNotFound.vue
 msgid "Page not found!"
-msgstr ""
+msgstr "页面未找到！"
 
 #: src/components/parameter-editor/ServoFunctionEditorDialog.vue
 msgid "Parameter Editor"
-msgstr ""
+msgstr "参数编辑器"
 
 #: src/components/parameter-editor/ParameterEditor.vue
 msgid "Parameter file"
-msgstr ""
+msgstr "参数文件"
 
 #: src/components/parameter-editor/ParameterLoader.vue
 msgid "Parameter not found in Autopilot data, most likely will not be written to the vehicle."
-msgstr ""
+msgstr "飞控数据中未找到该参数，很可能不会写入载具。"
 
 #: src/components/parameter-editor/ParameterLabel.vue
 msgid "Parameter not found. It may not be available on this vehicle or firmware version."
-msgstr ""
+msgstr "未找到参数。此载具或固件版本可能不支持该参数。"
 
 #: src/components/vehiclesetup/Configure.vue
 msgid "Parameters"
-msgstr ""
+msgstr "参数"
 
 #: src/components/vehiclesetup/overview/ParamSets.vue
 #, javascript-format
 msgid "Parameters Reset failed: ${ 0 }"
-msgstr ""
+msgstr "参数重置失败：${ 0 }"
 
 #: src/components/vehiclesetup/overview/ParamSets.vue
 msgid "Parameters reset <b>successful</b>."
-msgstr ""
+msgstr "参数重置<b>成功</b>。"
 
 #: src/types/frontend_services.ts
 msgid "Parameters service"
-msgstr ""
+msgstr "参数服务"
 
 #: src/components/parameter-editor/ParameterLoader.vue
 msgid "Parameters written successfully"
-msgstr ""
+msgstr "参数写入成功"
 
 #: src/types/frontend_services.ts
 msgid "Pardal service"
-msgstr ""
+msgstr "Pardal 服务"
 
 #: src/components/system-information/Processes.vue
 msgid "Parent PID"
-msgstr ""
+msgstr "父进程 PID"
 
 #: src/components/common/PasswordInput.vue
 msgid "Password"
-msgstr ""
+msgstr "密码"
 
 #: src/components/autopilot/AutopilotSerialConfiguration.vue
 msgid "Path"
-msgstr ""
+msgstr "路径"
 
 #: src/components/bridges/BridgeCard.vue
 #: src/components/bridges/BridgeCreationDialog.vue
 #, javascript-format
 msgid "Path: ${ 0 }"
-msgstr ""
+msgstr "路径：${ 0 }"
 
 #: src/components/zenoh-inspector/ZenohNetwork.vue
 #, javascript-format
 msgid "Peer (${ 0 })"
-msgstr ""
+msgstr "对等端（${ 0 }）"
 
 #: src/views/ExtensionManagerView.vue
 msgid "Pending"
-msgstr ""
+msgstr "待定"
 
 #: src/components/vehiclesetup/configuration/compass/ArdupilotMavlinkCompassSetup.vue
 msgid "Perform a full calibration of the selected compass(es) by manually spinning the vehicle around multiple times, about all 3 rotation axes."
-msgstr ""
+msgstr "通过手动将载具绕全部 3 个旋转轴多次旋转，对所选罗盘进行完整校准。"
 
 #: src/components/vehiclesetup/configuration/compass/ArdupilotMavlinkCompassSetup.vue
 msgid "Perform a quick, low-accuracy calibration of the compass(es) by pointing your vehicle North, then clicking the Calibrate button. It can be a good starting point for calibration, followed by <b>Compass Learn</b>."
-msgstr ""
+msgstr "将载具朝向正北，然后点击“校准”按钮，即可对罗盘进行快速、低精度的校准。这可以作为校准的良好起点，之后再进行<b>罗盘学习</b>。"
 
 #: src/components/kraken/modals/ExtensionDetailsModal.vue
 msgid "Permissions"
-msgstr ""
+msgstr "权限"
 
 #: src/components/autopilot/EndpointCard.vue
 msgid "Persistent"
-msgstr ""
+msgstr "持久"
 
 #: src/components/app/ImagePicker.vue
 msgid "Pick an Image"
-msgstr ""
+msgstr "选择图片"
 
 #: src/components/vehiclesetup/overview/LeakInfo.vue
 msgid "Pin:"
-msgstr ""
+msgstr "引脚："
 
 #: src/components/vehiclesetup/overview/PingInfo.vue
 msgid "Ping Sensors"
-msgstr ""
+msgstr "Ping 传感器"
 
 #: src/menus.ts
 msgid "Ping Sonar Devices"
-msgstr ""
+msgstr "Ping 声呐设备"
 
 #: src/types/frontend_services.ts
 msgid "Ping service"
-msgstr ""
+msgstr "Ping 服务"
 
 #: src/views/SettingsView.vue
 msgid "Pirate Mode"
-msgstr ""
+msgstr "海盗模式"
 
 #: src/components/vehiclesetup/configuration/compass/LevelHorizonCalibration.vue
 #, javascript-format
 msgid "Pitch: ${ 0 }°"
-msgstr ""
+msgstr "俯仰：${ 0 }°"
 
 #: src/views/ExtensionManagerView.vue
 msgid "Platform"
-msgstr ""
+msgstr "平台"
 
 #: src/components/parameter-editor/ServoFunctionActuatorEditor.vue
 msgid "Please configure a joystick button for this actuator using your GCS of choice."
-msgstr ""
+msgstr "请使用您选择的地面站为此执行器配置摇杆按键。"
 
 #: src/components/vehiclesetup/overview/ParamSets.vue
 msgid "Please reboot the vehicle to apply changes."
-msgstr ""
+msgstr "请重启载具以应用更改。"
 
 #: src/components/autopilot/FirmwareManager.vue
 msgid "Please select the correct vehicle type and update to the latest autopilot firmware."
-msgstr ""
+msgstr "请选择正确的载具类型，并更新到最新的飞控固件。"
 
 #: src/components/scanner/availableServicesTable.vue
 msgid "Port"
-msgstr ""
+msgstr "端口"
 
 #: src/components/autopilot/EndpointCreationDialog.vue
 #: src/components/autopilot/MasterEndpointManager.vue
 msgid "Port/Baudrate"
-msgstr ""
+msgstr "端口/波特率"
 
 #: src/components/health/GpsTrayMenu.vue
 msgid "Position coordinates"
-msgstr ""
+msgstr "位置坐标"
 
 #: src/components/app/PowerMenu.vue
 #: src/components/vehiclesetup/Configure.vue
 msgid "Power"
-msgstr ""
+msgstr "电源"
 
 #.  based on https://github.com/mavlink/qgroundcontrol/blob/Stable_V4.2/src/AutoPilotPlugins/APM/APMPowerComponent.qml
 #: src/components/vehiclesetup/configuration/power/BatteryCard.vue
 #: src/components/vehiclesetup/overview/PowerInfo.vue
 msgid "Power Module 90A"
-msgstr ""
+msgstr "电源模块 90A"
 
 #.  based on https://github.com/mavlink/qgroundcontrol/blob/Stable_V4.2/src/AutoPilotPlugins/APM/APMPowerComponent.qml
 #: src/components/vehiclesetup/configuration/power/BatteryCard.vue
 #: src/components/vehiclesetup/overview/PowerInfo.vue
 msgid "Power Module HV"
-msgstr ""
+msgstr "电源模块 HV"
 
 #: src/components/vehiclesetup/configuration/power/BatteryCard.vue
 msgid "Power Sensor"
-msgstr ""
+msgstr "电源传感器"
 
 #: src/components/app/PowerMenu.vue
 msgid "Power off"
-msgstr ""
+msgstr "关机"
 
 #: src/alerts/rules/network.ts
 msgid "Preferred network interface has no internet"
-msgstr ""
+msgstr "首选网络接口无法访问互联网"
 
 #: src/alerts/rules/network.ts
 msgid "Preferred network interface is slow"
-msgstr ""
+msgstr "首选网络接口速度较慢"
 
 #: src/components/video-manager/VideoThumbnail.vue
 msgid "Preview not available, add a stream to have one."
-msgstr ""
+msgstr "预览不可用，请添加视频流以获取预览。"
 
 #: src/components/video-manager/VideoThumbnail.vue
 msgid "Preview not requested, use the controls to fetch one."
-msgstr ""
+msgstr "尚未请求预览，请使用控件获取。"
 
 #: src/components/customization/ThemeCustomization.vue
 msgid "Primary color"
-msgstr ""
+msgstr "主色"
 
 #: src/components/app/SystemCheckerTrayMenu.vue
 msgid "Problems found"
-msgstr ""
+msgstr "发现问题"
 
 #: src/components/wizard/Wizard.vue
 msgid "Proceeding with the setup wizard is crucial for proper vehicle configuration.\n\n"
 "Are you certain that you wish to skip this step?"
-msgstr ""
+msgstr "完成设置向导对于正确配置载具至关重要。\n\n"
+"确定要跳过此步骤吗？"
 
 #: src/views/SystemInformationView.vue
 msgid "Processes"
-msgstr ""
+msgstr "进程"
 
 #: src/views/RecordsView.vue
 msgid "Processing"
-msgstr ""
+msgstr "处理中"
 
 #: src/views/RecordsView.vue
 msgid "Processing video/thumbnail..."
-msgstr ""
+msgstr "正在处理视频/缩略图……"
 
 #: src/components/customization/ThemeCustomization.vue
 msgid "Project logo"
-msgstr ""
+msgstr "项目徽标"
 
 #: src/components/autopilot/EndpointCreationDialog.vue
 msgid "Protect endpoint from being deleted"
-msgstr ""
+msgstr "保护端点不被删除"
 
 #: src/components/autopilot/EndpointCard.vue
 msgid "Protected"
-msgstr ""
+msgstr "已保护"
 
 #: src/components/speedtest/InternetSpeedTest.vue
 msgid "Provider ISP rating"
-msgstr ""
+msgstr "运营商 ISP 评分"
 
 #: src/types/frontend_services.ts
 msgid "Provides system information, E.g: CPU, disk, network interface and etc."
-msgstr ""
+msgstr "提供系统信息，例如 CPU、磁盘、网络接口等。"
 
 #: src/types/frontend_services.ts
 msgid "Publishes mDNS entries and related utilities"
-msgstr ""
+msgstr "发布 mDNS 条目及相关工具"
 
 #: src/components/utils/PullProgress.vue
 msgid "Pulling new version"
-msgstr ""
+msgstr "正在拉取新版本"
 
 #: src/components/vehiclesetup/configuration/accelerometer/QuickAccelerometerCalibration.vue
 msgid "Quick Calibration"
-msgstr ""
+msgstr "快速校准"
 
 #.  eslint-disable-next-line max-len
 #: src/components/vehiclesetup/configuration/compass/ArdupilotMavlinkCompassSetup.vue
 msgid "Quick Calibration is easier for large vehicles, but has worse performance - consider using log-based calibration afterwards, to refine results."
-msgstr ""
+msgstr "快速校准对大型载具更方便，但效果较差，建议之后使用基于日志的校准来优化结果。"
 
 #: src/components/vehiclesetup/configuration/accelerometer/QuickAccelerometerCalibration.vue
 msgid "Quick calibration requires that you place the vehicle on a level surface and keep it still for a few seconds. It is usually enough if your vehicle is generally leveled while in use."
-msgstr ""
+msgstr "快速校准需要将载具放在水平面上并保持静止数秒。如果载具在使用时基本保持水平，通常这样就足够了。"
 
 #: src/components/wizard/Wizard.vue
 msgid "ROV Setup"
-msgstr ""
+msgstr "ROV 设置"
 
 #: src/components/parameter-editor/ParameterLabel.vue
 #, javascript-format
 msgid "Range: ${ 0 } to ${ 1 }"
-msgstr ""
+msgstr "范围：${ 0 } 至 ${ 1 }"
 
 #: src/components/system-information/Firmware.vue
 msgid "Raspberry Firmware"
-msgstr ""
+msgstr "Raspberry 固件"
 
 #: src/components/video-manager/VideoManager.vue
 msgid "Raspberry legacy camera support"
-msgstr ""
+msgstr "Raspberry 旧版相机支持"
 
 #: src/components/wifi/WifiTrayMenu.vue
 msgid "Re-enable it by removing \"wifi\" from <code>BLUEOS_DISABLE_SERVICES</code> in <code>/root/.config/bootstrap/startup.json</code>"
-msgstr ""
+msgstr "从 <code>/root/.config/bootstrap/startup.json</code> 的 <code>BLUEOS_DISABLE_SERVICES</code> 中删除 \"wifi\" 即可重新启用"
 
 #: src/views/SettingsView.vue
 msgid "Re-run the initial vehicle setup wizard"
-msgstr ""
+msgstr "重新运行初始载具设置向导"
 
 #: src/views/Disk.vue
 msgid "Read speed (avg)"
-msgstr ""
+msgstr "读取速度（平均）"
 
 #: src/components/app/PowerMenu.vue
 #: src/components/autopilot/FirmwareManager.vue
 #: src/views/SettingsView.vue
 msgid "Reboot"
-msgstr ""
+msgstr "重启"
 
 #: src/components/app/VehicleRebootMenu.vue
 #: src/components/common/rebootRequiredOverlay.vue
 #: src/components/utils/RebootButton.vue
 #: src/components/vehiclesetup/overview/ParamSets.vue
 msgid "Reboot Autopilot"
-msgstr ""
+msgstr "重启飞控"
 
 #: src/components/app/OnBoardComputerRebootMenu.vue
 msgid "Reboot On-board Computer"
-msgstr ""
+msgstr "重启机载计算机"
 
 #: src/components/parameter-editor/ParameterEditorDialog.vue
 msgid "Reboot Required"
-msgstr ""
+msgstr "需要重启"
 
 #: src/components/parameter-editor/ParameterEditorDialog.vue
 msgid "Reboot required for parameter to take effect"
-msgstr ""
+msgstr "需要重启才能使参数生效"
 
 #: src/components/bridges/BridgeCard.vue
 msgid "Receiving at "
-msgstr ""
+msgstr "接收地址："
 
 #: src/components/video-manager/VideoDevice.vue
 msgid "Redirect sources can be used to redirect the video stream from another device. This is useful to publish external streams, such as RTSP from IP cameras, via MAVLink so GCSs can easily find them."
-msgstr ""
+msgstr "重定向源可用于重定向来自其他设备的视频流。这有助于通过 MAVLink 发布外部视频流（例如来自 IP 摄像机的 RTSP），以便地面站轻松发现它们。"
 
 #: src/components/customization/ThemeCustomization.vue
 msgid "Relative path under modeloverrides/. Defaults to the file name."
-msgstr ""
+msgstr "modeloverrides/ 下的相对路径。默认为文件名。"
 
 #: src/components/parameter-editor/RelaySetup.vue
 msgid "Relay Off"
-msgstr ""
+msgstr "继电器关"
 
 #: src/components/parameter-editor/RelaySetup.vue
 msgid "Relay On"
-msgstr ""
+msgstr "继电器开"
 
 #: src/components/version-chooser/ReleaseNotes.vue
 msgid "Release notes are not available for this version."
-msgstr ""
+msgstr "此版本没有可用的发行说明。"
 
 #: src/components/version-chooser/VersionChooser.vue
 msgid "Reload page"
-msgstr ""
+msgstr "重新加载页面"
 
 #: src/components/wizard/Wizard.vue
 msgid "Remind me later"
-msgstr ""
+msgstr "稍后提醒"
 
 #: src/components/version-chooser/VersionChooser.vue
 msgid "Remote Versions"
-msgstr ""
+msgstr "远程版本"
 
 #: src/components/version-chooser/VersionChooser.vue
 msgid "Remote repository"
-msgstr ""
+msgstr "远程仓库"
 
 #: src/components/customization/BrandingUploader.vue
 msgid "Remove"
-msgstr ""
+msgstr "移除"
 
 #: src/components/video-manager/VideoStream.vue
 msgid "Remove stream"
-msgstr ""
+msgstr "移除视频流"
 
 #: src/components/customization/BrandingUploader.vue
 msgid "Remove the custom file"
-msgstr ""
+msgstr "移除自定义文件"
 
 #: src/components/app/DnsConfigurationMenu.vue
 msgid "Remove this nameserver"
-msgstr ""
+msgstr "移除此 DNS 服务器"
 
 #: src/components/version-chooser/VersionChooser.vue
 msgid "Repository"
-msgstr ""
+msgstr "仓库"
 
 #: src/components/parameter-editor/ParameterLabel.vue
 msgid "Requires reboot"
-msgstr ""
+msgstr "需要重启"
 
 #: src/components/wifi/WifiManager.vue
 msgid "Rescanning..."
-msgstr ""
+msgstr "正在重新扫描……"
 
 #: src/components/customization/ThemeCustomization.vue
 #: src/views/ExtensionManagerView.vue
 msgid "Reset"
-msgstr ""
+msgstr "重置"
 
 #: src/components/vehiclesetup/overview/ParamSets.vue
 msgid "Reset All Parameters"
-msgstr ""
+msgstr "重置所有参数"
 
 #: src/components/vehiclesetup/overview/ParamSets.vue
 msgid "Reset Parameters to Firmware Defaults"
-msgstr ""
+msgstr "将参数重置为固件默认值"
 
 #: src/components/video-manager/VideoManager.vue
 #: src/views/SettingsView.vue
 msgid "Reset Settings"
-msgstr ""
+msgstr "重置设置"
 
 #: src/views/SettingsView.vue
 msgid "Reset all BlueOS settings to factory defaults"
-msgstr ""
+msgstr "将所有 BlueOS 设置恢复为出厂默认值"
 
 #: src/components/kraken/modals/ExtensionCreationModal.vue
 #: src/components/kraken/modals/ExtensionDetailsModal.vue
 msgid "Reset to default permissions"
-msgstr ""
+msgstr "重置为默认权限"
 
 #: src/types/frontend_services.ts
 msgid "Responsible for management of autopilot status and configuration."
-msgstr ""
+msgstr "负责管理飞控状态和配置。"
 
 #: src/types/frontend_services.ts
 msgid "Responsible for management of ethernet adapters configuration."
-msgstr ""
+msgstr "负责管理以太网适配器配置。"
 
 #: src/components/kraken/cards/InstalledExtensionCard.vue
 msgid "Restart"
-msgstr ""
+msgstr "重启"
 
 #: src/components/app/PowerMenu.vue
 msgid "Restart Autopilot"
-msgstr ""
+msgstr "重启飞控"
 
 #: src/components/vehiclesetup/overview/SystemId.vue
 msgid "Restart Core"
-msgstr ""
+msgstr "重启 Core"
 
 #: src/components/app/PowerMenu.vue
 msgid "Restart Core container"
-msgstr ""
+msgstr "重启 Core 容器"
 
 #: src/views/Autopilot.vue
 msgid "Restart autopilot"
-msgstr ""
+msgstr "重启飞控"
 
 #: src/components/vehiclesetup/overview/SystemId.vue
 msgid "Restart the BlueOS core container"
-msgstr ""
+msgstr "重启 BlueOS core 容器"
 
 #: src/views/SettingsView.vue
 msgid "Restart the system to finish the settings reset."
-msgstr ""
+msgstr "重启系统以完成设置重置。"
 
 #: src/components/app/PowerMenu.vue
 msgid "Restarts the autopilot"
-msgstr ""
+msgstr "重启飞控"
 
 #: src/components/app/PowerMenu.vue
 msgid "Restarts the core alone, should be enough in most cases"
-msgstr ""
+msgstr "仅重启 core，大多数情况下已足够"
 
 #: src/views/SettingsView.vue
 msgid "Restore all BlueOS services to defaults"
-msgstr ""
+msgstr "将所有 BlueOS 服务恢复为默认值"
 
 #: src/components/autopilot/FirmwareManager.vue
 msgid "Restore default firmware"
-msgstr ""
+msgstr "恢复默认固件"
 
 #: src/components/video-manager/VideoControlsDialog.vue
 msgid "Restore defaults"
-msgstr ""
+msgstr "恢复默认值"
 
 #: src/components/customization/ThemeCustomization.vue
 msgid "Restore the default BlueOS theme"
-msgstr ""
+msgstr "恢复默认 BlueOS 主题"
 
 #: src/components/autopilot/FirmwareManager.vue
 msgid "Retrieve from Cloud"
-msgstr ""
+msgstr "从云端获取"
 
 #: src/components/version-chooser/VersionChooser.vue
 #: src/components/wizard/Wizard.vue
 msgid "Retry"
-msgstr ""
+msgstr "重试"
 
 #: src/components/wizard/Wizard.vue
 msgid "Return"
-msgstr ""
+msgstr "返回"
 
 #: src/components/parameter-editor/ServoFunctionMotorEditor.vue
 msgid "Reverse Direction"
-msgstr ""
+msgstr "反转方向"
 
 #: src/components/vehiclesetup/configuration/camera.vue
 msgid "Reverse servo direction"
-msgstr ""
+msgstr "反转舵机方向"
 
 #: src/components/vehiclesetup/PwmSetup.vue
 msgid "Reversed"
-msgstr ""
+msgstr "已反转"
 
 #: src/views/ExtensionManagerView.vue
 msgid "Review identifier, name, and permissions"
-msgstr ""
+msgstr "检查标识符、名称和权限"
 
 #: src/components/ping/ping1d.vue
 #: src/components/ping/ping360.vue
 msgid "Revision"
-msgstr ""
+msgstr "修订版本"
 
 #: src/components/vehiclesetup/configuration/compass/LevelHorizonCalibration.vue
 #, javascript-format
 msgid "Roll: ${ 0 }°"
-msgstr ""
+msgstr "横滚：${ 0 }°"
 
 #: src/components/system-information/Processes.vue
 msgid "Root directory"
-msgstr ""
+msgstr "根目录"
 
 #: src/components/zenoh-inspector/ZenohNetwork.vue
 #, javascript-format
 msgid "Router (${ 0 })"
-msgstr ""
+msgstr "路由器（${ 0 }）"
 
 #: src/views/SettingsView.vue
 msgid "Run Wizard"
-msgstr ""
+msgstr "运行向导"
 
 #: src/components/version-chooser/VersionCard.vue
 msgid "Running"
-msgstr ""
+msgstr "运行中"
 
 #: src/components/system-information/Processes.vue
 msgid "Running time"
-msgstr ""
+msgstr "运行时间"
 
 #: src/components/video-manager/VideoStream.vue
 msgid "SDP"
@@ -3420,15 +3423,15 @@ msgstr ""
 
 #: src/views/Autopilot.vue
 msgid "SITL configuration"
-msgstr ""
+msgstr "SITL 配置"
 
 #: src/components/autopilot/SitlConfiguration.vue
 msgid "SITL frame"
-msgstr ""
+msgstr "SITL 机架"
 
 #: src/components/autopilot/SitlConfiguration.vue
 msgid "SITL frame set, autopilot restarted"
-msgstr ""
+msgstr "SITL 机架已设置，飞控已重启"
 
 #: src/components/wifi/ConnectionDialog.vue
 msgid "SSID"
@@ -3436,11 +3439,11 @@ msgstr ""
 
 #: src/components/vehiclesetup/configuration/compass/ArdupilotMavlinkCompassSetup.vue
 msgid "Same as the Autopilot's"
-msgstr ""
+msgstr "与飞控相同"
 
 #: src/components/health/GpsTrayMenu.vue
 msgid "Satellites in view"
-msgstr ""
+msgstr "可见卫星"
 
 #: src/components/app/VehicleBanner.vue
 #: src/components/kraken/modals/ExtensionCreationModal.vue
@@ -3450,232 +3453,232 @@ msgstr ""
 #: src/components/vehiclesetup/overview/SystemId.vue
 #: src/components/wifi/WifiSettingsDialog.vue
 msgid "Save"
-msgstr ""
+msgstr "保存"
 
 #: src/components/autopilot/MasterEndpointManager.vue
 msgid "Save Changes"
-msgstr ""
+msgstr "保存更改"
 
 #: src/components/parameter-editor/ParameterEditor.vue
 msgid "Save all parameters to file"
-msgstr ""
+msgstr "将所有参数保存到文件"
 
 #: src/components/parameter-editor/ParameterEditorDialog.vue
 msgid "Save and Reboot"
-msgstr ""
+msgstr "保存并重启"
 
 #: src/components/autopilot/AutopilotSerialConfiguration.vue
 msgid "Save and restart"
-msgstr ""
+msgstr "保存并重启"
 
 #: src/components/autopilot/EndpointCreationDialog.vue
 msgid "Save endpoint between system sessions"
-msgstr ""
+msgstr "在系统重启后保留端点"
 
 #: src/components/customization/ThemeCustomization.vue
 msgid "Save the chosen color and regenerate the theme CSS"
-msgstr ""
+msgstr "保存所选颜色并重新生成主题 CSS"
 
 #: src/components/version-chooser/VersionCard.vue
 msgid "Saves the container filesystem as a new image"
-msgstr ""
+msgstr "将容器文件系统保存为新镜像"
 
 #: src/components/version-chooser/VersionChooser.vue
 msgid "Saves the running container's filesystem as a new image, layered on top of"
-msgstr ""
+msgstr "将运行中容器的文件系统保存为新镜像，其基础镜像为"
 
 #: src/components/wifi/WifiSettingsDialog.vue
 msgid "Saving settings, please wait..."
-msgstr ""
+msgstr "正在保存设置，请稍候……"
 
 #: src/components/wifi/WifiManager.vue
 msgid "Scan this QR code with your phone to connect to BlueOS's hotspot."
-msgstr ""
+msgstr "使用手机扫描此二维码以连接 BlueOS 热点。"
 
 #: src/components/wifi/WifiManager.vue
 msgid "Scanning for wifi networks..."
-msgstr ""
+msgstr "正在扫描 Wi-Fi 网络……"
 
 #: src/components/parameter-editor/ParameterEditor.vue
 #: src/components/system-information/Processes.vue
 #: src/components/wifi/WifiManager.vue
 msgid "Search"
-msgstr ""
+msgstr "搜索"
 
 #: src/components/kraken/BackAlleyTab.vue
 msgid "Search Extensions"
-msgstr ""
+msgstr "搜索扩展"
 
 #: src/components/version-chooser/VersionChooser.vue
 msgid "Search images"
-msgstr ""
+msgstr "搜索镜像"
 
 #: src/views/ExtensionManagerView.vue
 msgid "Select .tar file"
-msgstr ""
+msgstr "选择 .tar 文件"
 
 #: src/components/zenoh-inspector/RawVideoPlayer.vue
 msgid "Select Decoder"
-msgstr ""
+msgstr "选择解码器"
 
 #: src/components/zenoh-inspector/ZenohInspector.vue
 msgid "Select a topic to view its messages."
-msgstr ""
+msgstr "选择一个主题以查看其消息。"
 
 #: src/components/vehiclesetup/configuration/compass/CompassMaskPicker.vue
 msgid "Select compasses to calibrate"
-msgstr ""
+msgstr "选择要校准的罗盘"
 
 #: src/components/autopilot/EndpointManager.vue
 msgid "Select the router to use for distributing MAVLink data."
-msgstr ""
+msgstr "选择用于分发 MAVLink 数据的路由器。"
 
 #: src/components/ping/PingIgnoredPorts.vue
 msgid "Selected ports are not probed for Ping devices. A Ping that was already detected keeps running until it is unplugged or BlueOS reboots."
-msgstr ""
+msgstr "所选端口不会被探测 Ping 设备。已检测到的 Ping 设备会继续运行，直到被拔出或 BlueOS 重启。"
 
 #: src/components/ping/ping1d.vue
 msgid "Send MAVLink DISTANCE_SENSOR messages to the vehicle. This allows ground stations such as QGroundControl to display the information on the telemetry overlay."
-msgstr ""
+msgstr "向载具发送 MAVLink DISTANCE_SENSOR 消息。这使 QGroundControl 等地面站能够在遥测叠加层上显示该信息。"
 
 #: src/components/bridges/BridgeCard.vue
 #, javascript-format
 msgid "Sending to ${ 0 }:${ 1 }"
-msgstr ""
+msgstr "发送至 ${ 0 }:${ 1 }"
 
 #: src/components/vehiclesetup/overview/BaroCalib.vue
 #: src/components/vehiclesetup/overview/OnboardSensors.vue
 msgid "Sensor"
-msgstr ""
+msgstr "传感器"
 
 #: src/components/vehiclesetup/configuration/accelerometer/ArdupilotAccelerometerSetup.vue
 msgid "Sensor is calibrated and good to use"
-msgstr ""
+msgstr "传感器已校准，可正常使用"
 
 #: src/components/vehiclesetup/overview/OnboardSensors.vue
 msgid "Sensor is callibrated and good to use"
-msgstr ""
+msgstr "传感器已校准，可正常使用"
 
 #: src/components/vehiclesetup/configuration/accelerometer/ArdupilotAccelerometerSetup.vue
 #: src/components/vehiclesetup/overview/OnboardSensors.vue
 msgid "Sensor needs to be calibrated"
-msgstr ""
+msgstr "传感器需要校准"
 
 #: src/components/vehiclesetup/overview/OnboardSensors.vue
 msgid "Sensor thermometer is calibrated and good to use"
-msgstr ""
+msgstr "传感器温度计已校准，可正常使用"
 
 #: src/components/vehiclesetup/configuration/accelerometer/ArdupilotAccelerometerSetup.vue
 #: src/components/vehiclesetup/overview/OnboardSensors.vue
 msgid "Sensor thermometer needs to be calibrated"
-msgstr ""
+msgstr "传感器温度计需要校准"
 
 #: src/components/parameter-editor/LeakSetup.vue
 msgid "Sensor type"
-msgstr ""
+msgstr "传感器类型"
 
 #: src/components/vehiclesetup/configuration/accelerometer/ArdupilotAccelerometerSetup.vue
 #, javascript-format
 msgid "Sensor was calibrated at ${ 0 } ºC"
-msgstr ""
+msgstr "传感器校准温度为 ${ 0 } ºC"
 
 #: src/components/autopilot/AutopilotSerialConfiguration.vue
 msgid "Serial"
-msgstr ""
+msgstr "串口"
 
 #: src/menus.ts
 msgid "Serial Bridges"
-msgstr ""
+msgstr "串口桥接"
 
 #: src/views/Autopilot.vue
 msgid "Serial Port Configuration"
-msgstr ""
+msgstr "串口配置"
 
 #: src/components/bridges/BridgeCreationDialog.vue
 msgid "Serial baudrate"
-msgstr ""
+msgstr "串口波特率"
 
 #: src/components/ethernet/DHCPServerDialog.vue
 msgid "Server Gateway"
-msgstr ""
+msgstr "服务器网关"
 
 #: src/components/bridges/BridgeCreationDialog.vue
 msgid "Server Mode"
-msgstr ""
+msgstr "服务器模式"
 
 #: src/components/bridges/BridgeCard.vue
 #, javascript-format
 msgid "Server listening at ${ 0 }"
-msgstr ""
+msgstr "服务器正在监听 ${ 0 }"
 
 #: src/components/bridges/BridgeCreationDialog.vue
 #, javascript-format
 msgid "Server mode will bind to the given port at the BlueOS device. This means it will receive data from the topside computer at port <B>${ 0 }</B>, and will send data back to the topside computer at the port where the data originated at the topside computer."
-msgstr ""
+msgstr "服务器模式将绑定到 BlueOS 设备上的指定端口。即它将在端口 <B>${ 0 }</B> 接收来自水面计算机的数据，并将数据发回水面计算机上发出数据的端口。"
 
 #: src/components/speedtest/InternetSpeedTest.vue
 msgid "Server to test internet speed"
-msgstr ""
+msgstr "用于测试互联网速度的服务器"
 
 #: src/components/scanner/availableServicesTable.vue
 msgid "Service Name"
-msgstr ""
+msgstr "服务名称"
 
 #: src/types/frontend_services.ts
 msgid "Service Scanner"
-msgstr ""
+msgstr "服务扫描器"
 
 #: src/types/frontend_services.ts
 msgid "Service responsible for managing wifi configuration on BlueOS."
-msgstr ""
+msgstr "负责管理 BlueOS 上 Wi-Fi 配置的服务。"
 
 #: src/types/frontend_services.ts
 msgid "Service to manage BlueOS extensions"
-msgstr ""
+msgstr "管理 BlueOS 扩展的服务"
 
 #: src/types/frontend_services.ts
 msgid "Service to manage Pardal"
-msgstr ""
+msgstr "管理 Pardal 的服务"
 
 #: src/types/frontend_services.ts
 msgid "Service to manage json database for the vehicle"
-msgstr ""
+msgstr "管理载具 JSON 数据库的服务"
 
 #: src/types/frontend_services.ts
 msgid "Service to manage ping devices"
-msgstr ""
+msgstr "管理 Ping 设备的服务"
 
 #: src/types/frontend_services.ts
 msgid "Service to manage vehicle Parameters"
-msgstr ""
+msgstr "管理载具参数的服务"
 
 #: src/types/frontend_services.ts
 msgid "Service to test network speed"
-msgstr ""
+msgstr "测试网络速度的服务"
 
 #: src/types/frontend_services.ts
 msgid "Service to update system time"
-msgstr ""
+msgstr "更新系统时间的服务"
 
 #: src/components/parameter-editor/ServoFunctionRangeEditor.vue
 msgid "Servo Range Configuration"
-msgstr ""
+msgstr "舵机行程配置"
 
 #: src/components/autopilot/BoardChangeDialog.vue
 msgid "Set"
-msgstr ""
+msgstr "设置"
 
 #: src/components/wizard/Wizard.vue
 msgid "Set custom vehicle name"
-msgstr ""
+msgstr "设置自定义载具名称"
 
 #: src/components/wizard/Wizard.vue
 msgid "Set vehicle hostname"
-msgstr ""
+msgstr "设置载具主机名"
 
 #: src/components/wizard/Wizard.vue
 msgid "Set vehicle image"
-msgstr ""
+msgstr "设置载具图片"
 
 #: src/components/kraken/cards/InstalledExtensionCard.vue
 #: src/components/vehiclesetup/configuration/compass/ArdupilotMavlinkCompassSetup.vue
@@ -3683,195 +3686,195 @@ msgstr ""
 #: src/views/ExtensionManagerView.vue
 #: src/views/SettingsView.vue
 msgid "Settings"
-msgstr ""
+msgstr "设置"
 
 #: src/views/SettingsView.vue
 msgid "Settings Reset Complete"
-msgstr ""
+msgstr "设置重置完成"
 
 #: src/components/version-chooser/VersionChooser.vue
 msgid "Settings, extensions and user data are kept outside the container, so they are not committed."
-msgstr ""
+msgstr "设置、扩展和用户数据保存在容器外部，因此不会被提交。"
 
 #: src/components/cloud/CloudSettingsTab.vue
 msgid "Setup is complete!"
-msgstr ""
+msgstr "设置完成！"
 
 #: src/components/vehiclesetup/configuration/power/BatteryCard.vue
 msgid "Show"
-msgstr ""
+msgstr "显示"
 
 #: src/views/SettingsView.vue
 msgid "Show hidden pages and advanced settings"
-msgstr ""
+msgstr "显示隐藏页面和高级设置"
 
 #: src/components/notifications/NotificationCard.vue
 msgid "Show in event log"
-msgstr ""
+msgstr "在事件日志中显示"
 
 #: src/components/video-manager/VideoStream.vue
 msgid "Show less"
-msgstr ""
+msgstr "收起"
 
 #: src/components/video-manager/VideoStream.vue
 msgid "Show more"
-msgstr ""
+msgstr "显示更多"
 
 #: src/components/notifications/ConfigMenu.vue
 msgid "Show old messages"
-msgstr ""
+msgstr "显示旧消息"
 
 #: src/components/scanner/availableServicesTable.vue
 msgid "Shows all available services running on BlueOS, including the service port, name, webpage, REST API endpoint, and swagger documentation per version. API endpoint links provide direct manual access to the APIs, and can be used to test how a service responds to a given request."
-msgstr ""
+msgstr "显示 BlueOS 上运行的所有可用服务，包括服务端口、名称、网页、REST API 端点以及各版本的 Swagger 文档。API 端点链接可直接手动访问 API，可用于测试服务对特定请求的响应。"
 
 #: src/components/app/PowerMenu.vue
 msgid "Shuts down the onboard computer"
-msgstr ""
+msgstr "关闭机载计算机"
 
 #: src/types/frontend_services.ts
 msgid "Simple helper service for the frontend and simple features"
-msgstr ""
+msgstr "为前端和简单功能提供支持的辅助服务"
 
 #: src/components/logs/LogManager.vue
 #: src/views/Disk.vue
 msgid "Size"
-msgstr ""
+msgstr "大小"
 
 #: src/components/version-chooser/VersionChooser.vue
 msgid "Skip"
-msgstr ""
+msgstr "跳过"
 
 #: src/components/wizard/Wizard.vue
 msgid "Skip Wizard"
-msgstr ""
+msgstr "跳过向导"
 
 #: src/components/nmea-injector/NMEASocketCreationDialog.vue
 msgid "Socket kind"
-msgstr ""
+msgstr "套接字类型"
 
 #: src/components/nmea-injector/NMEASocketCreationDialog.vue
 msgid "Socket port"
-msgstr ""
+msgstr "套接字端口"
 
 #: src/components/app/PowerMenu.vue
 msgid "Soft restart"
-msgstr ""
+msgstr "软重启"
 
 #: src/components/vehiclesetup/MotorDetection.vue
 msgid "Solutions"
-msgstr ""
+msgstr "解决方案"
 
 #: src/components/vehiclesetup/configuration/power/BatteryCard.vue
 msgid "Some changes require a reboot of the autopilot before they take effect. Parameters may stay unavailable until the autopilot reboots."
-msgstr ""
+msgstr "部分更改需要重启飞控才能生效。在飞控重启之前，参数可能一直不可用。"
 
 #: src/alerts/rules/network.ts
 msgid "Some features are unavailable"
-msgstr ""
+msgstr "部分功能不可用"
 
 #: src/alerts/rules/network.ts
 msgid "Some features may be unavailable"
-msgstr ""
+msgstr "部分功能可能不可用"
 
 #: src/components/parameter-editor/ServoFunctionGpioEditor.vue
 msgid "Some flight controller servo channels are capable of digital (GPIO) functionalities. Available options include relays, leak detection (input-capable pins only), and other functions not yet supported by this UI."
-msgstr ""
+msgstr "部分飞控舵机通道支持数字（GPIO）功能。可用选项包括继电器、漏水检测（仅限支持输入的引脚）以及此界面尚不支持的其他功能。"
 
 #: src/App.vue
 msgid "Some functionality is not available while the vehicle is armed"
-msgstr ""
+msgstr "载具解锁时部分功能不可用"
 
 #: src/alerts/rules/autopilot.ts
 msgid "Some sensors not calibrated"
-msgstr ""
+msgstr "部分传感器未校准"
 
 #: src/components/video-manager/VideoDiagnosticHelper.vue
 msgid "Some streams use MJPEG or uncompressed video. Cockpit can't play these formats, and they require more network bandwidth. We recommend switching to H.264 or H.265."
-msgstr ""
+msgstr "部分视频流使用 MJPEG 或未压缩视频。Cockpit 无法播放这些格式，且它们需要更多网络带宽。建议切换为 H.264 或 H.265。"
 
 #: src/components/kraken/BackAlleyTab.vue
 msgid "Sort By"
-msgstr ""
+msgstr "排序方式"
 
 #: src/components/kraken/modals/ExtensionSettingsModal.vue
 msgid "Source Enabled"
-msgstr ""
+msgstr "源已启用"
 
 #: src/components/video-manager/VideoStream.vue
 msgid "Source:"
-msgstr ""
+msgstr "源："
 
 #: src/components/disk/DiskSpeedGraph.vue
 msgid "Speed (MiB/s)"
-msgstr ""
+msgstr "速度（MiB/s）"
 
 #: src/components/speedtest/Graph.vue
 msgid "Speed Mb/s"
-msgstr ""
+msgstr "速度 Mb/s"
 
 #: src/views/Disk.vue
 msgid "Speed Test"
-msgstr ""
+msgstr "速度测试"
 
 #: src/components/vehiclesetup/configuration/compass/FullCompassCalibrator.vue
 msgid "Spin your vehicle around all of its axes until the progress bar completes."
-msgstr ""
+msgstr "绕所有轴旋转您的载具，直到进度条完成。"
 
 #: src/components/vehiclesetup/configuration/camera.vue
 msgid "Stabilize mount"
-msgstr ""
+msgstr "云台增稳"
 
 #: src/components/autopilot/FirmwareManager.vue
 msgid "Stable - A production-ready release. Suitable for most users."
-msgstr ""
+msgstr "Stable - 可用于生产的正式版本，适合大多数用户。"
 
 #: src/components/vehiclesetup/configuration/compass/CompassLearn.vue
 #: src/components/wizard/Wizard.vue
 msgid "Start"
-msgstr ""
+msgstr "开始"
 
 #: src/components/vehiclesetup/configuration/accelerometer/FullAccelerometerCalibration.vue
 #: src/components/vehiclesetup/configuration/accelerometer/QuickAccelerometerCalibration.vue
 msgid "Start Calibration"
-msgstr ""
+msgstr "开始校准"
 
 #: src/components/vehiclesetup/configuration/compass/CompassLearn.vue
 msgid "Start Compass Learn"
-msgstr ""
+msgstr "开始罗盘学习"
 
 #: src/components/vehiclesetup/MotorDetection.vue
 msgid "Start Detection"
-msgstr ""
+msgstr "开始检测"
 
 #: src/components/vehiclesetup/configuration/accelerometer/FullAccelerometerCalibration.vue
 #: src/components/vehiclesetup/configuration/compass/FullCompassCalibrator.vue
 msgid "Start Full Calibration"
-msgstr ""
+msgstr "开始完整校准"
 
 #: src/components/vehiclesetup/configuration/compass/LargeVehicleCompassCalibrator.vue
 msgid "Start Large Vehicle Calibration"
-msgstr ""
+msgstr "开始大型载具校准"
 
 #: src/views/Autopilot.vue
 msgid "Start autopilot"
-msgstr ""
+msgstr "启动飞控"
 
 #: src/components/video-manager/VideoThumbnail.vue
 msgid "Start continuous thumbnails (1s)"
-msgstr ""
+msgstr "开始连续缩略图（1 秒）"
 
 #: src/components/autopilot/EndpointCreationDialog.vue
 msgid "Start endpoint already enabled"
-msgstr ""
+msgstr "创建时即启用端点"
 
 #: src/views/SettingsView.vue
 msgid "Start the configuration wizard"
-msgstr ""
+msgstr "启动配置向导"
 
 #: src/components/parameter-editor/RelaySetup.vue
 msgid "Startup State"
-msgstr ""
+msgstr "启动状态"
 
 #: src/components/ethernet/InterfaceCard.vue
 #: src/components/kraken/cards/InstalledExtensionCard.vue
@@ -3879,423 +3882,423 @@ msgstr ""
 #: src/components/vehiclesetup/overview/BaroCalib.vue
 #: src/components/vehiclesetup/overview/OnboardSensors.vue
 msgid "Status"
-msgstr ""
+msgstr "状态"
 
 #: src/components/video-manager/VideoStream.vue
 msgid "Status:"
-msgstr ""
+msgstr "状态："
 
 #: src/components/vehiclesetup/configuration/camera.vue
 msgid "Step 1: Find the physical limits"
-msgstr ""
+msgstr "第 1 步：找到物理极限"
 
 #: src/components/vehiclesetup/configuration/camera.vue
 msgid "Step 2: Measure the actual angles"
-msgstr ""
+msgstr "第 2 步：测量实际角度"
 
 #: src/views/Autopilot.vue
 msgid "Stop autopilot"
-msgstr ""
+msgstr "停止飞控"
 
 #: src/components/video-manager/VideoThumbnail.vue
 msgid "Stop continuous thumbnails"
-msgstr ""
+msgstr "停止连续缩略图"
 
 #: src/views/ExtensionManagerView.vue
 msgid "Store"
-msgstr ""
+msgstr "商店"
 
 #: src/components/video-manager/VideoStream.vue
 msgid "Stream Name:"
-msgstr ""
+msgstr "视频流名称："
 
 #: src/components/video-manager/VideoStreamCreationDialog.vue
 msgid "Stream creation"
-msgstr ""
+msgstr "创建视频流"
 
 #: src/components/video-manager/VideoStreamCreationDialog.vue
 msgid "Stream endpoint"
-msgstr ""
+msgstr "视频流端点"
 
 #: src/components/video-manager/VideoStreamCreationDialog.vue
 msgid "Stream nickname"
-msgstr ""
+msgstr "视频流昵称"
 
 #: src/components/video-manager/VideoDevice.vue
 msgid "Streams active"
-msgstr ""
+msgstr "视频流运行中"
 
 #: src/components/video-manager/VideoDevice.vue
 msgid "Streams stopped, see the errors for more information"
-msgstr ""
+msgstr "视频流已停止，请查看错误信息了解详情"
 
 #: src/components/wifi/ConnectionDialog.vue
 #, javascript-format
 msgid "Successfully connected to '${ 0 }'"
-msgstr ""
+msgstr "已成功连接到“${ 0 }”"
 
 #: src/components/wifi/WifiManager.vue
 msgid "Successfully toggled hotspot state."
-msgstr ""
+msgstr "已成功切换热点状态。"
 
 #: src/components/wifi/WifiSettingsDialog.vue
 msgid "Successfully updated hotspot credentials."
-msgstr ""
+msgstr "已成功更新热点凭据。"
 
 #: src/components/wifi/WifiSettingsDialog.vue
 msgid "Successfully updated smart-hotspot configuration."
-msgstr ""
+msgstr "已成功更新智能热点配置。"
 
 #: src/components/beacon/BeaconTrayMenu.vue
 #, javascript-format
 msgid "Switch to ${ 0 }.local"
-msgstr ""
+msgstr "切换到 ${ 0 }.local"
 
 #: src/components/version-chooser/VersionChooser.vue
 msgid "Switching to new core..."
-msgstr ""
+msgstr "正在切换到新的 core……"
 
 #: src/views/SettingsView.vue
 msgid "System"
-msgstr ""
+msgstr "系统"
 
 #: src/components/vehiclesetup/overview/VehicleInfo.vue
 msgid "System ID"
-msgstr ""
+msgstr "系统 ID"
 
 #: src/menus.ts
 #: src/types/frontend_services.ts
 #: src/views/MainView.vue
 msgid "System Information"
-msgstr ""
+msgstr "系统信息"
 
 #: src/views/SettingsView.vue
 msgid "System Logs"
-msgstr ""
+msgstr "系统日志"
 
 #: src/views/SystemInformationView.vue
 msgid "System Monitor"
-msgstr ""
+msgstr "系统监视器"
 
 #: src/views/SettingsView.vue
 msgid "System configuration and maintenance"
-msgstr ""
+msgstr "系统配置与维护"
 
 #: src/components/app/SystemCheckerTrayMenu.vue
 msgid "System problems detected. Click to view details."
-msgstr ""
+msgstr "检测到系统问题。点击查看详情。"
 
 #: src/components/app/DnsConfigurationMenu.vue
 msgid "TRY AGAIN"
-msgstr ""
+msgstr "重试"
 
 #: src/components/version-chooser/VersionChooser.vue
 #: src/views/ExtensionManagerView.vue
 msgid "Tag"
-msgstr ""
+msgstr "标签"
 
 #: src/components/autopilot/EndpointManager.vue
 msgid "Telemetry Logs (.tlog)"
-msgstr ""
+msgstr "遥测日志（.tlog）"
 
 #: src/components/vehiclesetup/overview/OnboardSensors.vue
 msgid "Temperature"
-msgstr ""
+msgstr "温度"
 
 #: src/menus.ts
 msgid "Terminal"
-msgstr ""
+msgstr "终端"
 
 #: src/components/disk/DiskSpeedGraph.vue
 msgid "Test Size"
-msgstr ""
+msgstr "测试大小"
 
 #: src/views/Disk.vue
 msgid "Test failed"
-msgstr ""
+msgstr "测试失败"
 
 #: src/menus.ts
 msgid "Test link speed between topside computer and your vehicle."
-msgstr ""
+msgstr "测试水面计算机与载具之间的链路速度。"
 
 #: src/components/vehiclesetup/MotorDetection.vue
 msgid "Tests whether any of the motors are wired to spin backwards, and automatically reverses their control signals as relevant."
-msgstr ""
+msgstr "检测是否有电机接线导致反向旋转，并自动反转相应电机的控制信号。"
 
 #: src/components/video-manager/VideoDiagnosticHelper.vue
 msgid "That should be fine if you are using this wi-fi connection for something other than piloting."
-msgstr ""
+msgstr "如果您使用此 Wi-Fi 连接不是为了操控载具，则不会有问题。"
 
 #: src/components/vehiclesetup/overview/GyroCalib.vue
 msgid "The Gyroscopes can be automatically calibrated at startup. Be mindful that this is not recommended for vehicles that start up on moving platforms (such as boats)."
-msgstr ""
+msgstr "陀螺仪可在启动时自动校准。请注意，不建议在移动平台（如船只）上启动的载具使用此功能。"
 
 #: src/components/nmea-injector/NMEAInjector.vue
 msgid "The NMEA Injector receives NMEA via UDP or TCP and transforms it into MAVLink data that is forwarded to the autopilot. It currently supports the sentences"
-msgstr ""
+msgstr "NMEA 注入器通过 UDP 或 TCP 接收 NMEA 数据，将其转换为 MAVLink 数据并转发给飞控。目前支持以下语句："
 
 #: src/alerts/rules/autopilot.ts
 msgid "The autopilot cannot start until a board is connected."
-msgstr ""
+msgstr "在连接板卡之前，飞控无法启动。"
 
 #: src/components/nmea-injector/NMEAInjector.vue
 #, javascript-format
 msgid "The autopilot will not use injected position until ${ 0 } is MAV (14). It is currently ${ 1 }. Reboot the autopilot after changing the parameter."
-msgstr ""
+msgstr "在 ${ 0 } 设置为 MAV (14) 之前，飞控不会使用注入的位置。当前值为 ${ 1 }。更改参数后请重启飞控。"
 
 #: src/components/vehiclesetup/configuration/compass/ArdupilotMavlinkCompassSetup.vue
 msgid "The compass is not calibrated - please calibrate it."
-msgstr ""
+msgstr "罗盘未校准，请进行校准。"
 
 #: src/views/ExtensionManagerView.vue
 #, javascript-format
 msgid "The extension's platform (${ 0 }) doesn't match the one from your device. Installing it might result in the extension failing to load."
-msgstr ""
+msgstr "该扩展的平台（${ 0 }）与您的设备不匹配。安装后扩展可能无法加载。"
 
 #: src/components/vehiclesetup/configuration/camera.vue
 msgid "The gimbal will move to the new PWM values as you adjust them."
-msgstr ""
+msgstr "调整 PWM 值时，云台将随之移动到新的位置。"
 
 #: src/alerts/rules/network.ts
 msgid "The network link is working but domain names cannot be resolved. Check the DNS settings."
-msgstr ""
+msgstr "网络链路正常，但无法解析域名。请检查 DNS 设置。"
 
 #: src/components/wizard/Wizard.vue
 msgid "The operation failed!"
-msgstr ""
+msgstr "操作失败！"
 
 #: src/components/vehiclesetup/configuration/lights.vue
 msgid "The output pin for the primary set of lights:"
-msgstr ""
+msgstr "主灯组的输出引脚："
 
 #: src/components/vehiclesetup/configuration/lights.vue
 msgid "The output pin for the secondary set of lights:"
-msgstr ""
+msgstr "副灯组的输出引脚："
 
 #: src/components/vehiclesetup/MotorDetection.vue
 msgid "The test is running. The vehicle will move slightly as each motor is tested."
-msgstr ""
+msgstr "测试正在进行。每个电机测试时，载具会轻微移动。"
 
 #: src/components/vehiclesetup/MotorDetection.vue
 msgid "The test relies on the <b>motors being correctly connected</b> according to the selected vehicle frame, and spins each motor individually to check whether it generates thrust in the expected direction. The vehicle should be in calm water and far from walls and objects."
-msgstr ""
+msgstr "该测试要求<b>电机已按所选载具机架正确连接</b>，并逐个转动电机，以检查其是否在预期方向上产生推力。载具应处于平静水域，并远离墙壁和其他物体。"
 
 #: src/components/version-chooser/VersionChooser.vue
 msgid "The update may have failed or BlueOS is still starting up. Do you want to reload the page or skip?"
-msgstr ""
+msgstr "更新可能失败，或 BlueOS 仍在启动中。要重新加载页面还是跳过？"
 
 #: src/components/wizard/Wizard.vue
 msgid "The wizard will only show if BlueOS is updated and further configuration is necessary"
-msgstr ""
+msgstr "仅当 BlueOS 更新后需要进一步配置时才会显示向导"
 
 #: src/components/wizard/Wizard.vue
 msgid "The wizard will show again during BlueOS usage"
-msgstr ""
+msgstr "使用 BlueOS 期间将再次显示向导"
 
 #: src/components/customization/ThemeCustomization.vue
 msgid "Theme color, 3D models, logo and vehicle image"
-msgstr ""
+msgstr "主题颜色、3D 模型、徽标和载具图片"
 
 #: src/components/video-manager/VideoStreamCreationDialog.vue
 msgid "Thermal camera"
-msgstr ""
+msgstr "热成像相机"
 
 #: src/components/vehiclesetup/overview/ParamSets.vue
 #, javascript-format
 msgid "These are the recommended parameter sets for your vehicle and firmware version. Curated by ${ 0 }"
-msgstr ""
+msgstr "以下是适用于您的载具和固件版本的推荐参数集。由 ${ 0 } 整理"
 
 #: src/components/app/DnsConfigurationMenu.vue
 msgid "These nameservers are fetched from and applied to the host resolv configuration (<i>/etc/resolv.conf</i>), which are synchronized with the container's resolv configuration."
-msgstr ""
+msgstr "这些 DNS 服务器读取自并应用于主机的 resolv 配置（<i>/etc/resolv.conf</i>），该配置与容器的 resolv 配置保持同步。"
 
 #: src/components/vehiclesetup/configuration/compass/ArdupilotMavlinkCompassSetup.vue
 msgid "This Compass is not in use, drag it higher (by the dots) to be able to use it."
-msgstr ""
+msgstr "此罗盘未被使用，请（通过圆点）将其向上拖动以启用。"
 
 #: src/components/wifi/DisconnectionDialog.vue
 msgid "This IP address is currently being used to access BlueOS. Deleting it could prevent you from accessing your vehicle. Are you sure you want to disconnect?"
-msgstr ""
+msgstr "当前正在使用此 IP 地址访问 BlueOS。删除它可能导致您无法访问载具。确定要断开连接吗？"
 
 #: src/components/vehiclesetup/viewers/GenericViewer.vue
 msgid "This browser does not support the required WebGL features."
-msgstr ""
+msgstr "此浏览器不支持所需的 WebGL 功能。"
 
 #: src/alerts/rules/network.ts
 msgid "This computer has no internet"
-msgstr ""
+msgstr "本计算机无法访问互联网"
 
 #: src/alerts/rules/network.ts
 msgid "This computer's DNS is not resolving"
-msgstr ""
+msgstr "本计算机的 DNS 无法解析"
 
 #: src/components/kraken/cards/StoreExtensionCard.vue
 msgid "This extension is not compatible with current machine architecture running BlueOS."
-msgstr ""
+msgstr "此扩展与当前运行 BlueOS 的设备架构不兼容。"
 
 #: src/components/common/NotSafeOverlay.vue
 msgid "This feature is disabled because the vehicle is armed."
-msgstr ""
+msgstr "载具已解锁，此功能已禁用。"
 
 #.  eslint-disable-next-line max-len
 #: src/components/wifi/WifiManager.vue
 msgid "This hotspot is currently being used to access BlueOS. Turning it off could prevent you from accessing your vehicle. Are you sure you want to turn it off?"
-msgstr ""
+msgstr "当前正在通过此热点访问 BlueOS。关闭它可能导致您无法访问载具。确定要关闭吗？"
 
 #: src/App.vue
 msgid "This is an advanced feature"
-msgstr ""
+msgstr "这是一项高级功能"
 
 #: src/App.vue
 msgid "This is an installed extension"
-msgstr ""
+msgstr "这是已安装的扩展"
 
 #: src/components/autopilot/FirmwareManager.vue
 msgid "This likely means the firmware is corrupted."
-msgstr ""
+msgstr "这可能意味着固件已损坏。"
 
 #: src/components/autopilot/FirmwareManager.vue
 msgid "This option will restore the default firmware for your platform."
-msgstr ""
+msgstr "此选项将为您的平台恢复默认固件。"
 
 #: src/components/vehiclesetup/configuration/camera.vue
 msgid "This represents how much the PWM value changes per degree. Use this to verify against your servo specs. One that reaches +-45º with 1100-1900 PWM (all current BlueRobotics servos), has a ratio of 8.88µs per degree. This can help you make sure you measured the angles correctly."
-msgstr ""
+msgstr "此值表示每度对应的 PWM 变化量，可用于与舵机规格进行核对。在 1100-1900 PWM 下达到 ±45º 的舵机（目前所有 Blue Robotics 舵机）比率为每度 8.88µs。这有助于确认角度测量是否正确。"
 
 #: src/components/parameter-editor/ServoFunctionGpioEditor.vue
 #, javascript-format
 msgid "This servo's GPIO (<strong>${ 0 }</strong>) is currently in use by <strong>${ 1 }</strong>."
-msgstr ""
+msgstr "此舵机的 GPIO（<strong>${ 0 }</strong>）当前被 <strong>${ 1 }</strong> 使用。"
 
 #: src/components/kraken/modals/ExtensionSettingsModal.vue
 msgid "This source contains an invalid manifest URL."
-msgstr ""
+msgstr "此源包含无效的清单 URL。"
 
 #: src/components/video-manager/VideoStreamCreationDialog.vue
 msgid "This stream uses MJPEG or uncompressed video. Cockpit can't play these formats, and they require more network bandwidth. We recommend switching to H.264 or H.265."
-msgstr ""
+msgstr "此视频流使用 MJPEG 或未压缩视频。Cockpit 无法播放这些格式，且它们需要更多网络带宽。建议切换为 H.264 或 H.265。"
 
 #: src/components/health/SelfHealthTest.vue
 msgid "This vehicle is running its \"factory\" version of BlueOS. This generally means something went wrong, and the system reverted to this version in order to recover. Please file an issue at <a href='https://github.com/bluerobotics/BlueOS/issues' target='_blank'>BlueOS/issues</a> or post on our <a href='https://discuss.bluerobotics.com/c/bluerobotics-software/blue-os/85' target='_blank'>forum</a>. Please include the <a href='#' class='js-download-logs'>System logs</a> if possible, and what you were doing when this happened."
-msgstr ""
+msgstr "此载具正在运行 BlueOS 的“出厂”版本。这通常意味着出现了问题，系统已回退到此版本以进行恢复。请在 <a href='https://github.com/bluerobotics/BlueOS/issues' target='_blank'>BlueOS/issues</a> 提交问题，或在我们的<a href='https://discuss.bluerobotics.com/c/bluerobotics-software/blue-os/85' target='_blank'>论坛</a>上发帖。如有可能，请附上<a href='#' class='js-download-logs'>系统日志</a>，并说明问题发生时您正在进行的操作。"
 
 #: src/components/kraken/modals/ExtensionDetailsModal.vue
 msgid "This version is not compatible with current machine running BlueOS"
-msgstr ""
+msgstr "此版本与当前运行 BlueOS 的设备不兼容"
 
 #: src/components/vehiclesetup/overview/ParamSets.vue
 msgid "This will effectively wipe your \"eeprom\". You will lose all your parameters, vehicle setup, and calibrations. Use this if you don't know which parameters you changed and need a clean start."
-msgstr ""
+msgstr "这实际上会清空您的“eeprom”。您将丢失所有参数、载具设置和校准数据。如果您不清楚更改过哪些参数并需要重新开始，请使用此功能。"
 
 #: src/components/video-manager/VideoThumbnail.vue
 msgid "Thumbnails disabled for this source."
-msgstr ""
+msgstr "此源已禁用缩略图。"
 
 #: src/components/system-information/AboutThisSystem.vue
 msgid "Time"
-msgstr ""
+msgstr "时间"
 
 #: src/components/vehiclesetup/configuration/camera.vue
 msgid "To find the physical limits of the servo, move the camera to the minimum and maximum positions, then adjust the minimum/maximum PWMs values until it reaches the furthest it can move without hitting other components."
-msgstr ""
+msgstr "要找到舵机的物理极限，请将相机移动到最小和最大位置，然后调整最小/最大 PWM 值，直到其在不碰到其他部件的情况下达到最远位置。"
 
 #: src/components/cloud/CloudTrayMenu.vue
 msgid "To use the cloud features of the Ground Control you need to install it."
-msgstr ""
+msgstr "要使用地面站的云功能，需要先安装它。"
 
 #: src/components/wifi/WifiManager.vue
 msgid "Toggle hotspot"
-msgstr ""
+msgstr "切换热点"
 
 #: src/components/cloud/CloudSettingsTab.vue
 msgid "Token"
-msgstr ""
+msgstr "令牌"
 
 #: src/components/kraken/modals/ExtensionSettingsModal.vue
 msgid "Top ones have higher priority."
-msgstr ""
+msgstr "越靠上优先级越高。"
 
 #: src/components/zenoh-inspector/ZenohInspector.vue
 msgid "Topic liveliness status"
-msgstr ""
+msgstr "主题存活状态"
 
 #: src/components/zenoh-inspector/ZenohInspector.vue
 msgid "Topic message serialization type"
-msgstr ""
+msgstr "主题消息序列化类型"
 
 #: src/components/zenoh-inspector/ZenohInspector.vue
 msgid "Topic type"
-msgstr ""
+msgstr "主题类型"
 
 #: src/views/ZenohInspectorView.vue
 msgid "Topics"
-msgstr ""
+msgstr "主题"
 
 #: src/components/app/ReportMenu.vue
 msgid "Track changes, contribute, and get notified when fixed"
-msgstr ""
+msgstr "跟踪变更、参与贡献，并在修复后收到通知"
 
 #.  eslint-disable-next-line max-len
 #: src/components/vehiclesetup/configuration/failsafes/Failsafes.vue
 msgid "Triggers when the EKF variances surpass a given threshold, so it loses trust in its state estimates."
-msgstr ""
+msgstr "当 EKF 方差超过给定阈值、导致其不再信任状态估计时触发。"
 
 #.  eslint-disable-next-line max-len
 #: src/components/vehiclesetup/configuration/failsafes/Failsafes.vue
 msgid "Triggers when the internal pressure is too high. This may help to detect a leak, and to avoid rapid unplanned disassembly."
-msgstr ""
+msgstr "当内部压力过高时触发。这有助于检测漏水，并避免意外的快速解体。"
 
 #.  eslint-disable-next-line max-len
 #: src/components/vehiclesetup/configuration/failsafes/Failsafes.vue
 msgid "Triggers when the internal temperature is too high. This may help to prevent damage to electronics due to overheating."
-msgstr ""
+msgstr "当内部温度过高时触发。这有助于防止电子设备因过热而损坏。"
 
 #.  eslint-disable-next-line max-len
 #: src/components/vehiclesetup/configuration/failsafes/Failsafes.vue
 msgid "Triggers when the vehicle does not receive a heartbeat from the GCS within the timeout (default 3 seconds)."
-msgstr ""
+msgstr "当载具在超时时间（默认 3 秒）内未收到地面站心跳时触发。"
 
 #.  eslint-disable-next-line max-len
 #: src/components/vehiclesetup/configuration/failsafes/Failsafes.vue
 msgid "Triggers when the voltage goes below specified thresholds. This can help to avoid damage to the battery and potentially loss of the vehicle."
-msgstr ""
+msgstr "当电压低于指定阈值时触发。这有助于避免电池损坏以及可能的载具丢失。"
 
 #: src/components/kraken/BackAlleyTab.vue
 msgid "Try Again"
-msgstr ""
+msgstr "重试"
 
 #: src/components/app/DnsConfigurationMenu.vue
 msgid "Try to fetch DNS namservers from the host"
-msgstr ""
+msgstr "尝试从主机获取 DNS 服务器"
 
 #: src/components/wifi/WifiManager.vue
 msgid "Turn off hotspot"
-msgstr ""
+msgstr "关闭热点"
 
 #: src/components/version-chooser/VersionChooser.vue
 #, javascript-format
 msgid "Turn on Pirate mode to view all available BlueOS versions, including previous installs stored onboard, as well as past and current stable, beta, and development releases downloadable from ${ 0 }."
-msgstr ""
+msgstr "开启海盗模式以查看所有可用的 BlueOS 版本，包括存储在设备上的以往安装版本，以及可从 ${ 0 } 下载的历史和当前稳定版、测试版和开发版。"
 
 #: src/components/parameter-editor/RelaySetup.vue
 msgid "Turn relay off"
-msgstr ""
+msgstr "关闭继电器"
 
 #: src/components/parameter-editor/RelaySetup.vue
 msgid "Turn relay on"
-msgstr ""
+msgstr "打开继电器"
 
 #: src/components/autopilot/EndpointCreationDialog.vue
 #: src/components/logs/LogManager.vue
 #: src/components/vehiclesetup/overview/BaroCalib.vue
 #: src/components/vehiclesetup/overview/OnboardSensors.vue
 msgid "Type"
-msgstr ""
+msgstr "类型"
 
 #: src/components/vehiclesetup/overview/BaroCalib.vue
 #: src/components/vehiclesetup/overview/OnboardSensors.vue
 msgid "UNKNOWN"
-msgstr ""
+msgstr "未知"
 
 #: src/components/kraken/modals/ExtensionSettingsModal.vue
 msgid "URL"
@@ -4308,190 +4311,190 @@ msgstr ""
 #: src/components/system-information/Usb.vue
 #, javascript-format
 msgid "USB Bus ${ 0 }"
-msgstr ""
+msgstr "USB 总线 ${ 0 }"
 
 #: src/components/vehiclesetup/configuration/compass/ArdupilotMavlinkCompassSetup.vue
 msgid "Unable to get calibration status - something went wrong."
-msgstr ""
+msgstr "无法获取校准状态，出现了错误。"
 
 #: src/components/kraken/cards/InstalledExtensionCard.vue
 #: src/components/kraken/modals/ExtensionDetailsModal.vue
 msgid "Uninstall"
-msgstr ""
+msgstr "卸载"
 
 #: src/components/parameter-editor/ParameterLabel.vue
 #, javascript-format
 msgid "Units: ${ 0 }"
-msgstr ""
+msgstr "单位：${ 0 }"
 
 #: src/components/zenoh-inspector/ZenohInspector.vue
 msgid "Unknown"
-msgstr ""
+msgstr "未知"
 
 #: src/components/system-information/Usb.vue
 msgid "Unknown error"
-msgstr ""
+msgstr "未知错误"
 
 #: src/components/system-information/Firmware.vue
 #: src/components/version-chooser/VersionCard.vue
 msgid "Up to date"
-msgstr ""
+msgstr "已是最新"
 
 #: src/components/system-information/Firmware.vue
 msgid "Update"
-msgstr ""
+msgstr "更新"
 
 #: src/components/version-chooser/VersionCard.vue
 msgid "Update Bootstrap"
-msgstr ""
+msgstr "更新 Bootstrap"
 
 #: src/components/kraken/modals/ExtensionSettingsModal.vue
 msgid "Update Source"
-msgstr ""
+msgstr "更新源"
 
 #: src/components/wizard/Wizard.vue
 msgid "Update boat firmware"
-msgstr ""
+msgstr "更新船只固件"
 
 #: src/components/autopilot/EndpointCreationDialog.vue
 msgid "Update endpoint"
-msgstr ""
+msgstr "更新端点"
 
 #: src/menus.ts
 msgid "Update flight controller firmware, select the active autopilot, and start/stop ArduPilot (if using Navigator or SITL)."
-msgstr ""
+msgstr "更新飞控固件、选择当前使用的飞控，以及启动/停止 ArduPilot（如使用 Navigator 或 SITL）。"
 
 #: src/types/frontend_services.ts
 msgid "Update time"
-msgstr ""
+msgstr "更新时间"
 
 #: src/components/app/NewVersionNotificator.vue
 #: src/components/kraken/cards/InstalledExtensionCard.vue
 #, javascript-format
 msgid "Update to ${ 0 }"
-msgstr ""
+msgstr "更新到 ${ 0 }"
 
 #: src/components/kraken/cards/StoreExtensionCard.vue
 #, javascript-format
 msgid "Update to <strong style='white-space: nowrap;'>${ 0 }</strong>"
-msgstr ""
+msgstr "更新到 <strong style='white-space: nowrap;'>${ 0 }</strong>"
 
 #: src/components/version-chooser/VersionCard.vue
 #, javascript-format
 msgid "Update to latest ${ 0 }"
-msgstr ""
+msgstr "更新到最新的 ${ 0 }"
 
 #: src/components/version-chooser/VersionCard.vue
 msgid "Updating bootstrap is only recommended between stable versions."
-msgstr ""
+msgstr "仅建议在稳定版本之间更新 bootstrap。"
 
 #: src/components/customization/BrandingUploader.vue
 #: src/components/customization/ThemeCustomization.vue
 #: src/components/version-chooser/VersionChooser.vue
 msgid "Upload"
-msgstr ""
+msgstr "上传"
 
 #: src/components/customization/ThemeCustomization.vue
 msgid "Upload 3D model override"
-msgstr ""
+msgstr "上传 3D 模型覆盖"
 
 #: src/components/customization/ThemeCustomization.vue
 msgid "Upload <code>.glb</code> files served at <code>/userdata/modeloverrides/</code>. Use a relative name like <code>sub/MyFrame.glb</code> or <code>ALL.glb</code> to override every vehicle."
-msgstr ""
+msgstr "上传的 <code>.glb</code> 文件将在 <code>/userdata/modeloverrides/</code> 提供。使用 <code>sub/MyFrame.glb</code> 之类的相对名称，或使用 <code>ALL.glb</code> 覆盖所有载具。"
 
 #: src/views/ExtensionManagerView.vue
 msgid "Upload a Kraken-compatible .tar archive to sideload an extension."
-msgstr ""
+msgstr "上传与 Kraken 兼容的 .tar 归档文件以侧载扩展。"
 
 #: src/components/customization/BrandingUploader.vue
 msgid "Upload a new file"
-msgstr ""
+msgstr "上传新文件"
 
 #: src/views/ExtensionManagerView.vue
 msgid "Upload extension .tar file to onboard computer"
-msgstr ""
+msgstr "将扩展 .tar 文件上传到机载计算机"
 
 #: src/components/customization/BrandingUploader.vue
 #: src/views/ExtensionManagerView.vue
 msgid "Upload file"
-msgstr ""
+msgstr "上传文件"
 
 #: src/components/autopilot/FirmwareManager.vue
 msgid "Upload firmware file"
-msgstr ""
+msgstr "上传固件文件"
 
 #: src/components/customization/ThemeCustomization.vue
 msgid "Upload model"
-msgstr ""
+msgstr "上传模型"
 
 #: src/components/speedtest/InternetSpeedTest.vue
 msgid "Upload speed to internet"
-msgstr ""
+msgstr "到互联网的上传速度"
 
 #: src/components/speedtest/NetworkSpeedTest.vue
 msgid "Upload speed to vehicle"
-msgstr ""
+msgstr "到载具的上传速度"
 
 #: src/components/cloud/CloudTrayMenu.vue
 msgid "Uploads"
-msgstr ""
+msgstr "上传"
 
 #: src/views/Disk.vue
 msgid "Usage"
-msgstr ""
+msgstr "使用量"
 
 #: src/components/vehiclesetup/configuration/compass/ArdupilotMavlinkCompassSetup.vue
 msgid "Use Compass"
-msgstr ""
+msgstr "使用罗盘"
 
 #: src/components/vehiclesetup/configuration/compass/AutoCoordinateDetector.vue
 msgid "Use GeoIP coordinates"
-msgstr ""
+msgstr "使用 GeoIP 坐标"
 
 #: src/components/app/PirateModeMenu.vue
 msgid "Use Pirate Mode to show hidden pages and advanced settings. Pirate powers should be used with care."
-msgstr ""
+msgstr "使用海盗模式可显示隐藏页面和高级设置。请谨慎使用海盗权限。"
 
 #: src/components/kraken/BazaarTab.vue
 msgid "Use the cloud icon in the top right corner to configure Major Tom."
-msgstr ""
+msgstr "使用右上角的云图标配置 Major Tom。"
 
 #: src/components/vehiclesetup/configuration/compass/AutoCoordinateDetector.vue
 msgid "Use these coordinates"
-msgstr ""
+msgstr "使用这些坐标"
 
 #: src/components/app/DnsConfigurationMenu.vue
 msgid "Use this to prevent other Linux services (like dnsmasq or dhcpcd) from automatically changing the nameservers"
-msgstr ""
+msgstr "使用此选项可防止其他 Linux 服务（如 dnsmasq 或 dhcpcd）自动更改 DNS 服务器"
 
 #: src/components/version-chooser/VersionChooser.vue
 msgid "Use this to upload a .tar docker image. These can be downloaded from the BlueOS <a href='https://github.com/bluerobotics/BlueOS/releases' target='_blank' rel='noopener noreferrer'>Releases</a> Assets, or <a href='https://github.com/bluerobotics/BlueOS/actions/workflows/test-and-deploy.yml' target='_blank' rel='noopener noreferrer'>CI</a> Artifacts (GitHub account required), or generated locally using <code>docker save</code>."
-msgstr ""
+msgstr "使用此功能上传 .tar 格式的 Docker 镜像。镜像可从 BlueOS <a href='https://github.com/bluerobotics/BlueOS/releases' target='_blank' rel='noopener noreferrer'>Releases</a> 的 Assets 或 <a href='https://github.com/bluerobotics/BlueOS/actions/workflows/test-and-deploy.yml' target='_blank' rel='noopener noreferrer'>CI</a> 的 Artifacts（需要 GitHub 账户）下载，也可使用 <code>docker save</code> 在本地生成。"
 
 #: src/components/version-chooser/DockerLogin.vue
 msgid "Used by root user"
-msgstr ""
+msgstr "由 root 用户使用"
 
 #: src/menus.ts
 msgid "Used for forwarding UDP NMEA streams into ArduPilot."
-msgstr ""
+msgstr "用于将 UDP NMEA 数据流转发到 ArduPilot。"
 
 #: src/components/vehiclesetup/overview/BaroCalib.vue
 #: src/components/vehiclesetup/overview/OnboardSensors.vue
 msgid "Used to estimate altitude/depth"
-msgstr ""
+msgstr "用于估算高度/深度"
 
 #: src/components/kraken/cards/InstalledExtensionCard.vue
 msgid "User Custom Settings"
-msgstr ""
+msgstr "用户自定义设置"
 
 #: src/components/system-information/Firmware.vue
 msgid "VL085 Firmware (USB Controller):"
-msgstr ""
+msgstr "VL085 固件（USB 控制器）："
 
 #: src/components/vehiclesetup/configuration/compass/AutoCoordinateDetector.vue
 msgid "Valid GPS position"
-msgstr ""
+msgstr "有效的 GPS 位置"
 
 #: src/components/parameter-editor/ParameterEditor.vue
 #: src/components/parameter-editor/ParameterLoader.vue
@@ -4499,369 +4502,369 @@ msgstr ""
 #: src/components/vehiclesetup/configuration/compass/CompassParams.vue
 #: src/components/wizard/DefaultParamLoader.vue
 msgid "Value"
-msgstr ""
+msgstr "值"
 
 #: src/components/vehiclesetup/overview/VehicleInfo.vue
 msgid "Vehicle"
-msgstr ""
+msgstr "载具"
 
 #: src/components/vehiclesetup/Configure.vue
 msgid "Vehicle Body"
-msgstr ""
+msgstr "载具本体"
 
 #: src/components/vehiclesetup/configuration/power/BatteryCard.vue
 msgid "Vehicle Current:"
-msgstr ""
+msgstr "载具电流："
 
 #: src/components/vehiclesetup/Configure.vue
 msgid "Vehicle ID"
-msgstr ""
+msgstr "载具 ID"
 
 #: src/components/app/VehicleBanner.vue
 #: src/components/wizard/Wizard.vue
 msgid "Vehicle Name"
-msgstr ""
+msgstr "载具名称"
 
 #: src/menus.ts
 msgid "Vehicle Setup"
-msgstr ""
+msgstr "载具设置"
 
 #: src/components/vehiclesetup/configuration/power/BatteryCard.vue
 msgid "Vehicle Voltage:"
-msgstr ""
+msgstr "载具电压："
 
 #: src/menus.ts
 msgid "Vehicle and Peripherals setup. Includes sensor calibrations and Motors/Peripherals mapping."
-msgstr ""
+msgstr "载具和外设设置，包括传感器校准和电机/外设映射。"
 
 #: src/components/vehiclesetup/configuration/compass/AutoCoordinateDetector.vue
 msgid "Vehicle coordinates:"
-msgstr ""
+msgstr "载具坐标："
 
 #: src/components/customization/ThemeCustomization.vue
 msgid "Vehicle image"
-msgstr ""
+msgstr "载具图片"
 
 #: src/components/kraken/BackAlleyTab.vue
 #: src/components/kraken/BazaarTab.vue
 msgid "Vehicle is not connected to the internet."
-msgstr ""
+msgstr "载具未连接到互联网。"
 
 #: src/components/vehiclesetup/viewers/GenericViewer.vue
 msgid "Vehicle model not found"
-msgstr ""
+msgstr "未找到载具模型"
 
 #: src/views/PageNotFound.vue
 msgid "Vehicle not found."
-msgstr ""
+msgstr "未找到载具。"
 
 #: src/components/app/VehicleRebootRequiredTrayMenu.vue
 msgid "Vehicle reboot required. Click to reboot."
-msgstr ""
+msgstr "需要重启载具。点击以重启。"
 
 #: src/components/autopilot/FirmwareManager.vue
 msgid "Vehicle type"
-msgstr ""
+msgstr "载具类型"
 
 #: src/components/kraken/modals/ExtensionDetailsModal.vue
 msgid "Version"
-msgstr ""
+msgstr "版本"
 
 #: src/types/frontend_services.ts
 msgid "Version chooser service"
-msgstr ""
+msgstr "版本选择服务"
 
 #: src/components/system-information/Firmware.vue
 msgid "Version:"
-msgstr ""
+msgstr "版本："
 
 #: src/components/scanner/availableServicesTable.vue
 msgid "Versions"
-msgstr ""
+msgstr "版本"
 
 #: src/components/health/GpsTrayMenu.vue
 msgid "Vertical Accuracy"
-msgstr ""
+msgstr "垂直精度"
 
 #: src/components/health/GpsTrayMenu.vue
 msgid "Vertical position uncertainty"
-msgstr ""
+msgstr "垂直位置不确定度"
 
 #: src/components/vehiclesetup/overview/VideoOverview.vue
 msgid "Video"
-msgstr ""
+msgstr "视频"
 
 #: src/types/frontend_services.ts
 msgid "Video Manager"
-msgstr ""
+msgstr "视频管理器"
 
 #: src/components/video-manager/VideoManager.vue
 msgid "Video Manager Settings"
-msgstr ""
+msgstr "视频管理器设置"
 
 #: src/menus.ts
 msgid "Video Streams"
-msgstr ""
+msgstr "视频流"
 
 #: src/types/frontend_services.ts
 msgid "Video management service for BlueOS."
-msgstr ""
+msgstr "BlueOS 的视频管理服务。"
 
 #: src/components/video-manager/VideoDevice.vue
 msgid "Video source is blocked"
-msgstr ""
+msgstr "视频源已被屏蔽"
 
 #: src/components/kraken/cards/InstalledExtensionCard.vue
 msgid "View Logs"
-msgstr ""
+msgstr "查看日志"
 
 #: src/menus.ts
 msgid "View and modify vehicle parameters."
-msgstr ""
+msgstr "查看和修改载具参数。"
 
 #: src/menus.ts
 msgid "View detailed MAVLink traffic coming from your vehicle."
-msgstr ""
+msgstr "查看来自载具的详细 MAVLink 流量。"
 
 #: src/menus.ts
 msgid "View detailed Zenoh traffic coming from your vehicle."
-msgstr ""
+msgstr "查看来自载具的详细 Zenoh 流量。"
 
 #: src/components/system-information/Processes.vue
 msgid "Virt. Memory (kB)"
-msgstr ""
+msgstr "虚拟内存（kB）"
 
 #: src/menus.ts
 msgid "Visualize disk usage and delete files/folders."
-msgstr ""
+msgstr "可视化磁盘使用情况并删除文件/文件夹。"
 
 #: src/components/vehiclesetup/configuration/power/BatteryCard.vue
 msgid "Voltage Multiplier"
-msgstr ""
+msgstr "电压倍率"
 
 #: src/components/vehiclesetup/overview/PowerInfo.vue
 msgid "Voltage Multiplier:"
-msgstr ""
+msgstr "电压倍率："
 
 #: src/components/vehiclesetup/configuration/power/BatteryCard.vue
 msgid "Voltage Pin"
-msgstr ""
+msgstr "电压引脚"
 
 #: src/components/vehiclesetup/overview/PowerInfo.vue
 msgid "Voltage Pin:"
-msgstr ""
+msgstr "电压引脚："
 
 #: src/components/health/HealthTrayMenu.vue
 #: src/components/vehiclesetup/overview/PowerInfo.vue
 msgid "Voltage:"
-msgstr ""
+msgstr "电压："
 
 #: src/components/common/WarningDialog.vue
 msgid "WARNING"
-msgstr ""
+msgstr "警告"
 
 #: src/components/speedtest/InternetSpeedTest.vue
 msgid "Waiting for internet connection.."
-msgstr ""
+msgstr "正在等待互联网连接……"
 
 #: src/components/parameter-editor/ParameterEditor.vue
 msgid "Waiting for metadata.."
-msgstr ""
+msgstr "正在等待元数据……"
 
 #: src/components/parameter-editor/ParameterEditor.vue
 msgid "Waiting for parameters.."
-msgstr ""
+msgstr "正在等待参数……"
 
 #: src/components/wifi/WifiManager.vue
 msgid "Waiting for wifi networks..."
-msgstr ""
+msgstr "正在等待 Wi-Fi 网络……"
 
 #: src/components/cloud/CloudSyncStatusTab.vue
 #, javascript-format
 msgid "Waiting to upload • ${ 0 }"
-msgstr ""
+msgstr "等待上传 • ${ 0 }"
 
 #: src/components/autopilot/FirmwareManager.vue
 msgid "Warn me again"
-msgstr ""
+msgstr "再次提醒"
 
 #: src/components/scanner/availableServicesTable.vue
 msgid "Webpage"
-msgstr ""
+msgstr "网页"
 
 #: src/App.vue
 #: src/components/wizard/Wizard.vue
 #: src/views/MainView.vue
 msgid "Welcome to BlueOS!"
-msgstr ""
+msgstr "欢迎使用 BlueOS！"
 
 #: src/components/wizard/Wizard.vue
 msgid "Welcome to BlueOS! In this setup wizard we will guide you through the initial configuration of your vehicle, including setting up the vehicle name, hostname, and <b>firmware</b>. If your vehicle is already set up, you can skip this wizard."
-msgstr ""
+msgstr "欢迎使用 BlueOS！本设置向导将引导您完成载具的初始配置，包括设置载具名称、主机名和<b>固件</b>。如果您的载具已设置完毕，可以跳过此向导。"
 
 #: src/components/version-chooser/VersionCard.vue
 msgid "What's new?"
-msgstr ""
+msgstr "新功能"
 
 #: src/components/ethernet/DHCPServerDialog.vue
 msgid "When Backup Server is enabled, the DHCP server will stay inactive and only start serving IP addresses if no other DHCP server is detected on the network."
-msgstr ""
+msgstr "启用备用服务器后，DHCP 服务器将保持非活动状态，仅在网络中未检测到其他 DHCP 服务器时才开始分配 IP 地址。"
 
 #: src/components/version-chooser/VersionChooser.vue
 msgid "When selecting the .tar artifact, make sure it matches your hardware architecture (armv7, arm64, or amd64)"
-msgstr ""
+msgstr "选择 .tar 构建产物时，请确保其与您的硬件架构（armv7、arm64 或 amd64）匹配"
 
 #: src/views/MainView.vue
 msgid "WiFi Status"
-msgstr ""
+msgstr "Wi-Fi 状态"
 
 #: src/alerts/rules/network.ts
 msgid "WiFi is unavailable"
-msgstr ""
+msgstr "Wi-Fi 不可用"
 
 #: src/App.vue
 msgid "Widgets"
-msgstr ""
+msgstr "小组件"
 
 #: src/components/wifi/WifiManager.vue
 msgid "Wifi"
-msgstr ""
+msgstr "Wi-Fi"
 
 #: src/types/frontend_services.ts
 msgid "Wifi Manager"
-msgstr ""
+msgstr "Wi-Fi 管理器"
 
 #: src/components/wifi/WifiTrayMenu.vue
 msgid "Wifi is disabled"
-msgstr ""
+msgstr "Wi-Fi 已禁用"
 
 #: src/components/wifi/WifiTrayMenu.vue
 msgid "Wifi is disabled via environment variable."
-msgstr ""
+msgstr "Wi-Fi 已通过环境变量禁用。"
 
 #: src/components/wifi/WifiSettingsDialog.vue
 msgid "Wifi settings"
-msgstr ""
+msgstr "Wi-Fi 设置"
 
 #: src/components/app/ReportMenu.vue
 msgid "With GitHub"
-msgstr ""
+msgstr "通过 GitHub"
 
 #: src/components/app/ReportMenu.vue
 msgid "With Simple Report"
-msgstr ""
+msgstr "通过简单报告"
 
 #: src/components/system-information/Processes.vue
 msgid "Working directory"
-msgstr ""
+msgstr "工作目录"
 
 #: src/components/parameter-editor/ParameterLoader.vue
 msgid "Write"
-msgstr ""
+msgstr "写入"
 
 #: src/components/parameter-editor/ParameterLoader.vue
 msgid "Write Parameters"
-msgstr ""
+msgstr "写入参数"
 
 #: src/views/Disk.vue
 msgid "Write speed (avg)"
-msgstr ""
+msgstr "写入速度（平均）"
 
 #: src/components/kraken/modals/ExtensionDetailsModal.vue
 msgid "Written by:"
-msgstr ""
+msgstr "作者："
 
 #: src/components/health/GpsTrayMenu.vue
 msgid "Yaw"
-msgstr ""
+msgstr "偏航"
 
 #: src/components/parameter-editor/ParameterLoader.vue
 msgid "Yellow parameters are not available on your vehicle. They may not exist in your firmware version or may be disabled by a corresponding _ENABLE parameter."
-msgstr ""
+msgstr "黄色参数在您的载具上不可用。它们可能不存在于您的固件版本中，或已被相应的 _ENABLE 参数禁用。"
 
 #: src/views/SettingsView.vue
 msgid "Yes, reset settings"
-msgstr ""
+msgstr "是，重置设置"
 
 #: src/components/vehiclesetup/overview/ParamSets.vue
 msgid "Yes, reset them"
-msgstr ""
+msgstr "是，重置它们"
 
 #: src/components/version-chooser/VersionCard.vue
 msgid "Yes, update bootstrap"
-msgstr ""
+msgstr "是，更新 bootstrap"
 
 #: src/components/kraken/modals/ExtensionDetailsModal.vue
 msgid "You are using a custom docker configuration"
-msgstr ""
+msgstr "您正在使用自定义 Docker 配置"
 
 #: src/components/version-chooser/VersionChooser.vue
 msgid "You can download BlueOS versions (`BlueOS-core-docker-image` files) directly from the Assets in <a href='https://github.com/bluerobotics/BlueOS/releases' target='_blank' class='white--text' rel='noopener noreferrer'>GitHub Releases</a> and upload them using the \"Manual Upload\" section below."
-msgstr ""
+msgstr "您可以直接从 <a href='https://github.com/bluerobotics/BlueOS/releases' target='_blank' class='white--text' rel='noopener noreferrer'>GitHub Releases</a> 的 Assets 中下载 BlueOS 版本（`BlueOS-core-docker-image` 文件），然后通过下方的“手动上传”部分上传。"
 
 #: src/components/autopilot/EndpointManager.vue
 msgid "You can start it in the"
-msgstr ""
+msgstr "您可以在"
 
 #: src/components/wizard/Wizard.vue
 msgid "Your vehicle is ready to use!"
-msgstr ""
+msgstr "您的载具已可以使用！"
 
 #: src/menus.ts
 msgid "Zenoh Inspector"
-msgstr ""
+msgstr "Zenoh 检查器"
 
 #: src/components/zenoh-inspector/ZenohNetwork.vue
 msgid "Zenoh Network"
-msgstr ""
+msgstr "Zenoh 网络"
 
 #: src/components/cloud/CloudSettingsTab.vue
 msgid "already have a token"
-msgstr ""
+msgstr "已有令牌"
 
 #: src/components/bridges/BridgeCreationDialog.vue
 msgid "an automatically assigned port"
-msgstr ""
+msgstr "自动分配的端口"
 
 #: src/components/ethernet/InterfaceCard.vue
 msgid "dynamic IP"
-msgstr ""
+msgstr "动态 IP"
 
 #: src/components/vehiclesetup/MotorDetection.vue
 msgid "external movement"
-msgstr ""
+msgstr "外部运动"
 
 #: src/components/video-manager/VideoThumbnail.vue
 msgid "fetching..."
-msgstr ""
+msgstr "获取中……"
 
 #: src/components/vehiclesetup/MotorDetection.vue
 msgid "incorrect frame selection"
-msgstr ""
+msgstr "机架选择错误"
 
 #: src/components/vehiclesetup/MotorDetection.vue
 msgid "incorrect motor mapping"
-msgstr ""
+msgstr "电机映射错误"
 
 #: src/components/app/VehicleBanner.vue
 msgid "mDNS Hostname"
-msgstr ""
+msgstr "mDNS 主机名"
 
 #: src/components/vehiclesetup/MotorDetection.vue
 msgid "no movement"
-msgstr ""
+msgstr "无运动"
 
 #: src/components/parameter-editor/ServoFunctionGpioEditor.vue
 msgid "nothing"
-msgstr ""
+msgstr "无"
 
 #: src/components/vehiclesetup/MotorDetection.vue
 msgid "poor movement estimation"
-msgstr ""
+msgstr "运动估计不佳"
 
 #: src/components/ethernet/InterfaceCard.vue
 msgid "static IP"
-msgstr ""
+msgstr "静态 IP"
 
 #: src/components/customization/ThemeCustomization.vue
 msgid "sub/MyFrame.glb"
@@ -4869,11 +4872,11 @@ msgstr ""
 
 #: src/components/autopilot/EndpointManager.vue
 msgid "tab."
-msgstr ""
+msgstr "选项卡中启动它。"
 
 #: src/components/cloud/CloudSettingsTab.vue
 msgid "want to change your token"
-msgstr ""
+msgstr "想要更改令牌"
 
 #: src/components/kraken/modals/ExtensionCreationModal.vue
 msgid "yourorganization.yourextension"
