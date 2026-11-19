@@ -5,6 +5,7 @@ from unittest import mock
 from unittest.mock import AsyncMock
 
 import pytest
+from aiohttp import web
 
 from utils.chooser import VersionChooser
 from utils.dockerhub import (
@@ -127,6 +128,22 @@ async def test_set_version(write_mock: AsyncMock) -> None:
         result = await chooser.set_version("bluerobotics/blueos-core", "master")
         assert await write_mock.called_once_with(EXPECTED_SET_VERSION_WRITE_CALL)
         assert result.status == 200
+
+
+@pytest.mark.asyncio
+async def test_set_version_other_architecture() -> None:
+    client = mock.AsyncMock()
+    client.images.inspect.return_value = {"Architecture": "mips64le"}
+    chooser = VersionChooser(client)
+
+    with mock.patch("builtins.open", mock.mock_open(read_data=SAMPLE_JSON)) as open_mock:
+        result = await chooser.set_version("bluerobotics/blueos-core", "master")
+
+    assert result.status == 412
+    assert isinstance(result, web.Response)
+    assert "mips64le" in str(result.text)
+    open_mock.assert_not_called()
+    client.containers.get.assert_not_called()
 
 
 @pytest.mark.asyncio
