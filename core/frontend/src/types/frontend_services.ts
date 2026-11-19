@@ -86,6 +86,13 @@ export const customization_service: Service = {
   version: '0.1.0',
 }
 
+export const removable_storage_service: Service = {
+  name: 'Removable Storage',
+  description: 'Manages USB storage devices and their files.',
+  company: 'Blue Robotics',
+  version: '0.1.0',
+}
+
 export const nmea_injector_service: Service = {
   name: t`NMEA Injector`,
   description: t`Allows management of sockets for NMEA data injectior.`,

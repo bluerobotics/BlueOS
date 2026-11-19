@@ -26,6 +26,7 @@ members = [
     "pardal",
     "ping",
     "recorder-extractor",
+    "removable-storage",
     "versionchooser",
     "wifi",
 ]
@@ -378,6 +379,7 @@ dependencies = [
     { name = "pardal" },
     { name = "ping" },
     { name = "recorder-extractor" },
+    { name = "removable-storage" },
     { name = "versionchooser" },
     { name = "wifi" },
 ]
@@ -426,6 +428,7 @@ requires-dist = [
     { name = "pardal", virtual = "services/pardal" },
     { name = "ping", virtual = "services/ping" },
     { name = "recorder-extractor", virtual = "services/recorder_extractor" },
+    { name = "removable-storage", virtual = "services/removable_storage" },
     { name = "versionchooser", virtual = "services/versionchooser" },
     { name = "wifi", virtual = "services/wifi" },
 ]
@@ -1867,6 +1870,29 @@ dependencies = [
 [package.metadata]
 requires-dist = [
     { name = "aiocache", specifier = "==0.12.3" },
+    { name = "commonwealth", editable = "libs/commonwealth" },
+    { name = "fastapi", specifier = "==0.125.0" },
+    { name = "fastapi-versioning", specifier = "==0.10.0" },
+    { name = "loguru", specifier = "==0.7.3" },
+    { name = "pydantic", specifier = "==2.12.5" },
+    { name = "uvicorn", specifier = "==0.38.0" },
+]
+
+[[package]]
+name = "removable-storage"
+version = "0.1.0"
+source = { virtual = "services/removable_storage" }
+dependencies = [
+    { name = "commonwealth" },
+    { name = "fastapi" },
+    { name = "fastapi-versioning" },
+    { name = "loguru" },
+    { name = "pydantic" },
+    { name = "uvicorn" },
+]
+
+[package.metadata]
+requires-dist = [
     { name = "commonwealth", editable = "libs/commonwealth" },
     { name = "fastapi", specifier = "==0.125.0" },
     { name = "fastapi-versioning", specifier = "==0.10.0" },
