@@ -2,6 +2,7 @@
   <v-sheet
     class="my-4 pa-4 py-sm-0"
     :elevation="$vuetify.breakpoint.xs ? 1 : 0"
+    :data-testid="`version-card-${remote ? 'remote' : 'local'}`"
   >
     <div class="d-flex flex-column align-center flex-sm-row">
       <div class="d-flex">
