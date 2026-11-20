@@ -11,6 +11,8 @@ dependencies = [
     "fastapi==0.105.0",
     "fastapi-versioning==0.9.1",
     "loguru==0.5.3",
+    "pydantic==1.10.12",
+    "requests==2.25.1",
     "uvicorn==0.13.4",
 ]
 
