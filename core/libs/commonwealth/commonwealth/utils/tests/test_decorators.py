@@ -43,3 +43,16 @@ def test_temporary_cache_coalesces_in_flight() -> None:
 
     assert len(calls) == 1
     assert results == [1, 1, 1, 1]
+
+
+def test_temporary_cache_invalidate() -> None:
+    inputs = ["first", "second", "third"]
+    original_output = {key: cached_function(key) for key in inputs}
+
+    # Cache is still warm: same call returns the same value
+    assert all(original_output[key] == cached_function(key) for key in inputs)
+
+    # Force invalidation; subsequent calls must re-execute the function
+    cached_function.invalidate()  # type: ignore[attr-defined]
+
+    assert all(original_output[key] != cached_function(key) for key in inputs)
