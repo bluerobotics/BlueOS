@@ -64,7 +64,7 @@ _STUBS = {
     "commonwealth.utils.apis": module(
         "commonwealth.utils.apis", PrettyJSONResponse=MagicMock(), use_local_docs_assets=MagicMock()
     ),
-    "commonwealth.utils.logs": module("commonwealth.utils.logs", init_logger=MagicMock()),
+    "commonwealth.utils.logs": module("commonwealth.utils.logs", InterceptHandler=MagicMock(), init_logger=MagicMock()),
     "fastapi": module("fastapi", FastAPI=FakeApp, Request=Request),
     "fastapi.responses": module("fastapi.responses", HTMLResponse=MagicMock()),
     "fastapi_versioning": module(
