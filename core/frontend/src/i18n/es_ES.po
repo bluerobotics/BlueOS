@@ -10,7 +10,7 @@ msgstr ""
 "X-Crowdin-File-ID: 24\n"
 "Project-Id-Version: blueos\n"
 "Language-Team: Spanish\n"
-"PO-Revision-Date: 2026-11-19 01:54\n"
+"PO-Revision-Date: 2026-11-20 01:41\n"
 
 #: src/components/notifications/NotificationGroupCard.vue
 #, javascript-format
@@ -125,6 +125,10 @@ msgstr ""
 
 #: src/components/video-manager/VideoThumbnail.vue
 msgid "1 Hz"
+msgstr ""
+
+#: src/components/customization/ThemeCustomization.vue
+msgid "3D model overrides"
 msgstr ""
 
 #: src/components/vehiclesetup/viewers/GenericViewer.vue
@@ -299,6 +303,7 @@ msgid "Applied changes require a <b>system reboot</b>."
 msgstr "Los cambios aplicados requieren <b>reiniciar el sistema</b>."
 
 #: src/components/app/NetworkInterfacePriorityMenu.vue
+#: src/components/customization/ThemeCustomization.vue
 #: src/components/kraken/modals/ExtensionSettingsModal.vue
 #: src/components/version-chooser/VersionCard.vue
 #: src/components/wizard/Wizard.vue
@@ -602,6 +607,7 @@ msgstr "Este firmware no admite la configuración del soporte de cámara (no se 
 #: src/components/autopilot/EndpointCreationDialog.vue
 #: src/components/bridges/BridgeCreationDialog.vue
 #: src/components/common/WarningDialog.vue
+#: src/components/customization/ThemeCustomization.vue
 #: src/components/kraken/modals/ExtensionSettingsModal.vue
 #: src/components/nmea-injector/NMEASocketCreationDialog.vue
 #: src/components/parameter-editor/ParameterEditorDialog.vue
@@ -854,6 +860,11 @@ msgstr "Corriente por voltio:"
 msgid "Current:"
 msgstr "Corriente:"
 
+#: src/components/customization/ThemeCustomization.vue
+#: src/types/frontend_services.ts
+msgid "Customization"
+msgstr ""
+
 #: src/components/wizard/Wizard.vue
 msgid "Customize"
 msgstr "Personalizar"
@@ -1092,6 +1103,10 @@ msgstr "Arrastre las interfaces de red para colocar la de mayor prioridad arriba
 #: src/components/autopilot/AutopilotSerialConfiguration.vue
 msgid "Driver"
 msgstr "Controlador"
+
+#: src/components/customization/ThemeCustomization.vue
+msgid "Drives the gradient and scrollbar"
+msgstr ""
 
 #: src/views/SettingsView.vue
 msgid "Easier on the eyes in low-light environments"
@@ -1681,6 +1696,10 @@ msgstr "Cargar parámetros desde archivo"
 msgid "Loading Parameters"
 msgstr "Cargando parámetros"
 
+#: src/components/customization/ThemeCustomization.vue
+msgid "Loading current theme..."
+msgstr ""
+
 #: src/components/wizard/DefaultParamLoader.vue
 msgid "Loading parameters..."
 msgstr "Cargando parámetros..."
@@ -1776,6 +1795,10 @@ msgstr "Gestionar extensiones de BlueOS"
 #: src/menus.ts
 msgid "Manage BlueOS versions and update to the latest available."
 msgstr "Gestione las versiones de BlueOS y actualice a la última disponible."
+
+#: src/types/frontend_services.ts
+msgid "Manage BlueOS visual customization (theme color, 3D model overrides, branding)."
+msgstr ""
 
 #: src/menus.ts
 msgid "Manage MAVLink endpoints for internal/external systems. Use this if you need to connect additional MAVLink systems to your vehicle."
@@ -2017,6 +2040,10 @@ msgstr "No hay interfaces Ethernet disponibles"
 msgid "No events yet"
 msgstr "Todavía no hay eventos"
 
+#: src/components/customization/BrandingUploader.vue
+msgid "No file uploaded."
+msgstr ""
+
 #: src/alerts/rules/autopilot.ts
 msgid "No flight controller detected"
 msgstr "No se ha detectado ninguna controladora de vuelo"
@@ -2029,6 +2056,10 @@ msgstr "No se han encontrado imágenes en ${ 0 }. Suba algunas imágenes a este 
 #: src/alerts/rules/network.ts
 msgid "No internet connection"
 msgstr "Sin conexión a internet"
+
+#: src/components/customization/ThemeCustomization.vue
+msgid "No model overrides uploaded."
+msgstr ""
 
 #: src/components/notifications/NotificationManager.vue
 msgid "No notifications to display :)"
@@ -2338,6 +2369,10 @@ msgstr "Vista previa no disponible; añada un stream para tener una."
 msgid "Preview not requested, use the controls to fetch one."
 msgstr "Vista previa no solicitada; use los controles para obtener una."
 
+#: src/components/customization/ThemeCustomization.vue
+msgid "Primary color"
+msgstr ""
+
 #: src/components/app/SystemCheckerTrayMenu.vue
 msgid "Problems found"
 msgstr "Problemas detectados"
@@ -2351,6 +2386,10 @@ msgstr "Completar el asistente de configuración es fundamental para configurar 
 #: src/views/SystemInformationView.vue
 msgid "Processes"
 msgstr "Procesos"
+
+#: src/components/customization/ThemeCustomization.vue
+msgid "Project logo"
+msgstr ""
 
 #: src/components/autopilot/EndpointCard.vue
 msgid "Protected"
@@ -2453,9 +2492,17 @@ msgstr "Recordármelo más tarde"
 msgid "Remote Versions"
 msgstr "Versiones remotas"
 
+#: src/components/customization/BrandingUploader.vue
+msgid "Remove"
+msgstr ""
+
 #: src/components/video-manager/VideoStream.vue
 msgid "Remove stream"
 msgstr "Quitar stream"
+
+#: src/components/customization/BrandingUploader.vue
+msgid "Remove the custom file"
+msgstr ""
 
 #: src/components/app/DnsConfigurationMenu.vue
 msgid "Remove this nameserver"
@@ -2469,6 +2516,7 @@ msgstr "Requiere reinicio"
 msgid "Rescanning..."
 msgstr "Volviendo a buscar..."
 
+#: src/components/customization/ThemeCustomization.vue
 #: src/views/ExtensionManagerView.vue
 msgid "Reset"
 msgstr "Restablecer"
@@ -2542,6 +2590,10 @@ msgstr "Restaurar firmware por defecto"
 #: src/components/video-manager/VideoControlsDialog.vue
 msgid "Restore defaults"
 msgstr "Restaurar valores por defecto"
+
+#: src/components/customization/ThemeCustomization.vue
+msgid "Restore the default BlueOS theme"
+msgstr ""
 
 #: src/components/autopilot/FirmwareManager.vue
 msgid "Retrieve from Cloud"
@@ -2630,6 +2682,10 @@ msgstr "Guardar y reiniciar"
 #: src/components/autopilot/AutopilotSerialConfiguration.vue
 msgid "Save and restart"
 msgstr "Guardar y reiniciar"
+
+#: src/components/customization/ThemeCustomization.vue
+msgid "Save the chosen color and regenerate the theme CSS"
+msgstr ""
 
 #: src/components/wifi/WifiSettingsDialog.vue
 msgid "Saving settings, please wait..."
@@ -3112,6 +3168,10 @@ msgstr "El asistente solo se mostrará si BlueOS se actualiza y es necesaria má
 msgid "The wizard will show again during BlueOS usage"
 msgstr "El asistente volverá a mostrarse durante el uso de BlueOS"
 
+#: src/components/customization/ThemeCustomization.vue
+msgid "Theme color, 3D models, logo and vehicle image"
+msgstr ""
+
 #: src/components/vehiclesetup/overview/ParamSets.vue
 #, javascript-format
 msgid "These are the recommended parameter sets for your vehicle and firmware version. Curated by ${ 0 }"
@@ -3350,18 +3410,33 @@ msgstr "Actualizar a <strong style='white-space: nowrap;'>${ 0 }</strong>"
 msgid "Update to latest ${ 0 }"
 msgstr "Actualizar a la última ${ 0 }"
 
+#: src/components/customization/BrandingUploader.vue
+#: src/components/customization/ThemeCustomization.vue
 #: src/components/version-chooser/VersionChooser.vue
 msgid "Upload"
 msgstr "Subir"
+
+#: src/components/customization/ThemeCustomization.vue
+msgid "Upload 3D model override"
+msgstr ""
+
+#: src/components/customization/ThemeCustomization.vue
+msgid "Upload <code>.glb</code> files served at <code>/userdata/modeloverrides/</code>. Use a relative name like <code>sub/MyFrame.glb</code> or <code>ALL.glb</code> to override every vehicle."
+msgstr ""
 
 #: src/views/ExtensionManagerView.vue
 msgid "Upload a Kraken-compatible .tar archive to sideload an extension."
 msgstr "Suba un archivo .tar compatible con Kraken para instalar una extensión manualmente."
 
+#: src/components/customization/BrandingUploader.vue
+msgid "Upload a new file"
+msgstr ""
+
 #: src/views/ExtensionManagerView.vue
 msgid "Upload extension .tar file to onboard computer"
 msgstr "Subir el archivo .tar de la extensión al ordenador de a bordo"
 
+#: src/components/customization/BrandingUploader.vue
 #: src/views/ExtensionManagerView.vue
 msgid "Upload file"
 msgstr "Subir archivo"
@@ -3369,6 +3444,10 @@ msgstr "Subir archivo"
 #: src/components/autopilot/FirmwareManager.vue
 msgid "Upload firmware file"
 msgstr "Subir archivo de firmware"
+
+#: src/components/customization/ThemeCustomization.vue
+msgid "Upload model"
+msgstr ""
 
 #: src/components/speedtest/InternetSpeedTest.vue
 msgid "Upload speed to internet"
@@ -3461,6 +3540,10 @@ msgstr "Configuración del vehículo y los periféricos. Incluye la calibración
 #: src/components/vehiclesetup/configuration/compass/AutoCoordinateDetector.vue
 msgid "Vehicle coordinates:"
 msgstr "Coordenadas del vehículo:"
+
+#: src/components/customization/ThemeCustomization.vue
+msgid "Vehicle image"
+msgstr ""
 
 #: src/components/kraken/BackAlleyTab.vue
 #: src/components/kraken/BazaarTab.vue
