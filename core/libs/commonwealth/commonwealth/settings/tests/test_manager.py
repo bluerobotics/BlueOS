@@ -1,8 +1,12 @@
+import multiprocessing as mp
 import os
 import pathlib
+import stat
 import tempfile
 import threading
-from typing import Any, Dict
+from multiprocessing.synchronize import Barrier
+from typing import Any, Dict, Optional
+from unittest.mock import patch
 
 import pykson  # type: ignore
 
@@ -87,6 +91,22 @@ class SettingsV12(SettingsV3):
 
         data["VERSION"] = SettingsV12.VERSION
         data["version_12_variable"] = self.version_12_variable
+
+
+def _multiprocess_save_worker(
+    file_path: str,
+    barrier: Barrier,
+    queue: "mp.Queue[tuple[str, Optional[str]]]",
+) -> None:
+    settings_data = SettingsV2()
+    path = pathlib.Path(file_path)
+    try:
+        barrier.wait(timeout=30)
+        for _ in range(100):
+            settings_data.save(path)
+        queue.put(("ok", None))
+    except Exception as error:  # noqa: BLE001 - collect to assert on the main process
+        queue.put(("err", f"{type(error).__name__}: {error}"))
 
 
 def test_basic_settings_save_load() -> None:
@@ -353,3 +373,94 @@ def test_concurrent_load_and_save_do_not_crash() -> None:
     assert not load_thread.is_alive(), "load thread did not finish"
     assert not errors, f"Concurrent load and save raised: {errors}"
     assert os.listdir(config_path.joinpath("managertest")) == ["settings-2.json"]
+
+
+def test_multiprocess_saves_do_not_collide_on_temp_file() -> None:
+    # Regression for pytest-xdist workers sharing ~/.config/<service>/settings-N.tmp during collection.
+    temporary_folder = tempfile.mkdtemp()
+    target = pathlib.Path(temporary_folder) / "settings-2.json"
+    workers = 8
+    barrier: Barrier = mp.Barrier(workers)
+    queue: "mp.Queue[tuple[str, Optional[str]]]" = mp.Queue()
+
+    processes = [
+        mp.Process(target=_multiprocess_save_worker, args=(str(target), barrier, queue)) for _ in range(workers)
+    ]
+    for process in processes:
+        process.start()
+    for process in processes:
+        process.join(timeout=60)
+        assert not process.is_alive(), f"process {process.pid} did not finish"
+
+    results = [queue.get(timeout=5) for _ in processes]
+    errors = [result for result in results if result[0] == "err"]
+    assert not errors, f"Multiprocess saves raised: {errors}"
+    assert target.exists()
+    assert os.listdir(temporary_folder) == ["settings-2.json"]
+
+
+def test_clear_temp_files_removes_legacy_keeps_unique() -> None:
+    temporary_folder = tempfile.mkdtemp()
+    config_path = pathlib.Path(temporary_folder)
+    settings_folder = config_path / "managertest"
+    settings_folder.mkdir()
+    SettingsV2().save(settings_folder / "settings-2.json")
+
+    # Match mkstemp's 8-character random segment used by Settings.save.
+    unique = settings_folder / "settings-2.abcdefgh.tmp"
+    unique.write_text("in-progress", encoding="utf-8")
+    legacy = settings_folder / "settings-2.tmp"
+    legacy.write_text("legacy", encoding="utf-8")
+
+    manager.Manager("ManagerTest", SettingsV2, config_path)
+
+    names = set(os.listdir(settings_folder))
+    assert unique.name in names
+    assert legacy.name not in names
+    assert "settings-2.json" in names
+
+
+def test_save_temp_random_segment_is_at_most_10_chars() -> None:
+    temporary_folder = tempfile.mkdtemp()
+    file_path = pathlib.Path(temporary_folder) / "settings-2.json"
+    created: list[str] = []
+    real_mkstemp = tempfile.mkstemp
+
+    def tracking_mkstemp(*args: Any, **kwargs: Any) -> tuple[int, str]:
+        fd, name = real_mkstemp(*args, **kwargs)
+        created.append(pathlib.Path(name).name)
+        return fd, name
+
+    with patch("tempfile.mkstemp", tracking_mkstemp):
+        SettingsV2().save(file_path)
+
+    assert len(created) == 1
+    name = created[0]
+    assert name.startswith("settings-2.")
+    assert name.endswith(".tmp")
+    random_segment = name[len("settings-2.") : -len(".tmp")]
+    assert 1 <= len(random_segment) <= 10
+    assert os.listdir(temporary_folder) == ["settings-2.json"]
+
+
+def test_save_preserves_settings_file_mode_0644() -> None:
+    temporary_folder = tempfile.mkdtemp()
+    file_path = pathlib.Path(temporary_folder) / "settings-2.json"
+    file_path.write_text("{}", encoding="utf-8")
+    os.chmod(file_path, 0o644)
+    assert stat.S_IMODE(file_path.stat().st_mode) == 0o644
+
+    SettingsV2().save(file_path)
+
+    assert stat.S_IMODE(file_path.stat().st_mode) == 0o644
+    assert os.listdir(temporary_folder) == ["settings-2.json"]
+
+
+def test_save_creates_settings_file_with_mode_0644() -> None:
+    temporary_folder = tempfile.mkdtemp()
+    file_path = pathlib.Path(temporary_folder) / "settings-2.json"
+
+    SettingsV2().save(file_path)
+
+    assert file_path.exists()
+    assert stat.S_IMODE(file_path.stat().st_mode) == 0o644
