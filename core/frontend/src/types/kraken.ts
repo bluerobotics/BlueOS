@@ -81,6 +81,7 @@ export interface RunningContainer {
     image: string
     imageId: string
     status: string
+    uptime_seconds?: number | null
 }
 
 export interface ManifestSource {
