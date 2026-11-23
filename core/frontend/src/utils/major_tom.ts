@@ -1,13 +1,10 @@
 import axios from 'axios'
 
-import { fetchInstalledExtensions } from '@/components/kraken/KrakenManager'
+import { fetchInstalledExtensions, installExtension } from '@/components/kraken/KrakenManager'
 import { InstalledExtensionData, ProgressEvent } from '@/types/kraken'
-import back_axios from '@/utils/api'
 
 export const MAJOR_TOM_IDENTIFIER = 'blueos.major_tom'
 export const MAJOR_TOM_INSTALL_URL = 'https://blueos.cloud/major_tom/install/'
-
-const KRAKEN_API_V2_URL = '/kraken/v2.0'
 
 export type MajorTomAction = 'skip' | 'install' | 'update'
 
@@ -47,20 +44,8 @@ export async function installOrUpdateMajorTom(
 ): Promise<void> {
   const majorTomData = await fetchMajorTomInstallData()
 
-  await back_axios({
-    method: 'POST',
-    url: `${KRAKEN_API_V2_URL}/extension/`,
-    data: {
-      identifier: majorTomData.identifier,
-      name: majorTomData.name,
-      docker: majorTomData.docker,
-      tag: majorTomData.tag,
-      enabled: true,
-      permissions: majorTomData?.permissions ?? '',
-      user_permissions: majorTomData?.user_permissions ?? '',
-    },
-    timeout: 600000,
-    // axios 0.21 has no .event, it passes the ProgressEvent directly
-    onDownloadProgress: (progressEvent) => progressHandler({ event: progressEvent.event ?? progressEvent }),
-  })
+  // axios' fetch adapter leaves `.event` undefined, the callers need the native ProgressEvent in any case
+  await installExtension(majorTomData, (progressEvent) => progressHandler({
+    event: progressEvent.event ?? (progressEvent as unknown as ProgressEvent),
+  }))
 }
