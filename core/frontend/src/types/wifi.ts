@@ -12,6 +12,12 @@ export interface RfkillStatus {
     hard_blocked: boolean
 }
 
+export interface Country {
+    code: string
+    name: string
+    max_power_dbm: number
+}
+
 export interface HotspotStatus {
     enabled: boolean
     supported: boolean
