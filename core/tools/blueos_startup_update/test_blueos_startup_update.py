@@ -950,3 +950,37 @@ PATCHES_FOR_OS = {
 def test_select_patches_by_host(host_cpu: CpuType, host_os: HostOs) -> None:
     selected = [name for name, _ in blueos_startup_update.select_patches(host_cpu, host_os)]
     assert selected == PATCHES_FOR_EVERY_HOST + PATCHES_FOR_CPU[host_cpu] + PATCHES_FOR_OS[host_os]
+
+
+def run_ipv6_patch(host_os: HostOs, files: Dict[str, str]) -> Tuple[bool, Dict[str, str]]:
+    def fake_load_file(path: str) -> str:
+        if path not in files:
+            raise blueos_startup_update.HostFileError(f"Failed to read {path}")
+        return files[path]
+
+    def fake_save_file(path: str, content: str, _backup_identifier: str) -> None:
+        files[path] = content
+
+    with patch.object(blueos_startup_update, "load_file", fake_load_file), patch.object(
+        blueos_startup_update, "save_file", fake_save_file
+    ), patch.object(blueos_startup_update, "get_host_os", lambda: host_os):
+        return blueos_startup_update.ensure_ipv6_disabled(), files
+
+
+def test_ipv6_is_disabled_through_sysctl_d_on_trixie() -> None:
+    needs_restart, files = run_ipv6_patch(HostOs.Trixie, {"/etc/sysctl.conf": ""})
+    assert needs_restart
+    assert files["/etc/sysctl.d/99-blueos.conf"].split() == [
+        "net.ipv6.conf.all.disable_ipv6=1",
+        "net.ipv6.conf.default.disable_ipv6=1",
+        "net.ipv6.conf.lo.disable_ipv6=1",
+    ]
+    assert files["/etc/sysctl.conf"] == ""
+    assert not run_ipv6_patch(HostOs.Trixie, files)[0], "the patch did not converge"
+
+
+def test_ipv6_sysctl_conf_stays_required_before_trixie() -> None:
+    with pytest.raises(blueos_startup_update.HostFileError):
+        run_ipv6_patch(HostOs.Bookworm, {})
+    needs_restart, files = run_ipv6_patch(HostOs.Bookworm, {"/etc/sysctl.conf": ""})
+    assert needs_restart and "/etc/sysctl.d/99-blueos.conf" not in files

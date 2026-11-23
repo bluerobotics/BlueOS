@@ -13,7 +13,13 @@ from pathlib import Path
 from typing import Callable, List, Optional, Tuple
 
 import appdirs
-from commonwealth.utils.commands import load_file, locate_file, run_command, save_file
+from commonwealth.utils.commands import (
+    HostFileError,
+    load_file,
+    locate_file,
+    run_command,
+    save_file,
+)
 from commonwealth.utils.general import CpuType, HostOs, get_cpu_type, get_host_os
 from commonwealth.utils.logs import InterceptHandler, init_logger
 from loguru import logger
@@ -683,8 +689,14 @@ def ensure_ipv6_disabled() -> bool:
         ),
     ]
 
-    sysctl_config_path = "/etc/sysctl.conf"
-    sysctl_config_file = load_file(sysctl_config_path)
+    # Trixie's systemd-sysctl no longer reads /etc/sysctl.conf, only /etc/sysctl.d
+    sysctl_config_path = "/etc/sysctl.d/99-blueos.conf" if get_host_os() == HostOs.Trixie else "/etc/sysctl.conf"
+    try:
+        sysctl_config_file = load_file(sysctl_config_path)
+    except HostFileError:
+        if get_host_os() != HostOs.Trixie:
+            raise
+        sysctl_config_file = ""
 
     # Make sure every required entry is in the file and uncommented
     needs_update = False
