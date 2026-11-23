@@ -35,12 +35,20 @@ from harbor import ContainerManager, DockerCtx
 from harbor.exceptions import ContainerNotFound
 from manifest import ManifestManager
 from manifest.models import ExtensionVersion
+from recovery import (
+    LABEL_IDENTIFIER,
+    LABEL_NAME,
+    LABEL_PERMISSIONS,
+    LABEL_USER_PERMISSIONS,
+    stamp_extension_labels,
+)
 from settings import ExtensionSettings, SettingsV2
 from utils import has_enough_disk_space
 
 TEMP_EXTENSION_KEEPALIVE_TTL_SECONDS = 10 * 60
 TEMP_EXTENSION_TAG_PREFIX = "temp-"
 CONFIG_FINGERPRINT_LABEL = "blueos.config-fingerprint"
+IDENTITY_LABELS = (LABEL_IDENTIFIER, LABEL_NAME, LABEL_PERMISSIONS, LABEL_USER_PERMISSIONS)
 
 
 class Extension:
@@ -151,11 +159,16 @@ class Extension:
         digest of what was requested is the only thing that can be compared.
 
         The fingerprint's own label is excluded, so recomputing it from an
-        already-labelled config is idempotent. The image id is included
+        already-labelled config is idempotent. So are the identity labels, they
+        say what the container is, not how it is configured. The image id is included
         because a tag can be re-pulled onto a new digest.
         """
         comparable = {key: value for key, value in config.items() if key != "Labels"}
-        labels = {key: value for key, value in (config.get("Labels") or {}).items() if key != CONFIG_FINGERPRINT_LABEL}
+        labels = {
+            key: value
+            for key, value in (config.get("Labels") or {}).items()
+            if key != CONFIG_FINGERPRINT_LABEL and key not in IDENTITY_LABELS
+        }
         if labels:
             comparable["Labels"] = labels
 
@@ -183,6 +196,11 @@ class Extension:
 
         current_labels = (container["Config"] or {}).get("Labels") or {}
         if current_labels.get(CONFIG_FINGERPRINT_LABEL) == fingerprint:
+            return container
+
+        # Created before identity labels existed, so its real configuration is unknown (settings may have been
+        # rebuilt by recovery): keep a container that runs the requested image instead of replacing it
+        if LABEL_IDENTIFIER not in current_labels and container["Image"] == image_id:
             return container
 
         if (container["State"] or {}).get("Running", False):
@@ -353,6 +371,7 @@ class Extension:
 
         self._set_container_config_host_config(config)
         self._set_container_config_default_env_variables(config)
+        stamp_extension_labels(config, ext.identifier, ext.name, ext.permissions, ext.user_permissions)
 
         try:
             async with DockerCtx() as client:
