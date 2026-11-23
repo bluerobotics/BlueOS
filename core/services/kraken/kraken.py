@@ -164,7 +164,8 @@ class Kraken:
                 and container_name not in [ext.container_name() for ext in extensions]
             ):
                 try:
-                    await Extension.remove(container_name)
+                    # Keep the image, so a container that was not recovered can still be reinstalled
+                    await Extension.remove(container_name, False)
                 except Exception as e:
                     logger.warning(f"Dangling container {container_name} could not be removed: {e}")
 
