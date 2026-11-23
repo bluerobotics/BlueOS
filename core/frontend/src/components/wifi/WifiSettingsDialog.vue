@@ -95,6 +95,16 @@ export default Vue.extend({
       return this.$refs.form as VForm
     },
   },
+  watch: {
+    show(opened: boolean): void {
+      if (opened) {
+        // data() runs before the store is populated, and reopening deliberately drops any unsaved edit
+        this.inputed_ssid = wifi.hotspot_credentials?.ssid || ''
+        this.inputed_password = wifi.hotspot_credentials?.password || ''
+        this.enable_smart_hotspot = wifi.smart_hotspot_status || false
+      }
+    },
+  },
   methods: {
     async saveSettings(): Promise<boolean> {
       if (!this.form.validate()) {
