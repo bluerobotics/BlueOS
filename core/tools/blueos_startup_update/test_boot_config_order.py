@@ -9,13 +9,16 @@ import pytest
 from commonwealth.utils.general import CpuType
 from test_blueos_startup_update import (
     BOOKWORM,
+    MULTI_BOARD_INSTALL_SCRIPT,
     NAVIGATOR_BOARDS,
     NAVIGATOR_INSTALL_SCRIPTS,
     REPOSITORY_PATH,
+    TRIXIE,
     Distribution,
     apply_boot_config_patches,
     install_script_configuration,
     install_script_section,
+    multi_board_sections,
     section_configuration,
     stock_files,
 )
@@ -389,3 +392,49 @@ def test_install_script_closes_the_scope_of_an_overlay_already_in_the_section() 
     assert close_overlay_scope(script_name, "pi5", config.replace("dtoverlay=nospi10\n", "")) == config.replace(
         "dtoverlay=nospi10\n", ""
     )
+
+
+@pytest.mark.parametrize("cpu_type", [CpuType.PI4, CpuType.PI5])
+def test_multi_board_script_writes_what_the_startup_patches_manage(cpu_type: CpuType) -> None:
+    section_name = install_script_section(NAVIGATOR_INSTALL_SCRIPTS[cpu_type])
+    managed = blueos_startup_update.navigator_managed_entries(cpu_type)
+    # The USB gadget mode is left to update_dwc2, and the scope is closed when a board overlay is last
+    expected = [line for line, _ in managed if not line.startswith("dtoverlay=dwc2")]
+    expected.append(blueos_startup_update.BOOT_CONFIG_END_OVERLAY_SCOPE)
+
+    assert multi_board_sections()[section_name] == expected
+
+
+def test_multi_board_script_closes_every_section_it_writes() -> None:
+    sections = multi_board_sections()
+    assert sorted(sections) == ["pi3", "pi4", "pi5"]
+    for name, lines in sections.items():
+        assert lines[0] == blueos_startup_update.BOOT_CONFIG_END_OVERLAY_SCOPE, name
+        assert not blueos_startup_update.boot_config_overlay_is_open(lines), f"[{name}] ends with an open overlay"
+
+
+@pytest.mark.parametrize("cpu_type", [CpuType.PI4, CpuType.PI5])
+def test_multi_board_script_and_startup_patches_converge(cpu_type: CpuType) -> None:
+    content = (REPOSITORY_PATH / MULTI_BOARD_INSTALL_SCRIPT).read_text(encoding="utf-8")
+    start = content.index("write_board_section() {")
+    end = content.index("for SECTION in pi3 pi4 pi5; do")
+    end = content.index("\ndone\n", end) + len("\ndone\n")
+    function = content[start:end]
+    # closes the overlay the stock Trixie section holds, which is what the real script runs against
+    close_function = re.search(r"^close_overlay_scope\(\) \{\n.*?^\}\n", content, re.DOTALL | re.MULTILINE)
+    assert close_function
+    function = close_function.group(0) + function.replace(close_function.group(0), "")
+    with tempfile.TemporaryDirectory() as directory:
+        config_file = Path(directory) / "config.txt"
+        config_file.write_text(TRIXIE.stock_config, encoding="utf-8")
+        subprocess.run(["bash", "-c", f'CONFIG_FILE="$1"\n{function}', "bash", config_file], check=True)
+        files = stock_files(TRIXIE)
+        files[TRIXIE.config_file] = config_file.read_text(encoding="utf-8")
+
+    section_name = install_script_section(NAVIGATOR_INSTALL_SCRIPTS[cpu_type])
+    written = section_configuration(files[TRIXIE.config_file], section_name)
+    apply_boot_config_patches(cpu_type, TRIXIE, files)
+    patched = section_configuration(files[TRIXIE.config_file], section_name)
+    assert [line for line in patched if not line.startswith("dtoverlay=dwc2")] == written
+    applied = apply_boot_config_patches(cpu_type, TRIXIE, files)
+    assert not any(applied.values())

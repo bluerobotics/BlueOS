@@ -49,6 +49,10 @@ NAVIGATOR_INSTALL_SCRIPTS = {
     CpuType.PI5: "install/boards/bcm_2712.sh",
 }
 
+# Configures every board at once for an image that can't know which board it will boot on, so it
+# writes one section per board instead of a single one
+MULTI_BOARD_INSTALL_SCRIPT = "install/boards/bcm_multi.sh"
+
 ALL_INSTALL_SCRIPTS = sorted(
     str(script.relative_to(REPOSITORY_PATH)) for script in (REPOSITORY_PATH / "install" / "boards").glob("*.sh")
 )
@@ -310,6 +314,12 @@ def bash_words(word_list: str) -> List[str]:
         check=True,
     )
     return result.stdout.splitlines()
+
+
+def multi_board_sections() -> Dict[str, List[str]]:
+    content = (REPOSITORY_PATH / MULTI_BOARD_INSTALL_SCRIPT).read_text(encoding="utf-8")
+    calls = re.findall(r"^write_board_section (\w+) \\\n((?:\s+\"[^\n]*\n?)+)", content, re.MULTILINE)
+    return {name: bash_words(lines.replace("\\\n", " ").strip()) for name, lines in calls}
 
 
 def install_script_section(script_name: str) -> str:
@@ -800,7 +810,7 @@ def test_install_scripts_probe_selects_the_real_boot_partition(
     assert probe, f"{script_name} no longer probes for the boot partition, /boot may be an inert Bookworm stub"
 
     # A Pi5 is newer than Bullseye, so boot files at /boot are never its boot partition
-    if expected == "boot" and script_name == NAVIGATOR_INSTALL_SCRIPTS[CpuType.PI5]:
+    if expected == "boot" and script_name in (NAVIGATOR_INSTALL_SCRIPTS[CpuType.PI5], MULTI_BOARD_INSTALL_SCRIPT):
         expected = None
 
     for directory, boot_files in layout.items():
