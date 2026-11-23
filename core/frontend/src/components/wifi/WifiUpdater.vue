@@ -133,12 +133,24 @@ export default Vue.extend({
           }))
           wifi.setAvailableNetworks(available_networks)
         })
-        .catch((error) => {
+        .catch(async (error) => {
           wifi.setAvailableNetworks(null)
           if (isBackendOffline(error)) { return }
+          // The blocked radio already has its own banner, and a scan fails on it every time
+          if (await this.radioIsBlocked()) { return }
           const message = `Could not scan for wifi networks: ${error.message}`
           notifier.pushError('WIFI_SCAN_FAIL', message)
         })
+    },
+    async radioIsBlocked(): Promise<boolean> {
+      // Asked at the failure, so the answer is not stale and a dead service still gets reported
+      try {
+        const response = await back_axios({ method: 'get', url: `${wifi.API_URL}/rfkill`, timeout: 10000 })
+        wifi.setRfkillStatus(response.data)
+        return response.data.soft_blocked || response.data.hard_blocked
+      } catch {
+        return false
+      }
     },
     async fetchSavedNetworks(): Promise<void> {
       await back_axios({

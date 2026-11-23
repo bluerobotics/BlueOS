@@ -7,6 +7,11 @@ export interface Network {
     frequency: number
 }
 
+export interface RfkillStatus {
+    soft_blocked: boolean
+    hard_blocked: boolean
+}
+
 export interface HotspotStatus {
     enabled: boolean
     supported: boolean
