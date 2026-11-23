@@ -1,5 +1,6 @@
 import json
 import socket
+from functools import cache
 from pathlib import Path
 from runpy import run_path
 from typing import Any, Tuple
@@ -7,7 +8,9 @@ from unittest import mock
 from unittest.mock import AsyncMock
 
 import pytest
-from utils.chooser import VersionChooser
+from commonwealth.utils.general import HostOs
+from utils import chooser as chooser_module
+from utils.chooser import TRIXIE_SUPPORT_LABEL, VersionChooser
 from utils.dockerhub import (
     DNS_FAILURE_MESSAGE,
     TagFetcher,
@@ -54,6 +57,11 @@ SAMPLE_IMAGE = json.loads(
    "id":"856fdf5e66c9b3697c25015556e7895c9066febb1a8ac8657a4eb41f2fc95a57"
 }"""
 )
+
+
+@pytest.fixture(autouse=True)
+def bookworm_host(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(chooser_module, "get_host_os", cache(lambda: HostOs.Bookworm))
 
 
 async def test_api_root_redirects_to_relative_docs() -> None:
@@ -159,7 +167,7 @@ async def test_set_version_invalid_settings(json_mock: mock.MagicMock) -> None:
     chooser = VersionChooser(client)
 
     # Image does not exist locally, but for the test let's fake it exists
-    async def is_valid_version(image: str) -> Tuple[bool, str]:
+    async def is_valid_version(image: str, **_kwargs: Any) -> Tuple[bool, str]:
         return True, image
 
     chooser.is_valid_version = is_valid_version  # type: ignore
@@ -263,7 +271,7 @@ async def test_set_version_json_exception(json_mock: mock.MagicMock) -> None:
     chooser = VersionChooser(client)
 
     # Image does not exist locally, but for the test let's fake it exists
-    async def is_valid_version(image: str) -> Tuple[bool, str]:
+    async def is_valid_version(image: str, **_kwargs: Any) -> Tuple[bool, str]:
         return True, image
 
     chooser.is_valid_version = is_valid_version  # type: ignore
@@ -522,3 +530,60 @@ async def test_fetch_remote_tags_sha_dns_error() -> None:
     assert fetch_sha.await_count == 1
     assert {tag.tag for tag in tags} == {"master", "latest"}
     assert all(tag.sha is None for tag in tags)
+
+
+@pytest.mark.parametrize(
+    "host_os, labels, accepted",
+    [
+        (HostOs.Trixie, None, False),
+        (HostOs.Trixie, {}, False),
+        (HostOs.Trixie, {TRIXIE_SUPPORT_LABEL: "1"}, True),
+        (HostOs.Bookworm, None, True),
+        (HostOs.Bullseye, {}, True),
+        (HostOs.Other, None, True),
+    ],
+)
+async def test_set_version_refuses_a_core_without_trixie_support_on_a_trixie_host(
+    host_os: HostOs, labels: Any, accepted: bool, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setattr(chooser_module, "get_host_os", cache(lambda: host_os))
+    client = mock.AsyncMock()
+    client.images.inspect.return_value = {"Architecture": get_current_arch(), "Config": {"Labels": labels}}
+    chooser = VersionChooser(client)
+
+    with mock.patch("builtins.open", mock.mock_open(read_data=SAMPLE_JSON)) as open_mock:
+        result = await chooser.set_version("bluerobotics/blueos-core", "1.4.7")
+
+    if accepted:
+        assert result.status_code == 200
+    else:
+        assert result.status_code == 412
+        assert "Trixie" in json.loads(result.body)["error"]
+        open_mock.assert_not_called()
+        client.containers.get.assert_not_called()
+
+
+async def test_set_bootstrap_version_is_not_refused_for_a_missing_trixie_label(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(chooser_module, "get_host_os", cache(lambda: HostOs.Trixie))
+    client = mock.AsyncMock()
+    client.images.inspect.return_value = {"Architecture": get_current_arch(), "Config": {"Labels": {}}}
+    chooser = VersionChooser(client)
+
+    assert await chooser.is_valid_version("bluerobotics/blueos-bootstrap:1.4.7") == (
+        True,
+        "bluerobotics/blueos-bootstrap:1.4.7",
+    )
+    assert not (await chooser.is_valid_version("bluerobotics/blueos-core:1.4.7", is_core=True))[0]
+
+
+async def test_set_version_rereads_a_host_os_that_failed_to_load(monkeypatch: pytest.MonkeyPatch) -> None:
+    host_os_reads = iter([HostOs.Other, HostOs.Trixie])
+    monkeypatch.setattr(chooser_module, "get_host_os", cache(lambda: next(host_os_reads)))
+    client = mock.AsyncMock()
+    client.images.inspect.return_value = {"Architecture": get_current_arch(), "Config": {"Labels": {}}}
+    chooser = VersionChooser(client)
+
+    with mock.patch("builtins.open", mock.mock_open(read_data=SAMPLE_JSON)):
+        result = await chooser.set_version("bluerobotics/blueos-core", "1.4.7")
+
+    assert result.status_code == 412

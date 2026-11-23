@@ -78,6 +78,8 @@ ARG TARGETVARIANT
 # The format can be invalid if someone is build BlueOS without a tag as reference
 ARG GIT_DESCRIBE_TAGS
 ENV GIT_DESCRIBE_TAGS=${GIT_DESCRIBE_TAGS:-0.0.0-0-g00000000}
+# Read by the version chooser, a Raspberry Pi OS Trixie host refuses the versions without it
+LABEL org.bluerobotics.blueos.trixie-support="1"
 RUN <<-EOF
 set -e
 

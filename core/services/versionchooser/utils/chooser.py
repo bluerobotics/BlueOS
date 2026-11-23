@@ -1,3 +1,4 @@
+import asyncio
 import json
 import pathlib
 import re
@@ -10,6 +11,7 @@ import aiodocker
 import aiohttp
 import appdirs
 import docker
+from commonwealth.utils.general import HostOs, get_host_os
 from fastapi import Response
 from fastapi.responses import JSONResponse, StreamingResponse
 from loguru import logger
@@ -22,6 +24,19 @@ from utils.dockerhub import (
 )
 
 DOCKER_CONFIG_PATH = pathlib.Path(appdirs.user_config_dir("bootstrap"), "startup.json")
+
+# Set by core/Dockerfile on the images that know how to run on a Raspberry Pi OS Trixie host. Older ones are refused
+# for lacking it: they were never built nor tested against Trixie.
+TRIXIE_SUPPORT_LABEL = "org.bluerobotics.blueos.trixie-support"
+
+
+def host_is_trixie() -> bool:
+    host_os = get_host_os()
+    if host_os == HostOs.Other:
+        # An unreadable os-release is cached as Other, and must not let an unsupported core in until a restart
+        get_host_os.cache_clear()
+        host_os = get_host_os()
+    return host_os == HostOs.Trixie
 
 
 class VersionChooser:
@@ -105,12 +120,13 @@ class VersionChooser:
 
         return JSONResponse(status_code=501, content={"error": f"Response: {response}"})
 
-    async def is_valid_version(self, image: str) -> Tuple[bool, str]:
+    async def is_valid_version(self, image: str, is_core: bool = False) -> Tuple[bool, str]:
         """
         Check if the image exists locally and runs on this vehicle.
 
         Args:
             image (str): the repository of the image
+            is_core (bool): also require Trixie support when the host runs Trixie, which only cores need
 
         Returns:
             Tuple[bool, str]: (True, image) if the image is valid, (False, error_msg) otherwise
@@ -129,6 +145,15 @@ class VersionChooser:
         # docker load and private pulls skip the architecture filter of the remote tags
         if image_info["Architecture"] != get_current_arch():
             error_msg = f"{image} is built for {image_info['Architecture']}, this vehicle runs {get_current_arch()}."
+            logger.critical(error_msg)
+            return False, error_msg
+
+        labels = image_info.get("Config", {}).get("Labels") or {}
+        if is_core and TRIXIE_SUPPORT_LABEL not in labels and await asyncio.to_thread(host_is_trixie):
+            error_msg = (
+                f"{image} does not support Raspberry Pi OS Trixie, which this vehicle runs. "
+                "Choose a newer BlueOS version, or reflash the vehicle with an older Raspberry Pi OS."
+            )
             logger.critical(error_msg)
             return False, error_msg
 
@@ -297,7 +322,7 @@ class VersionChooser:
                 500 - Invalid settings file/Other internal error
         """
 
-        image_check = await self.is_valid_version(f"{image}:{tag}")
+        image_check = await self.is_valid_version(f"{image}:{tag}", is_core=True)
         if not image_check[0]:
             return JSONResponse(status_code=412, content={"error": image_check[1]})
 
