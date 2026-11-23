@@ -81,6 +81,24 @@ export async function fetchConsolidatedManifests(): Promise<ExtensionData[]> {
 }
 
 /**
+ * Fetch the readme of one extension version from the consolidated manifests, uses API v2
+ * @param {string} identifier The extension identifier
+ * @param {string} tag The version tag
+ */
+export async function fetchExtensionReadme(identifier: string, tag: string): Promise<string> {
+  const response = await back_axios({
+    method: 'get',
+    url: `${KRAKEN_API_V2_URL}/manifest/consolidated/${encodeURIComponent(identifier)}/`
+      + `${encodeURIComponent(tag)}/readme`,
+    responseType: 'text',
+    // Margin for slow links: the request may first wait on the shared 5 s backend status check
+    timeout: 60000,
+  })
+
+  return response.data as string
+}
+
+/**
  * Creates a new manifest source in kraken, uses API v2
  * @param {boolean} validateUrl If true, will throw in case an invalid manifest source is provided in given URL
  * @returns {Promise<Manifest>} The created manifest source with data already fetched in case validate is true,
@@ -409,6 +427,7 @@ export default {
   fetchManifestSources,
   fetchManifestSource,
   fetchConsolidatedManifests,
+  fetchExtensionReadme,
   fetchInstalledExtensions,
   addManifestSource,
   updateManifestSource,
