@@ -106,6 +106,8 @@ python_packages=$(git ls-files '*/setup.py' 'core/libs/*/pyproject.toml' 'core/s
 echo "Running isort.."
 # Run isort for each python project
 echo "$python_packages" | xargs -I {} isort --src-path="{}" ${isort_extra_args} "{}"
+# The e2e tests are sorted without --src-path
+isort ${isort_extra_args} tests/e2e
 
 # This will only get the python files track by git, not including submodules
 python_files=$(git ls-files '*.py')
@@ -125,8 +127,11 @@ pylint $python_files
 
 echo "Running mypy.."
 echo "$python_packages" | parallel 'mypy {} --cache-dir "{}/__mypycache__"'
+# Without --explicit-package-bases, mypy finds the e2e modules under two names
+(cd tests/e2e && mypy --config-file ../../pyproject.toml --explicit-package-bases . --cache-dir __mypycache__)
 
 echo "Running pytest.."
-pytest -n 10 --durations=0 --cov --cov-report term --cov-report html
+# The e2e tests boot a VM and run in their own CI job
+pytest -n 10 --durations=0 --cov --cov-report term --cov-report html --ignore tests/e2e
 
 exit 0
