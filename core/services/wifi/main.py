@@ -6,6 +6,7 @@ import logging
 from pathlib import Path
 from typing import Any, List, Optional
 
+import radio
 from commonwealth.utils.apis import (
     GenericErrorHandlingRoute,
     PrettyJSONResponse,
@@ -22,6 +23,7 @@ from loguru import logger
 from tabulate import tabulate  # type: ignore
 from typedefs import (
     HotspotStatus,
+    RfkillStatus,
     SavedWifiNetwork,
     ScannedWifiNetwork,
     WifiCredentials,
@@ -164,6 +166,27 @@ def get_hotspot_credentials() -> Any:
     return wifi_manager.hotspot_credentials()
 
 
+@app.get("/rfkill", response_model=RfkillStatus, summary="Get the rfkill state of the wifi radio.")
+@version(1, 0)
+async def get_rfkill() -> Any:
+    if wifi_manager is None:
+        return await radio.rfkill_status()
+    return await wifi_manager.rfkill_status()
+
+
+@app.post("/rfkill/unblock", response_model=RfkillStatus, summary="Unblock the wifi radio.")
+@version(1, 0)
+async def unblock_rfkill() -> Any:
+    if wifi_manager is None:
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="No wifi manager available.")
+    await wifi_manager.rfkill_unblock()
+    rfkill = await wifi_manager.rfkill_status()
+    # The button is hidden when the radio is blocked by hardware, so this is only reachable through the API
+    if rfkill.hard_blocked:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Wifi radio is blocked by hardware.")
+    return rfkill
+
+
 app = VersionedFastAPI(app, version="1.0.0", prefix_format="/v{major}.{minor}", enable_latest=True)
 use_local_docs_assets(app)
 app.mount("/", StaticFiles(directory=str(FRONTEND_FOLDER), html=True))
@@ -195,6 +218,12 @@ async def main() -> None:
             logger.info(f"Using {implementation} as wifi manager.")
             await implementation.start()
             wifi_manager = implementation
+            # Installs that shipped with the radio soft-blocked would otherwise never scan nor host a hotspot. Only
+            # done here, and not when the hotspot starts, so the watchdog never overrides a deliberate block
+            try:
+                await wifi_manager.rfkill_unblock()
+            except Exception:
+                logger.exception("Could not unblock the wifi radio.")
             break
 
     await server.serve()

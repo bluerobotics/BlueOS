@@ -2,9 +2,16 @@ import abc
 from argparse import ArgumentParser, Namespace
 from typing import List, Optional
 
+import radio
 from commonwealth.settings.manager import PydanticManager
 from settings import SettingsV1
-from typedefs import SavedWifiNetwork, ScannedWifiNetwork, WifiCredentials, WifiStatus
+from typedefs import (
+    RfkillStatus,
+    SavedWifiNetwork,
+    ScannedWifiNetwork,
+    WifiCredentials,
+    WifiStatus,
+)
 from wifi_handlers.wpa_supplicant.wpa_supplicant import WPASupplicant
 
 
@@ -98,6 +105,12 @@ class AbstractWifiManager:
     @abc.abstractmethod
     def is_smart_hotspot_enabled(self) -> bool:
         return self._settings_manager.settings.smart_hotspot_enabled is True
+
+    async def rfkill_status(self) -> RfkillStatus:
+        return await radio.rfkill_status()
+
+    async def rfkill_unblock(self) -> None:
+        await radio.rfkill_unblock()
 
     @abc.abstractmethod
     async def start(self) -> None:

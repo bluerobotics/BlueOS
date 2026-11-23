@@ -21,7 +21,13 @@ from sdbus_async.networkmanager import (
     NetworkManagerSettings,
 )
 from sdbus_async.networkmanager.enums import AccessPointCapabilities, WpaSecurityFlags
-from typedefs import SavedWifiNetwork, ScannedWifiNetwork, WifiCredentials, WifiStatus
+from typedefs import (
+    RfkillStatus,
+    SavedWifiNetwork,
+    ScannedWifiNetwork,
+    WifiCredentials,
+    WifiStatus,
+)
 from wifi_handlers.AbstractWifiHandler import AbstractWifiManager
 
 
@@ -31,6 +37,10 @@ class CreateAPException(Exception):
 
 class InvalidConfigurationError(Exception):
     pass
+
+
+NM_UNBLOCK_TIMEOUT_S = 3
+NM_UNBLOCK_POLL_S = 0.1
 
 
 class NetworkManagerWifi(AbstractWifiManager):
@@ -151,6 +161,27 @@ class NetworkManagerWifi(AbstractWifiManager):
         await self._create_virtual_interface()
         self._tasks.append(asyncio.get_event_loop().create_task(self._autoscan()))
         self._tasks.append(asyncio.get_event_loop().create_task(self.hotspot_watchdog()))
+
+    async def rfkill_status(self) -> RfkillStatus:
+        assert self._nm is not None
+        sysfs = await super().rfkill_status()
+        return RfkillStatus(
+            soft_blocked=sysfs.soft_blocked or not await self._nm.wireless_enabled,
+            hard_blocked=sysfs.hard_blocked or not await self._nm.wireless_hardware_enabled,
+        )
+
+    async def rfkill_unblock(self) -> None:
+        assert self._nm is not None
+        # NetworkManager keeps its own persistent wireless switch on top of the rfkill one, and only flipping
+        # that one makes it lift the rfkill block it set itself
+        await super().rfkill_unblock()
+        await self._nm.wireless_enabled.set_async(True)
+        # NetworkManager only reflects the new state once it processed the rfkill event
+        for _ in range(int(NM_UNBLOCK_TIMEOUT_S / NM_UNBLOCK_POLL_S)):
+            if await self._nm.wireless_enabled:
+                return
+            await asyncio.sleep(NM_UNBLOCK_POLL_S)
+        logger.warning("NetworkManager did not report the wifi radio as enabled.")
 
     async def _autoscan(self) -> None:
 
