@@ -15,10 +15,14 @@ from harbor.models import ContainerModel, ContainerUsageModel
 
 class ContainerManager:
     @staticmethod
-    async def get_raw_container_by_name(client: Docker, container_name: str) -> DockerContainer:
-        containers = await client.containers.list(filters={"name": {container_name: True}})  # type: ignore
+    async def get_raw_container_by_name(
+        client: Docker, container_name: str, include_stopped: bool = False
+    ) -> DockerContainer:
+        containers = await client.containers.list(  # type: ignore
+            all=include_stopped, filters={"name": {container_name: True}}
+        )
         if not containers:
-            raise ContainerNotFound(f"Container {container_name} not found in running containers")
+            raise ContainerNotFound(f"Container {container_name} not found")
 
         return cast(DockerContainer, containers[0])
 

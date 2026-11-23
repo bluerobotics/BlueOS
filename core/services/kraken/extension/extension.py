@@ -199,7 +199,9 @@ class Extension:
             cls.lock(container_name)
 
             async with DockerCtx() as client:
-                container = await ContainerManager.get_raw_container_by_name(client, container_name)
+                container = await ContainerManager.get_raw_container_by_name(
+                    client, container_name, include_stopped=True
+                )
 
                 image = container["Image"]
 
