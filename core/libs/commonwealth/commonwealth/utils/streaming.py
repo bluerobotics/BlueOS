@@ -1,12 +1,15 @@
 import asyncio
 import base64
 import json
+from contextlib import aclosing
 from dataclasses import asdict, dataclass
-from typing import AsyncGenerator, Optional, Tuple
+from typing import AsyncGenerator, Optional, Tuple, TypeVar
 
 from fastapi import status
 
 from commonwealth.utils.apis import StackedHTTPException
+
+T = TypeVar("T")
 
 
 @dataclass
@@ -126,3 +129,20 @@ async def timeout_streamer(gen: AsyncGenerator[str | bytes, None], timeout: int 
         yield streaming_error_exception(fragment, e)
     finally:
         task.cancel()
+
+
+async def idle_timeout(gen: AsyncGenerator[T, None], timeout: float) -> AsyncGenerator[T, None]:
+    """
+    Re-yield the items of an async generator, raising TimeoutError if it produces nothing for `timeout` seconds.
+    """
+    async with aclosing(gen) as closing_gen:
+        iterator = aiter(closing_gen)
+        while True:
+            try:
+                # wait_for can drop an item that lands exactly at the timeout, harmless for pull streams
+                item = await asyncio.wait_for(anext(iterator), timeout)
+            except StopAsyncIteration:
+                return
+            except asyncio.TimeoutError as error:
+                raise TimeoutError(f"No progress for {timeout:.0f} s") from error
+            yield item
