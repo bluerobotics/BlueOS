@@ -1,5 +1,6 @@
 import asyncio
 import base64
+import copy
 import hashlib
 import json
 import os
@@ -213,15 +214,6 @@ class Extension:
         finally:
             cls.unlock(container_name)
 
-    async def _image_is_available_locally(self) -> bool:
-        try:
-            image_ref = f"{self.source.docker}:{self.tag}" + (f"@{self.digest}" if self.digest else "")
-            async with DockerCtx() as client:
-                await client.images.inspect(image_ref)
-                return True
-        except DockerError:
-            return False
-
     async def _disable_running_extension(self) -> Optional["Extension"]:
         """Disable any currently running extension with the same identifier."""
         try:
@@ -243,7 +235,7 @@ class Extension:
             enabled=True,
             user_permissions=self.source.user_permissions,
         )
-        # Save in settings first, if the image fails to install it will try to fetch after in main kraken check loop
+        # Saved before pulling so the watchdog can pick it up; a failed install rolls it back
         self._save_settings(new_extension)
         return new_extension
 
@@ -253,6 +245,76 @@ class Extension:
             return None
         docker_auth = f"{self.source.auth.username}:{self.source.auth.password}"
         return base64.b64encode(docker_auth.encode("utf-8")).decode("utf-8")
+
+    @staticmethod
+    async def _inspect_or_none(client: Any, ref: str) -> Optional[Any]:
+        try:
+            return await client.images.inspect(ref)
+        except DockerError as error:
+            if error.status == 404:
+                return None
+            raise
+
+    async def _local_image_id(self, client: Any, exact: bool = False) -> Optional[str]:
+        """Id of the local `repo:tag`, restored from the catalog digest when only `repo@digest` exists.
+
+        With `exact` and a digest, a bare `repo:tag` is not accepted since it may be an older image.
+        """
+        tag_ref = f"{self.source.docker}:{self.tag}"
+        image = None if exact and self.digest else await self._inspect_or_none(client, tag_ref)
+        if image is None and self.digest:
+            digest_ref = f"{self.source.docker}@{self.digest}"
+            if await self._inspect_or_none(client, digest_ref) is None:
+                return None
+            await client.images.tag(digest_ref, self.source.docker, tag=self.tag)
+            image = await self._inspect_or_none(client, tag_ref)
+        return image["Id"] if image else None
+
+    async def _sibling_image_id(self, running_ext: Optional["Extension"]) -> Optional[str]:
+        """Image Id of the other tag that was running before this install, None if there is none or unknown."""
+        if not running_ext or running_ext.unique_entry == self.unique_entry:
+            return None
+        try:
+            async with DockerCtx() as client:
+                image = await self._inspect_or_none(client, f"{running_ext.source.docker}:{running_ext.tag}")
+        except Exception as error:
+            logger.warning(f"Could not inspect running image of {running_ext.identifier}: {error}")
+            return None
+        return image["Id"] if image else None
+
+    async def _can_use_local_image(self, running_ext: Optional["Extension"], sibling_image_id: Optional[str]) -> bool:
+        try:
+            async with DockerCtx() as client:
+                local_id = await self._local_image_id(client, exact=True)
+        except Exception as error:
+            logger.warning(f"Could not verify image of {self.identifier}:{self.tag}: {error}")
+            return False
+        if local_id is None:
+            return False
+        # A digest match is content-addressed, while a bare tag may just be an alias of the running sibling
+        needs_sibling_check = not self.digest and running_ext and running_ext.unique_entry != self.unique_entry
+        return not needs_sibling_check or (sibling_image_id is not None and local_id != sibling_image_id)
+
+    async def _rollback_failed_install(
+        self, running_ext: Optional["Extension"], prior_settings: Optional[ExtensionSettings]
+    ) -> None:
+        try:
+            self._save_settings(prior_settings)
+            logger.info(
+                f"Rolled back {self.identifier}:{self.tag}"
+                + (f", re-enabling {running_ext.tag}" if running_ext else "")
+            )
+        except Exception as rollback_error:
+            logger.warning(f"Failed to roll back {self.identifier}:{self.tag} after pull failure: {rollback_error}")
+        if not running_ext:
+            return
+        try:
+            self.reset_start_attempt(running_ext.unique_entry)
+            await running_ext.enable()
+        except Exception as enable_error:
+            logger.warning(
+                f"Failed to re-enable {running_ext.identifier}:{running_ext.tag} after pull failure: {enable_error}"
+            )
 
     async def _pull_docker_image(self, docker_auth: Optional[str]) -> AsyncGenerator[bytes, None]:
         """Pull Docker image and yield progress updates."""
@@ -265,9 +327,9 @@ class Extension:
                 # Docker reports pull errors in-band and still ends the stream normally
                 if error := line.get("error") or (line.get("errorDetail", {}) or {}).get("message"):
                     raise RuntimeError(str(error))
-            # Make sure to add correct tag if a digest was used since docker messes up the tag
-            if self.digest:
-                await client.images.tag(tag, f"{self.source.docker}:{self.tag}")
+            # Podman sends no final status line, so check the result. This also retags a digest pull
+            if await self._local_image_id(client, exact=True) is None:
+                raise RuntimeError("image missing after pull")
 
     async def _clear_remaining_tags(self) -> None:
         """Uninstall all other tags for this extension."""
@@ -279,8 +341,14 @@ class Extension:
     async def install(self, clear_remaining_tags: bool = True) -> AsyncGenerator[bytes, None]:
         logger.info(f"Installing extension {self.identifier}:{self.tag}")
 
+        try:
+            prior_settings: Optional[ExtensionSettings] = copy.deepcopy(self.settings)
+        except ExtensionNotFound:
+            prior_settings = None
+
         # First we should make sure no other tag is running
         running_ext = await self._disable_running_extension()
+        sibling_image_id = await self._sibling_image_id(running_ext)
 
         self._create_extension_settings()
         try:
@@ -291,20 +359,14 @@ class Extension:
                 yield line
         except Exception as error:
             # In case of some external installs kraken shouldn't try to install it again so we remove from settings
-            should_raise = False
-            if await self._image_is_available_locally():
-                logger.info(f"Pull failed but image {self.identifier}:{self.tag} is already available locally")
-            else:
-                if not running_ext or self.unique_entry != running_ext.unique_entry:
-                    should_raise = True
-                    await self.uninstall()
-                if running_ext:
-                    await running_ext.enable()
-
-            if should_raise:
-                raise ExtensionPullFailed(f"Failed to pull extension {self.identifier}:{self.tag}") from error
-            # Reached only if the extensions are the same, the change is in permissions, not installation failure.
-            return
+            if await self._can_use_local_image(running_ext, sibling_image_id):
+                logger.warning(
+                    f"Pull failed but image {self.identifier}:{self.tag} is available locally, "
+                    f"keeping other tags: {error}"
+                )
+                return
+            await self._rollback_failed_install(running_ext, prior_settings)
+            raise ExtensionPullFailed(f"Failed to pull extension {self.identifier}:{self.tag}: {error}") from error
         finally:
             self.unlock(self.unique_entry)
             self.reset_start_attempt(self.unique_entry)
@@ -684,9 +746,7 @@ class Extension:
         return extension
 
     @classmethod
-    async def finalize_temporary_extension(
-        cls, temp_extension: "Extension", identifier: str, source: ExtensionSource
-    ) -> "Extension":
+    async def finalize_temporary_extension(cls, temp_extension: "Extension", source: ExtensionSource) -> "Extension":
         """
         Finalize a temporary extension by assigning a valid identifier and updating settings.
         """
@@ -698,18 +758,6 @@ class Extension:
         # Remove old temporary extension
         temp_extension._save_settings()
         cls.temp_extension_activity.pop(old_settings.tag, None)
-
-        # Save new extension
-        new_settings = ExtensionSettings(
-            identifier=identifier,
-            name=source.name,
-            docker=source.docker,
-            tag=source.tag,
-            permissions=source.permissions,
-            enabled=source.enabled,
-            user_permissions=source.user_permissions,
-        )
-        new_extension._save_settings(new_settings)
 
         # Retag uploaded image with final coordinates and drop the temporary tag reference
         if old_settings.docker != source.docker or old_settings.tag != source.tag:
