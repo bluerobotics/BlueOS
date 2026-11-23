@@ -58,10 +58,4 @@ chmod +x "$BINARY_PATH"
 
 echo "Installed binary type: $(file "$(which "$BINARY_PATH")")"
 
-# Create configuration file
-DATABASE_PATH="/etc/filebrowser/filebrowser.db"
-mkdir -p "$(dirname $DATABASE_PATH)"
-filebrowser config init --address=0.0.0.0 --port=7777 --auth.method=noauth --log=stdout --root=/shortcuts --database="$DATABASE_PATH"
-filebrowser users add pi raspberry --database="$DATABASE_PATH"
-
 echo "Finished installing $PROJECT_NAME"
