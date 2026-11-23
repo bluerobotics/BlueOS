@@ -249,12 +249,14 @@ def boot_config_normalize_section_order(
     (section_start, section_end) = boot_config_get_or_append_section(config_content, section_name)
     section_body = config_content[section_start + 1 : section_end]
     # The user also writes an empty dtoverlay=, so the patch does not own every copy of it.
-    match_patterns = [pattern for board_line, pattern in managed_entries if board_line != BOOT_CONFIG_END_OVERLAY_SCOPE]
-
     def is_managed(line: str) -> bool:
         if boot_config_line_is_protected(line):
             return False
-        return any(re.match(pattern, line, regex_flags) for pattern in match_patterns)
+        return any(
+            re.match(pattern, line, regex_flags)
+            for board_line, pattern in managed_entries
+            if board_line != BOOT_CONFIG_END_OVERLAY_SCOPE
+        )
 
     user_lines = [line for line in section_body if line and not is_managed(line)]
 
@@ -270,7 +272,16 @@ def boot_config_normalize_section_order(
     for board_line, pattern in managed_entries:
         if board_line == BOOT_CONFIG_END_OVERLAY_SCOPE and not earlier_directive_present:
             continue
-        if any(boot_config_line_is_protected(line) and re.match(pattern, line, regex_flags) for line in section_body):
+        # A protected line replaces the board line in its slot. Left with the user lines, it would land after
+        # the overlays the user keeps, and the firmware would apply a dtparam to the wrong overlay.
+        protected = [
+            line
+            for line in section_body
+            if boot_config_line_is_protected(line) and re.match(pattern, line, regex_flags)
+        ]
+        if protected:
+            board_lines.extend(protected)
+            user_lines = [line for line in user_lines if line not in protected]
             continue
         board_lines.append(board_line)
 
@@ -284,6 +295,10 @@ def boot_config_normalize_section_order(
         if user_line == BOOT_CONFIG_END_OVERLAY_SCOPE and not boot_config_overlay_is_open(board_lines):
             continue
         board_lines.append(user_line)
+
+    # A user overlay that stays in the section would take the lines written below the section, too
+    if boot_config_overlay_is_open(board_lines):
+        board_lines.append(BOOT_CONFIG_END_OVERLAY_SCOPE)
 
     config_content[section_start + 1 : section_end] = board_lines
 
