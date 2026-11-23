@@ -6,7 +6,8 @@ import appdirs
 from loguru import logger
 
 from commonwealth.settings.bases.pykson_base import PyksonSettings
-from commonwealth.settings.temp_files import clear_temp_files
+from commonwealth.settings.exceptions import SettingsFromTheFuture
+from commonwealth.settings.temp_files import clear_temp_files, move_invalid_file_aside
 
 
 class PyksonManager:
@@ -30,6 +31,7 @@ class PyksonManager:
         )
         self.config_folder.mkdir(parents=True, exist_ok=True)
         self.settings_type = settings_type
+        self._keep_files_untouched = False
         self._settings: Optional[PyksonSettings] = None
         logger.debug(
             f"Starting {project_name} settings with {settings_type.__name__}, configuration path: {config_folder}"
@@ -94,6 +96,9 @@ class PyksonManager:
 
     def save(self) -> None:
         """Save settings"""
+        if self._keep_files_untouched:
+            logger.error("Not saving settings: the stored file could not be loaded or set aside, so it is kept as is")
+            return
         self.settings.save(self.settings_file_path())
 
     def load(self) -> None:
@@ -117,19 +122,34 @@ class PyksonManager:
         ]
         valid_files.sort(key=get_settings_version_from_filename, reverse=True)
 
+        # A broken settings class is a code bug, it must fail here before any file is moved aside
+        default_settings = self.settings_type()
+        keep_files_untouched = False
+        self._keep_files_untouched = False
+
         logger.debug(f"Found possible candidates for settings source: {valid_files}")
         for valid_file in valid_files:
             logger.debug(f"Checking {valid_file} for settings")
             try:
                 self._settings = PyksonManager.load_from_file(self.settings_type, valid_file)
                 logger.debug(f"Using {valid_file} as settings source")
+                self._keep_files_untouched = keep_files_untouched
                 return
+            except SettingsFromTheFuture as exception:
+                logger.debug(f"Ignoring {valid_file}, going to try another file: {exception}")
+            except OSError as exception:
+                # Not a sign of a corrupt file, so it is neither moved aside nor replaced by the defaults
+                logger.error(f"Failed to read {valid_file}, going to try another file: {exception}")
+                keep_files_untouched = True
             except Exception as exception:
-                logger.debug("Invalid settings, going to try another file:", exception)
+                if not move_invalid_file_aside(valid_file, exception):
+                    keep_files_untouched = True
 
         logger.debug("No valid settings found, using default settings")
-        self._settings = self.settings_type()
-        self.save()
+        self._settings = default_settings
+        self._keep_files_untouched = keep_files_untouched
+        if not keep_files_untouched:
+            self.save()
 
     def _clear_temp_files(self) -> None:
         """Clear leftover fixed-name temporary files from older saves"""

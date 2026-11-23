@@ -59,7 +59,9 @@ class PyksonSettings(pykson.JsonObject):
             result = json.load(settings_file)
 
             if "VERSION" not in result.keys():
-                raise BadSettingsFile(f"Settings file does not appears to contain a valid settings format: {result}")
+                raise BadSettingsFile(
+                    f"Settings file does not appears to contain a valid settings format, keys: {sorted(result)}"
+                )
 
             version = result["VERSION"]
 
