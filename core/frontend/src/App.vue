@@ -318,14 +318,20 @@
           <settings-menu />
           <report-menu />
         </v-container>
+        <!-- Clicking the version line and the build line (below) both count toward dev mode; @click.stop on the
+          link keeps opening it from counting -->
+        <!-- eslint-disable-next-line vuejs-accessibility/click-events-have-key-events -->
         <span
+          id="current-version"
           class="build_info"
+          @click="buildDateClick"
         >
           {{ t`BlueOS Version:` }}
           <a
             target="_blank"
             rel="noopener noreferrer"
             :href="git_info_url"
+            @click.stop
           >
             {{ git_info }}
           </a>
@@ -338,11 +344,11 @@
         </span>
         <!-- eslint-disable vuejs-accessibility/click-events-have-key-events -->
         <span
-          id="current-version"
+          v-if="commit_date || settings.is_dev_mode"
           class="build_info"
           @click="buildDateClick"
         >
-          Build: {{ build_date }}
+          <template v-if="commit_date">{{ t`Commit date:` }} {{ commit_date }}</template>
           <v-btn
             v-if="settings.is_dev_mode"
             v-tooltip="t`Disable dev mode`"
@@ -391,7 +397,6 @@
 </template>
 
 <script lang="ts">
-import stable from 'semver-stable'
 import { t } from 'ttag'
 import Vue, { defineAsyncComponent } from 'vue'
 
@@ -403,7 +408,8 @@ import customization_store from '@/store/customization'
 import helper from '@/store/helper'
 import wifi from '@/store/wifi'
 import { Service } from '@/types/helper'
-import { convertGitDescribeToTag, convertGitDescribeToUrl } from '@/utils/helper_functions'
+import { blueosCommitDate, blueosGitDescribe } from '@/utils/blueos-version'
+import { convertGitDescribeToUrl, isCloudTrayMenuVisible } from '@/utils/helper_functions'
 import updateTime from '@/utils/update_time'
 import * as VCU from '@/utils/version_chooser'
 
@@ -759,21 +765,19 @@ export default Vue.extend({
       ]
     },
     git_info(): string {
-      return import.meta.env.VITE_APP_GIT_DESCRIBE
+      return blueosGitDescribe()
     },
     git_info_url(): string {
-      return convertGitDescribeToUrl(import.meta.env.VITE_APP_GIT_DESCRIBE)
+      return convertGitDescribeToUrl(this.git_info)
     },
-    build_date(): string {
-      return import.meta.env.VITE_BUILD_DATE
+    commit_date(): string {
+      return blueosCommitDate()
     },
     blueos_logo(): string {
       return customization_store.logoUrl ?? (settings.is_dark_theme ? blueos_white : blueos_blue)
     },
     is_cloud_tray_menu_visible(): boolean {
-      // Keep tray menu visible in everything except stable versions
-      const tag = convertGitDescribeToTag(this.git_info)
-      return !tag || !stable.is(tag) || settings.is_dev_mode
+      return isCloudTrayMenuVisible(this.git_info) || settings.is_dev_mode
     },
   },
 
@@ -986,6 +990,10 @@ span.build_info {
 
 #current-version {
   user-select: none;
+}
+
+#current-version a {
+  user-select: text;
 }
 
 #tour-center-hook {

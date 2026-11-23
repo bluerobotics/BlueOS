@@ -14,6 +14,8 @@ import VueDraggable from 'vuedraggable'
 import Vuetify from 'vuetify/lib'
 
 import consoleLogger from '@/libs/console-logger'
+import { loadBlueosVersion, retryBlueosVersion } from '@/utils/blueos-version'
+import { convertGitDescribeToTag } from '@/utils/helper_functions'
 
 import DefaultTooltip from './components/common/DefaultTooltip.vue'
 import VStep from './components/vue-tour/src/components/VStep.vue'
@@ -39,13 +41,22 @@ Vue.component('VTour', VTour)
 Vue.component('VStep', VStep)
 Vue.prototype.$tours = {}
 
-const project = 'BlueOS'
-// Avoid logging local development
-const version = import.meta.env.VITE_APP_GIT_DESCRIBE
-const isOfficialTag = version?.includes('tags/')
-const release = `${project}@${version}`.replace('tags/', '').replace(/\//g, ':')
-console.info(`Running: ${release}`)
-if (version && isOfficialTag) {
+// Nginx may still be starting when the first read fails, so the first retries are quick. The tail holds steady
+// because a slow Pi under boot load needs time, not more attempts, and each read is capped by FETCH_TIMEOUT_MS
+// (utils/blueos-version). Nothing waits for the version: mount does not depend on it, and a later success updates
+// Sentry and the drawer.
+const VERSION_RETRY_DELAYS_MS = [2000, 5000, 10000, 10000, 10000]
+
+function initSentry(version: string): void {
+  if (!version) {
+    return
+  }
+  const release = `BlueOS@${version}`
+  console.info(`Running: ${release}`)
+  // Distance 0 is a build of the tag itself. Later commits stay out of Sentry.
+  if (!convertGitDescribeToTag(version)) {
+    return
+  }
   Sentry.init({
     Vue,
     release,
@@ -63,20 +74,28 @@ if (version && isOfficialTag) {
   })
 }
 
-consoleLogger.initialize().catch((error) => {
-  console.error('Failed to initialize console logger:', error)
-})
+async function start(): Promise<void> {
+  consoleLogger.initialize().catch((error) => {
+    console.error('Failed to initialize console logger:', error)
+  })
 
-initI18n()
-  .then(async () => {
-    const { default: App } = await import('./App.vue')
-    new Vue({
-      router,
-      store,
-      vuetify,
-      render: (h) => h(App),
-    }).$mount('#app')
-  })
-  .catch((error) => {
-    console.error('Failed to start application:', error)
-  })
+  // Runs in the background: the drawer reads the version reactively and Sentry starts once it is known.
+  loadBlueosVersion()
+    .then((version) => {
+      initSentry(version)
+      return version ? undefined : retryBlueosVersion(VERSION_RETRY_DELAYS_MS, initSentry)
+    })
+    .catch((error) => console.error('Failed to load the BlueOS version:', error))
+
+  await initI18n()
+
+  const { default: App } = await import('./App.vue')
+  new Vue({
+    router,
+    store,
+    vuetify,
+    render: (h) => h(App),
+  }).$mount('#app')
+}
+
+start().catch((error) => console.error('Failed to start application:', error))
