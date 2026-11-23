@@ -860,21 +860,26 @@ def test_image_build_checks_what_the_install_scripts_write() -> None:
     # the mistake shows. That check only runs on the upstream repository, where nobody reads it
     # until a release ships, so it stopping matching the install scripts has to fail here instead.
     workflow = WORKFLOW_PATH.read_text(encoding="utf-8")
-    sections = {install_script_section(script): script for script in NAVIGATOR_INSTALL_SCRIPTS.values()}
+    # A board section header starts the lines the image has to hold in that section
+    written: Dict[Tuple[str, str], List[str]] = {}
+    for board in ("bcm_27xx", "bcm_2712"):
+        script_name = f"install/boards/{board}.sh"
+        written[(board, install_script_section(script_name))] = install_script_configuration(script_name)[1]
+    for section_name, lines in multi_board_sections().items():
+        written[("bcm_multi", section_name)] = lines
 
     checked = []
-    for words in re.findall(r"EXPECTED=\((.*?)\)", workflow, re.DOTALL):
-        expected = bash_words(words)
-        headers = [line for line in expected if line.startswith("[")]
-        assert len(headers) == 1, f"{expected} does not look for exactly one board section"
-        section_name = headers[0].strip("[]")
-        assert section_name in sections, f"no install script writes a [{section_name}] section"
-        _, insertions = install_script_configuration(sections[section_name])
-        for line in expected:
-            assert line in headers or line in insertions, f"{sections[section_name]} does not write {line!r}"
-        checked.append(section_name)
+    for board, words in re.findall(r"^\s*(bcm_\w+)\)\n(?:[^\n]*\n)*?\s*EXPECTED=\((.*?)\)", workflow, re.MULTILINE):
+        section_name = ""
+        for line in bash_words(words):
+            if line.startswith("["):
+                section_name = line.strip("[]")
+                assert (board, section_name) in written, f"{board} does not write a [{section_name}] section"
+                checked.append((board, section_name))
+            else:
+                assert line in written[(board, section_name)], f"{board} does not write {line!r}"
 
-    assert sorted(checked) == sorted(sections), f"{sorted(sections)} are built as images, {sorted(checked)} are checked"
+    assert sorted(checked) == sorted(written), f"{sorted(written)} are built as images, {sorted(checked)} are checked"
 
     # cmdline.txt is reached through a path of its own, so it is checked separately, and every board
     # script writes the same two things to it whether or not a Navigator can be used with the board

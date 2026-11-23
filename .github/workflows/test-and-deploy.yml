@@ -371,6 +371,12 @@ jobs:
             board: "bcm_2712"
             artifact: "arm64-v8"
             image: "raspios_lite_arm64/images/raspios_lite_arm64-2024-07-04/2024-07-04-raspios-bookworm-arm64-lite.img.xz"
+          - runner: ubuntu-24.04-arm
+            platform: "linux/arm64/v8"
+            os: "trixie"
+            board: "bcm_multi"
+            artifact: "arm64-v8"
+            image: "raspios_lite_arm64/images/raspios_lite_arm64-2026-10-06/2026-10-06-raspios-trixie-arm64-lite.img.xz"
 
     runs-on: ${{ matrix.runner }}
 
@@ -424,13 +430,21 @@ jobs:
       - name: Add /boot additions
         run: |
           # BOARD selects the board install script, so check that the image ended up with the configuration
-          # of the board it was built for.
+          # of the board it was built for. A "[section]" starts the lines that follow, and they must be found in
+          # that section: the same line elsewhere in config.txt is not read by that board.
+          CLOSED_SECTIONS=false
           case "${{ matrix.board }}" in
             bcm_2712)
               EXPECTED=("[pi5]" "dtoverlay=i2c3-pi5,baudrate=400000" "dtoverlay=spi1-3cs")
               ;;
             bcm_27xx)
               EXPECTED=("[pi4]" "dtoverlay=i2c4,pins_6_7,baudrate=1000000" "dtoverlay=spi1-3cs")
+              ;;
+            bcm_multi)
+              # Every board shares the config.txt, and each section has to be closed or the settings below it
+              # would be limited to that board too
+              CLOSED_SECTIONS=true
+              EXPECTED=("[pi3]" "dtoverlay=spi1-3cs" "[pi4]" "dtoverlay=i2c4,pins_6_7,baudrate=1000000" "dtoverlay=navigator-eeprom" "dtoverlay=spi1-3cs" "[pi5]" "dtoverlay=i2c3-pi5,baudrate=400000" "dtoverlay=spi1-3cs")
               ;;
             *)
               echo "Unknown board ${{ matrix.board }}, add the board configuration its image must contain."
@@ -444,13 +458,25 @@ jobs:
           LOOP_DEVICE=$(sudo kpartx -avs deploy/pimod/blueos.img | sed -E 's/.*(loop[0-9]+)p[0-9]+.*/\1/g' | head -1)
           # Mount the boot partition
           sudo mount "/dev/mapper/${LOOP_DEVICE}p1" /mnt/piboot
-          # Create ssh and userconf files
-          sudo cp install/boards/config.toml /mnt/piboot/custom.toml
+          # Create ssh and userconf files. Trixie ignores custom.toml, its user is provisioned by the image build.
+          if [ "${{ matrix.os }}" != trixie ]; then
+            sudo cp install/boards/config.toml /mnt/piboot/custom.toml
+          fi
           # A board install script writing to the /boot stub instead of the boot partition still exits 0,
           # so the image itself is the only place where a missing Navigator configuration can be caught.
           MISSING=()
           for LINE in "${EXPECTED[@]}"; do
-            sudo grep -qxF "$LINE" /mnt/piboot/config.txt || MISSING+=("config.txt: $LINE")
+            if [[ $LINE == \[*\] ]]; then
+              HEADER=$LINE
+              # From the section header to the [all] that closes it, or to the end of the file
+              SECTION=$(sudo awk -v header="$HEADER" '$0 == header {on = 1} on {print} on && $0 == "[all]" {exit}' /mnt/piboot/config.txt)
+              [ -n "$SECTION" ] || MISSING+=("config.txt: $HEADER")
+              if $CLOSED_SECTIONS && [ "$(tail -n 1 <<< "$SECTION")" != "[all]" ]; then
+                MISSING+=("config.txt: $HEADER is not closed by [all]")
+              fi
+            else
+              grep -qxF "$LINE" <<< "$SECTION" || MISSING+=("config.txt: $HEADER $LINE")
+            fi
           done
           # cmdline.txt is reached through its own path and can be left behind on its own. Whatever
           # board this is, the memory cgroup docker needs is enabled and the serial console that
