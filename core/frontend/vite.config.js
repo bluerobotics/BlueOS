@@ -255,6 +255,9 @@ export default defineConfig(({ command, mode }) => {
           changeOrigin: true,
           autoRewrite: true,
         },
+        '^/blueos-version': {
+          target: SERVER_ADDRESS,
+        },
         '^/bag': {
           target: SERVER_ADDRESS,
         },
