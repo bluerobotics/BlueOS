@@ -1,3 +1,5 @@
+import { AxiosProgressEvent } from 'axios'
+
 import {
   ExtensionData,
   ExtensionUploadResponse,
@@ -11,6 +13,49 @@ import back_axios from '@/utils/api'
 
 const KRAKEN_BASE_URL = '/kraken'
 const KRAKEN_API_V2_URL = `${KRAKEN_BASE_URL}/v2.0`
+
+// Axios `timeout` is a hard deadline from request start, so large or slow pulls die
+// while Docker is still streaming. Abort only after this long with no new bytes.
+// Keep it equal to PULL_IDLE_TIMEOUT_SECONDS in kraken's extension.py, so the server-side limit fires first.
+const PULL_IDLE_TIMEOUT_MS = 120000
+
+// Aborts the request after PULL_IDLE_TIMEOUT_MS without an onDownloadProgress event, rejecting with a readable message
+async function withPullIdleWatchdog<T>(
+  progressHandler: (event: AxiosProgressEvent) => void,
+  request: (config: {
+    signal: AbortSignal
+    onDownloadProgress: (event: AxiosProgressEvent) => void
+  }) => Promise<T>,
+): Promise<T> {
+  const controller = new AbortController()
+  let timedOut = false
+  let timer: ReturnType<typeof setTimeout> | undefined
+  function bump(): void {
+    clearTimeout(timer)
+    timer = setTimeout(() => {
+      timedOut = true
+      controller.abort()
+    }, PULL_IDLE_TIMEOUT_MS)
+  }
+  bump()
+  try {
+    return await request({
+      signal: controller.signal,
+      onDownloadProgress: (event) => {
+        bump()
+        progressHandler(event)
+      },
+    })
+  } catch (error) {
+    // axios drops the abort reason and would only report a bare "canceled"
+    if (timedOut) {
+      throw new Error(`No progress from Docker for ${PULL_IDLE_TIMEOUT_MS / 1000} s, aborted`)
+    }
+    throw error
+  } finally {
+    clearTimeout(timer)
+  }
+}
 
 /**
  * List details of all installed extensions.
@@ -237,7 +282,7 @@ export async function finalizeExtension(
   tempTag: string,
   progressHandler: (event: any) => void,
 ): Promise<void> {
-  await back_axios({
+  await withPullIdleWatchdog(progressHandler, (pullConfig) => back_axios({
     method: 'POST',
     url: `${KRAKEN_API_V2_URL}/extension/upload/finalize?temp_tag=${tempTag}`,
     data: {
@@ -249,9 +294,8 @@ export async function finalizeExtension(
       permissions: extension?.permissions ?? '',
       user_permissions: extension?.user_permissions ?? '',
     },
-    timeout: 120000,
-    onDownloadProgress: progressHandler,
-  })
+    ...pullConfig,
+  }))
 }
 
 /**
@@ -263,7 +307,7 @@ export async function installExtension(
   extension: InstalledExtensionData,
   progressHandler: (event: any) => void,
 ): Promise<void> {
-  await back_axios({
+  await withPullIdleWatchdog(progressHandler, (pullConfig) => back_axios({
     url: `${KRAKEN_API_V2_URL}/extension/`,
     method: 'POST',
     data: {
@@ -275,9 +319,8 @@ export async function installExtension(
       permissions: extension?.permissions ?? '',
       user_permissions: extension?.user_permissions ?? '',
     },
-    timeout: 600000,
-    onDownloadProgress: progressHandler,
-  })
+    ...pullConfig,
+  }))
 }
 
 /**
@@ -339,12 +382,11 @@ export async function updateExtensionToVersion(
   version: string,
   progressHandler: (event: any) => void,
 ): Promise<void> {
-  await back_axios({
+  await withPullIdleWatchdog(progressHandler, (pullConfig) => back_axios({
     url: `${KRAKEN_API_V2_URL}/extension/${identifier}/${version}`,
     method: 'PUT',
-    timeout: 120000,
-    onDownloadProgress: progressHandler,
-  })
+    ...pullConfig,
+  }))
 }
 
 /**
