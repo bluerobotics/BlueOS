@@ -965,12 +965,11 @@ def select_patches(host_cpu: CpuType, host_os: HostOs) -> List[Tuple[str, Callab
         patches_to_apply = [(name, patch) for name, patch in patches_to_apply if name != "swap"]
 
     if host_cpu == CpuType.PI3:
-        patches_to_apply.extend(
-            [
-                ("revert_update_dwc2", revert_update_dwc2),
-                ("clean_config_pi3", clean_config_pi3),
-            ]
-        )
+        patches_to_apply.append(("revert_update_dwc2", revert_update_dwc2))
+        # Trixie images ship one config.txt with a section per board, and current firmware ignores the other boards'
+        # sections, so the Pi3 keeps them to let the same SD card boot on a Pi4 or Pi5
+        if host_os != HostOs.Trixie:
+            patches_to_apply.append(("clean_config_pi3", clean_config_pi3))
 
     if host_cpu in [CpuType.PI4, CpuType.PI5]:
         patches_to_apply.extend(

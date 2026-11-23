@@ -951,7 +951,10 @@ def test_select_patches_by_host(host_cpu: CpuType, host_os: HostOs) -> None:
     common = list(PATCHES_FOR_EVERY_HOST)
     if host_os != HostOs.Trixie:
         common.insert(PATCHES_FOR_EVERY_HOST.index("noIPV6") + 1, "swap")
-    assert selected == common + PATCHES_FOR_CPU[host_cpu] + PATCHES_FOR_OS[host_os]
+    for_cpu = list(PATCHES_FOR_CPU[host_cpu])
+    if host_os == HostOs.Trixie and "clean_config_pi3" in for_cpu:
+        for_cpu.remove("clean_config_pi3")
+    assert selected == common + for_cpu + PATCHES_FOR_OS[host_os]
 
 
 def run_ipv6_patch(host_os: HostOs, files: Dict[str, str]) -> Tuple[bool, Dict[str, str]]:
