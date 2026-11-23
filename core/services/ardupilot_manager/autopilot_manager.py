@@ -1,6 +1,8 @@
 import asyncio
 import os
 import pathlib
+import shlex
+import shutil
 import subprocess
 import time
 from contextlib import asynccontextmanager
@@ -10,6 +12,7 @@ from uuid import uuid4
 import psutil
 from commonwealth.mavlink_comm.VehicleManager import VehicleManager
 from commonwealth.settings.manager import PydanticManager
+from commonwealth.utils.general import CpuType, get_cpu_type
 from commonwealth.utils.Singleton import Singleton
 from config import SERVICE_NAME
 from elftools.elf.elffile import ELFFile
@@ -38,6 +41,33 @@ from typedefs import (
     TLogMode,
     Vehicle,
 )
+
+
+def soc_node_needs_alias(device_tree: pathlib.Path) -> bool:
+    return not (device_tree / "soc").exists() and any(device_tree.glob("soc@*"))
+
+
+async def alias_soc_node(
+    command_line: str,
+    device_tree: pathlib.Path = pathlib.Path("/proc/device-tree"),
+    # Fixed on purpose: the copy can be inspected on the device when ArduPilot does not detect the board
+    device_tree_copy: pathlib.Path = pathlib.Path("/tmp/ardupilot_device_tree"),
+) -> str:
+    """
+    ArduPilot only looks for a device tree node named exactly "soc" to identify a Raspberry Pi 5, and recent kernels
+    only have "soc@107c000000". The alias is shown through a private mount, nothing else sees the change.
+    """
+    if not soc_node_needs_alias(device_tree):
+        return command_line
+    shutil.rmtree(device_tree_copy, ignore_errors=True)
+    copy = await asyncio.create_subprocess_exec("cp", "-a", "/sys/firmware/devicetree/base/.", device_tree_copy)
+    soc_node = next(device_tree.glob("soc@*"), None)
+    if await copy.wait() != 0 or soc_node is None:
+        logger.error("Could not alias the soc device tree node, ArduPilot may not detect the Pi5")
+        return command_line
+    (device_tree_copy / "soc").symlink_to(soc_node.name)
+    mount_and_run = f"mount --bind {device_tree_copy} /sys/firmware/devicetree/base && exec {command_line}"
+    return f"unshare -m sh -c {shlex.quote(mount_and_run)}"
 
 
 class AutoPilotManager(metaclass=Singleton):
@@ -394,6 +424,9 @@ class AutoPilotManager(metaclass=Singleton):
         if self.firmware_has_debug_symbols(firmware_path):
             logger.info("Debug symbols found, launching with gdb server...")
             command_line = f"gdbserver 0.0.0.0:5555 {command_line}"
+
+        if get_cpu_type() == CpuType.PI5:
+            command_line = await alias_soc_node(command_line)
 
         logger.info(f"Using command line: '{command_line}'")
         self.ardupilot_subprocess = subprocess.Popen(
