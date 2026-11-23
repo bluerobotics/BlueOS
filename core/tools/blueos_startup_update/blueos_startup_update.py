@@ -744,6 +744,22 @@ def fix_wpa_service() -> bool:
     return True
 
 
+# deploy/pimod/provision_trixie.sh writes the same content into the image, a test keeps them equal
+NETWORK_MANAGER_CONF_TEMPLATE = """[main]
+plugins=ifupdown,keyfile
+dns=none
+
+[ifupdown]
+managed=false
+
+[device]
+wifi.scan-rand-mac-address=no
+
+[keyfile]
+unmanaged-devices=interface-name:eth0;interface-name:usb0
+"""
+
+
 def configure_network_manager() -> bool:
     """
     Ensures NetworkManager.conf has dns=none in [main] and the unmanaged-devices entry in [keyfile],
@@ -758,20 +774,8 @@ def configure_network_manager() -> bool:
     result = run_command(f"test -f {file_path} && cat {file_path}", check=False)
     if result.returncode != 0:
         # File doesn't exist, create with template
-        content = """[main]
-plugins=ifupdown,keyfile
-dns=none
-
-[ifupdown]
-managed=false
-
-[device]
-wifi.scan-rand-mac-address=no
-
-[keyfile]
-unmanaged-devices=interface-name:eth0;interface-name:usb0
-"""
-        return run_command(f"echo '{content}' | sudo tee {file_path}", check=False).returncode == 0
+        tee = run_command(f"echo '{NETWORK_MANAGER_CONF_TEMPLATE}' | sudo tee {file_path}", check=False)
+        return tee.returncode == 0
 
     # "interface:" is not a NetworkManager device spec, so earlier versions wrote an entry that was ignored.
     # Only that line is rewritten, so the user's comments and layout are kept. NetworkManager keys are case-sensitive.
@@ -962,7 +966,10 @@ def select_patches(host_cpu: CpuType, host_os: HostOs) -> List[Tuple[str, Callab
             ]
         )
     if host_os == HostOs.Bookworm:
-        patches_to_apply.extend([("wpa", fix_wpa_service), ("networkmanager", configure_network_manager)])
+        patches_to_apply.append(("wpa", fix_wpa_service))
+    # Trixie keeps wpa_supplicant as the NetworkManager-driven D-Bus service, so it has no wpa patch
+    if host_os in [HostOs.Bookworm, HostOs.Trixie]:
+        patches_to_apply.append(("networkmanager", configure_network_manager))
     return patches_to_apply
 
 

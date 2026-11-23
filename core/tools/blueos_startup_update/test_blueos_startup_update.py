@@ -940,6 +940,7 @@ PATCHES_FOR_CPU = {
 PATCHES_FOR_OS = {
     HostOs.Bullseye: [],
     HostOs.Bookworm: ["wpa", "networkmanager"],
+    HostOs.Trixie: ["networkmanager"],
     HostOs.Other: [],
 }
 
