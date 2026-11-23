@@ -92,22 +92,24 @@ COPY --parents \
     /home/pi/
 RUN /home/pi/tools/install-system-tools.sh
 
-# Copy binaries and necessary folders from download-binaries to this stage
-COPY --from=download-binaries \
-    /usr/bin/blueos_startup_update.py \
-    /usr/bin/blueos-recorder \
-    /usr/bin/bridges \
-    /usr/bin/disktest \
-    /usr/bin/linux2rest \
-    /usr/bin/machineid-cli \
-    /usr/bin/mavlink2rest \
-    /usr/bin/mavlink-camera-manager \
-    /usr/bin/mavlink-server \
-    /usr/bin/mcap \
-    /usr/bin/mcap-foxglove-video-extract \
-    /usr/bin/zenoh \
-    /usr/bin/ttyd \
-    /usr/bin/
+# One layer per binary. Keep this order, do not sort it alphabetically: it follows how often the corresponding
+# tools/ directory changes (git log, least often first). A release usually changes only a few, and a pull
+# re-downloads from the first changed one. To check or update the order, rank the directories by commits since
+# 2025-06 (the binary names differ from the directory names for recorder, mcap-extractor and machineid):
+#   for d in tools/*/; do echo "$(git log --since=2025-06-01 --oneline -- $d | wc -l) $d"; done | sort -n
+COPY --from=download-binaries /usr/bin/ttyd /usr/bin/
+COPY --from=download-binaries /usr/bin/bridges /usr/bin/
+COPY --from=download-binaries /usr/bin/disktest /usr/bin/
+COPY --from=download-binaries /usr/bin/machineid-cli /usr/bin/
+COPY --from=download-binaries /usr/bin/mcap /usr/bin/
+COPY --from=download-binaries /usr/bin/zenoh /usr/bin/
+COPY --from=download-binaries /usr/bin/blueos-recorder /usr/bin/
+COPY --from=download-binaries /usr/bin/mcap-foxglove-video-extract /usr/bin/
+COPY --from=download-binaries /usr/bin/mavlink2rest /usr/bin/
+COPY --from=download-binaries /usr/bin/linux2rest /usr/bin/
+COPY --from=download-binaries /usr/bin/mavlink-server /usr/bin/
+COPY --from=download-binaries /usr/bin/mavlink-camera-manager /usr/bin/
+COPY --from=download-binaries /usr/bin/blueos_startup_update.py /usr/bin/
 
 COPY --from=install-services-and-libs /home/pi/.venv /usr/blueos/venv
 
@@ -165,14 +167,14 @@ COPY ./.vscode /home/pi/.vscode
 COPY --exclude=ardupilot_tools --exclude=filebrowser --exclude=logviewer --exclude=scripts \
     --exclude=swagger_ui --exclude=wifi --exclude=install-system-tools.sh tools /home/pi/tools
 
-# Libs and services code
-COPY libs /home/pi/libs
 # An --exclude entry without a matching path in the early COPY would drop that tool from the image silently.
 RUN --mount=type=bind,source=tools,target=/context-tools \
     for tool in /context-tools/*; do \
         [ -e "/home/pi/tools/$(basename "$tool")" ] || { echo "$tool is in neither tools COPY"; exit 1; }; \
     done
 
+# Libs and services code
+COPY libs /home/pi/libs
 COPY services /home/pi/services
 
 # The .pth files written in the install-services-and-libs stage point at libs/<name>/src.
