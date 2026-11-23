@@ -198,12 +198,30 @@ def boot_config_get_available_section(config_content: List[str]) -> List[str]:
     return section
 
 
+def boot_config_shares_sections_between_boards() -> bool:
+    # One config.txt serves every board on Trixie, so a board must not touch the other boards' sections
+    return get_host_os() == HostOs.Trixie
+
+
 def boot_config_filter_conflicting_configuration_at_section(
-    config_content: List[str], config_pattern_match: str, config: str, section_name: str
+    config_content: List[str],
+    config_pattern_match: str,
+    config: str,
+    section_name: str,
+    keep_other_board_sections: bool = False,
 ) -> List[str]:
     regex_flags = re.IGNORECASE | re.DOTALL | re.MULTILINE
 
     (section_start, section_end) = boot_config_get_or_append_section(config_content, section_name)
+
+    def in_other_board_section(index: int) -> bool:
+        # Filters such as [HDMI:0] or [gpio4=1] are headers too, and are not boards
+        headers = [
+            header["name"].lower()
+            for line in config_content[: index + 1]
+            if (header := re.match(r"^\[(?P<name>[^\]]+)\]", line))
+        ]
+        return bool(headers) and headers[-1] in {"pi3", "pi4", "pi5"} - {section_name.lower()}
 
     return [
         line
@@ -211,6 +229,8 @@ def boot_config_filter_conflicting_configuration_at_section(
         if (
             # If it's not protected
             re.match(f"^.*#.*{CONFIG_USER_PROTECTION_WORD}.*$", line, regex_flags)
+            # Or it belongs to another board that shares this config.txt
+            or (keep_other_board_sections and in_other_board_section(i))
             # Then remove the conflicting configuration...
             or not (
                 re.match(config_pattern_match, line, regex_flags)
@@ -566,7 +586,11 @@ def update_dwc2() -> bool:
 
     # Remove any unprotected and conflicting dwc2 overlay configuration
     config_content = boot_config_filter_conflicting_configuration_at_section(
-        config_content, dwc2_overlay_match_pattern, dwc2_overlay_config, section_name
+        config_content,
+        dwc2_overlay_match_pattern,
+        dwc2_overlay_config,
+        section_name,
+        boot_config_shares_sections_between_boards(),
     )
     boot_config_normalize_section_order(config_content, section_name, managed_entries)
 
@@ -625,7 +649,7 @@ def update_navigator_overlays() -> bool:
     for (config, config_match_pattern) in navigator_configs_with_match_patterns:
         # Remove any unprotected and conflicting configuration of peripherals
         config_content = boot_config_filter_conflicting_configuration_at_section(
-            config_content, config_match_pattern, config, section_name
+            config_content, config_match_pattern, config, section_name, boot_config_shares_sections_between_boards()
         )
 
     boot_config_normalize_section_order(config_content, section_name, managed_entries)
