@@ -69,6 +69,7 @@ export async function fetchConsolidatedManifests(): Promise<ExtensionData[]> {
   const response = await back_axios({
     method: 'get',
     url: `${KRAKEN_API_V2_URL}/manifest/consolidated`,
+    params: { readme: false },
     timeout: 25000,
   })
 
