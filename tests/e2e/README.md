@@ -68,3 +68,12 @@ Here is an example of how to use the interactive prompt:
 
 Per-run files (disk overlay, `qemu.pid`, `serial.log`, `startup.json`) are in `.run/`. Changes made inside the VM are
 lost when it stops.
+
+## Run the frontend tests on the VM
+
+The tests expect a Navigator by default. `E2E_BOARD=none` is for the VM, which has no board, so the tests set up SITL:
+
+```bash
+cd tests/e2e
+E2E_BOARD=none uv run --env-file .env python -m targets.sil -- bun --cwd ../../e2e e2e
+```
