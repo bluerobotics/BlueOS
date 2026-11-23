@@ -1,3 +1,4 @@
+# syntax=docker/dockerfile:1.20@sha256:26147acbda4f14c5add9946e2fd2ed543fc402884fd75146bd342a7f6271dc1d
 # Override with --build-arg BASE_IMAGE=blueos-base:dev for local builds
 ARG BASE_IMAGE=bluerobotics/blueos-base:0.2.6
 
@@ -32,21 +33,29 @@ ADD https://astral.sh/uv/install.sh /uv-installer.sh
 RUN sh /uv-installer.sh && rm /uv-installer.sh
 ENV PATH="/root/.local/bin/:$PATH"
 
-# Project files
+# Project files. Services are virtual projects (package = false) and run from
+# /home/pi/services in the final image, so only their metadata is required to
+# resolve dependencies. Copying the source would rebuild this environment on
+# every service edit, and the vehicle would re-download the whole virtualenv.
 COPY ./uv.lock /home/pi/uv.lock
 COPY ./pyproject.toml /home/pi/pyproject.toml
 COPY ./.python-version /home/pi/.python-version
 
-COPY ./libs /home/pi/libs
-COPY ./services /home/pi/services
-
-COPY ./tools /home/pi/tools
+COPY --parents libs/*/pyproject.toml /home/pi/
+COPY --parents services/*/pyproject.toml /home/pi/
 
 # Virtual environment creation and packages installation
 WORKDIR /home/pi
-RUN uv venv && uv sync --frozen --no-default-groups
+RUN uv venv && uv sync --frozen --no-default-groups --no-install-workspace \
+    && SITE_PACKAGES=$(.venv/bin/python -c 'import sysconfig; print(sysconfig.get_path("purelib"))') \
+    && for lib in libs/*/; do \
+        name=$(basename "$lib"); \
+        printf '%s\n' "/home/pi/libs/$name/src" > "$SITE_PACKAGES/$name.pth"; \
+    done
 
-# Post install scripts
+# Post install scripts. Kept after the sync so a tool-script edit does not
+# redo the dependency install above.
+COPY --parents tools/ardupilot_tools tools/install-python-libs.sh /home/pi/
 RUN BLUEOS_PYTHON_ENVS="/home/pi/.venv" /home/pi/tools/install-python-libs.sh
 
 # Reset default workdir
@@ -86,6 +95,11 @@ RUN /home/pi/tools/install-system-tools.sh
 # Copy libs and services code
 COPY libs /home/pi/libs
 COPY services /home/pi/services
+
+# The venv's .pth files point at libs/<name>/src. Fail the build if a lib uses another layout.
+RUN for lib in /home/pi/libs/*/; do \
+        [ -d "${lib}src" ] || { echo "${lib} has no src directory"; exit 1; }; \
+    done
 
 # Set tmux configuration file
 COPY configuration/tmux.conf /etc/tmux.conf
