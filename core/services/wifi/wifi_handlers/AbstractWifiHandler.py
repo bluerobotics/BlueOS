@@ -1,4 +1,6 @@
 import abc
+import asyncio
+import functools
 from argparse import ArgumentParser, Namespace
 from typing import List, Optional
 
@@ -13,6 +15,12 @@ from typedefs import (
     WifiStatus,
 )
 from wifi_handlers.wpa_supplicant.wpa_supplicant import WPASupplicant
+
+
+@functools.cache
+def _country_lock() -> asyncio.Lock:
+    # Created on first use, so it binds to the running loop and not to whichever one exists at import
+    return asyncio.Lock()
 
 
 class AbstractWifiManager:
@@ -105,6 +113,33 @@ class AbstractWifiManager:
     @abc.abstractmethod
     def is_smart_hotspot_enabled(self) -> bool:
         return self._settings_manager.settings.smart_hotspot_enabled is True
+
+    async def set_country(self, code: str) -> None:
+        # A failure restores the previous country, which overlapping requests would mix up
+        async with _country_lock():
+            await self._apply_country(code)
+
+    async def _apply_country(self, code: str) -> None:
+        # Choosing a country implies the user wants the radio on, as raspi-config does
+        await self.rfkill_unblock()
+        await radio.set_country(code)
+        previous_country = self._settings_manager.settings.regulatory_country
+        if previous_country == code:
+            return
+        self._settings_manager.settings.regulatory_country = code
+        try:
+            self._settings_manager.save()
+        except Exception:
+            # Or a later unrelated save would persist a country the request failed to apply
+            self._settings_manager.settings.regulatory_country = previous_country
+            raise
+
+    async def apply_saved_country(self) -> None:
+        # Never forcing a default: the country can already have been set by the user outside of BlueOS
+        saved_country = self._settings_manager.settings.regulatory_country
+        # Skipping when it is already active also avoids rewriting wpa_supplicant.conf on every boot
+        if saved_country is not None and await radio.current_country() != saved_country:
+            await self.set_country(saved_country)
 
     async def rfkill_status(self) -> RfkillStatus:
         return await radio.rfkill_status()

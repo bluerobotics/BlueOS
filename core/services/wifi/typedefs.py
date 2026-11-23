@@ -14,6 +14,16 @@ class RfkillStatus(BaseModel):
     hard_blocked: bool
 
 
+class Country(BaseModel):
+    code: str
+    name: str
+    max_power_dbm: int
+
+
+class RegulatoryCountry(BaseModel):
+    code: str
+
+
 class WifiStatus(BaseModel):
     bssid: Optional[str] = None
     freq: Optional[str] = None

@@ -1,3 +1,4 @@
+import importlib
 import sys
 from ipaddress import IPv4Address
 from pathlib import Path
@@ -17,6 +18,7 @@ _STUBBED = (
     "settings",
     "commonwealth",
     "commonwealth.utils",
+    "commonwealth.utils.commands",
     "commonwealth.utils.DHCPServerManager",
     "commonwealth.utils.general",
     "commonwealth.settings",
@@ -24,9 +26,13 @@ _STUBBED = (
     "commonwealth.settings.settings",
     "fastapi",
 )
+# radio needs the real one
+_commands = importlib.import_module("commonwealth.utils.commands")
+
 _previous = {name: sys.modules.get(name) for name in _STUBBED}
 for name in _STUBBED:
     sys.modules[name] = MagicMock()
+sys.modules["commonwealth.utils.commands"] = _commands
 
 import pytest
 from wifi_handlers.wpa_supplicant.Hotspot import HotspotManager
