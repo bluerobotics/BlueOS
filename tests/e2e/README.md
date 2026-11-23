@@ -36,7 +36,7 @@ Build the core image from this checkout and point the tests to it:
 ```bash
 docker build --platform linux/amd64 \
   --build-arg GIT_DESCRIBE_TAGS=$(git describe --tags --long --always) \
-  --build-arg VITE_APP_GIT_DESCRIBE=$(git describe --long --always --dirty --all) \
+  --build-arg GIT_COMMIT_DATE=$(git log -1 --format=%cI) \
   --tag blueos-core:dev --file core/Dockerfile core
 ```
 
