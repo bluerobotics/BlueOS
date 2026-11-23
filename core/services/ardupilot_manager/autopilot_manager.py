@@ -1,3 +1,4 @@
+# pylint: disable=too-many-lines
 import asyncio
 import os
 import pathlib
@@ -43,6 +44,8 @@ from typedefs import (
 
 class AutoPilotManager(metaclass=Singleton):
     # pylint: disable=too-many-instance-attributes
+    HEARTBEAT_BURST_MAX_RETRIES = 12
+
     def __init__(self) -> None:
         self._settings_manager: PydanticManager[SettingsV1] = PydanticManager(SERVICE_NAME, SettingsV1)
         self._settings_manager.settings.create_app_folders()
@@ -50,6 +53,8 @@ class AutoPilotManager(metaclass=Singleton):
         self._serial: Optional[SerialById] = None
         self._serial_absence_reported = False
         self._serial_paths: Set[str] = set()
+        self._heartbeat_burst_pending = False
+        self._heartbeat_burst_retries = 0
         self.should_be_running = False
         self._lifecycle_lock = asyncio.Lock()
         self.mavlink_manager = MavlinkManager()
@@ -170,6 +175,7 @@ class AutoPilotManager(metaclass=Singleton):
         self._serial = None
         self._serial_paths = set()
         self._serial_absence_reported = False
+        self._heartbeat_burst_pending = False
 
         self.should_be_running = False
         self.remove_old_logs()
@@ -284,12 +290,19 @@ class AutoPilotManager(metaclass=Singleton):
             # Looking for the board is blocking I/O
             left, moved_board = await asyncio.to_thread(self._locate_serial_board)
             if left:
-                await self._follow_serial_board_locked(moved_board)
-                return
-            self._serial_absence_reported = False
-            if not await mavlink_manager.is_running():
-                logger.warning("Mavlink router stopped. Trying to restart it.")
-                await mavlink_manager.restart()
+                if not await self._follow_serial_board_locked(moved_board) or moved_board is None:
+                    return
+                self._arm_heartbeat_burst(moved_board)
+            else:
+                self._serial_absence_reported = False
+                if not await mavlink_manager.is_running():
+                    logger.warning("Mavlink router stopped. Trying to restart it.")
+                    await mavlink_manager.restart()
+                    if self._current_board is not None:
+                        self._arm_heartbeat_burst(self._current_board)
+        # The burst waits on mavlink2rest, up to its timeout, so it does not hold the lock
+        if self._heartbeat_burst_pending:
+            await self._retry_heartbeat_burst()
 
     def _locate_serial_board(self) -> Tuple[bool, Optional[FlightController]]:
         # A serial board that reboots or reconnects behind our back re-enumerates on a new device path while the
@@ -511,9 +524,35 @@ class AutoPilotManager(metaclass=Singleton):
         master_endpoint = self._serial_master_endpoint(board)
         await self._set_serial_board(board)
         await self.start_mavlink_manager(master_endpoint)
-        if "px4" in board.name.lower():
-            # PX4 needs at least one initial heartbeat to start sending data
+        await self._wake_up_px4(board)
+
+    async def _wake_up_px4(self, board: FlightController) -> None:
+        # PX4 needs at least one initial heartbeat to start sending data. It stays pending until the vehicle is
+        # heard, so the router watchdog repeats it: a request that went through does not mean PX4 received it
+        self._arm_heartbeat_burst(board)
+        if self._heartbeat_burst_pending:
+            await self._burst_heartbeat()
+
+    def _arm_heartbeat_burst(self, board: FlightController) -> None:
+        self._heartbeat_burst_pending = self._is_px4(board)
+        self._heartbeat_burst_retries = 0
+
+    async def _retry_heartbeat_burst(self) -> None:
+        if await self.vehicle_manager.is_heart_beating():
+            self._heartbeat_burst_pending = False
+            return
+        if self._heartbeat_burst_retries >= self.HEARTBEAT_BURST_MAX_RETRIES:
+            self._heartbeat_burst_pending = False
+            logger.warning("The vehicle did not answer the initial heartbeats, giving up on them.")
+            return
+        self._heartbeat_burst_retries += 1
+        await self._burst_heartbeat()
+
+    async def _burst_heartbeat(self) -> None:
+        try:
             await self.vehicle_manager.burst_heartbeat()
+        except Exception as error:
+            logger.warning(f"Could not send the initial heartbeats: {error}")
 
     def set_sitl_frame(self, frame: SITLFrame) -> None:
         self.current_sitl_frame = frame

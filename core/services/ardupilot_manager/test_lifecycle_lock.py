@@ -48,6 +48,7 @@ def fixture_manager(lifecycle: Lifecycle) -> Iterator[AutoPilotManager]:
     manager._serial_absence_reported = False
     manager._serial_paths = set()
     manager.autopilot_default_endpoints = []
+    manager._heartbeat_burst_pending = False
     manager._settings_manager = MagicMock()
     manager.firmware_manager = AsyncMock()
     manager.mavlink_manager = MagicMock(
@@ -525,7 +526,7 @@ async def test_setup_forgets_the_absence_of_the_serial_board(
 ) -> None:
     node = dev.node("ttyACM0")
     serial_board_on(manager, lifecycle, pixhawk_at(node), dev.link(node))
-    manager._serial_absence_reported = True
+    manager._serial_absence_reported = manager._heartbeat_burst_pending = True
     manager.mavlink_manager.stop = AsyncMock()  # type: ignore[method-assign]
 
     with (
@@ -545,6 +546,7 @@ async def test_setup_forgets_the_absence_of_the_serial_board(
 
     assert not manager._serial_absence_reported
     assert manager._serial is None
+    assert not manager._heartbeat_burst_pending
 
 
 async def test_router_watchdog_does_not_move_stopped_serial_board(
@@ -608,3 +610,106 @@ async def test_start_serial_looks_up_the_by_id_link_each_time(
 def test_serial_master_endpoint_needs_a_path() -> None:
     with pytest.raises(ValueError):
         AutoPilotManager._serial_master_endpoint(FlightController(name="Pixhawk1", platform=Platform.Pixhawk1))
+
+
+PX4 = "PX4 FMU v2.x"  # What PX4 reports as USB product, identified as a Pixhawk1
+
+
+@pytest.mark.parametrize("board_name, bursts", [(PX4, 1), ("Pixhawk1", 0)])
+async def test_router_watchdog_wakes_up_moved_px4_board(
+    manager: AutoPilotManager, lifecycle: Lifecycle, dev: SerialBoards, board_name: str, bursts: int
+) -> None:
+    old = dev.node("ttyACM0")
+    router = serial_board_on(manager, lifecycle, pixhawk_at(old, board_name), dev.link(old))
+    manager.vehicle_manager = AsyncMock()
+    manager.vehicle_manager.is_heart_beating.return_value = False
+    Path(old).unlink()
+    dev.link(dev.node("ttyACM1"))
+
+    await manager._restart_router_if_dead()
+
+    assert router.restarts == 1
+    assert manager.vehicle_manager.burst_heartbeat.await_count == bursts
+
+
+@pytest.mark.parametrize("board_name, bursts", [(PX4, 1), ("Pixhawk1", 0)])
+async def test_router_watchdog_wakes_up_px4_board_after_restarting_on_the_same_path(
+    manager: AutoPilotManager, lifecycle: Lifecycle, dev: SerialBoards, board_name: str, bursts: int
+) -> None:
+    node = dev.node("ttyACM0")
+    router = serial_board_on(manager, lifecycle, pixhawk_at(node, board_name), dev.link(node))
+    router.running = False
+    manager.vehicle_manager = AsyncMock()
+    manager.vehicle_manager.is_heart_beating.return_value = False
+    locked_while_bursting = []
+
+    async def burst() -> None:
+        locked_while_bursting.append(manager._lifecycle_lock.locked())
+
+    manager.vehicle_manager.burst_heartbeat = burst
+
+    await manager._restart_router_if_dead()
+
+    assert router.restarts == 1
+    assert locked_while_bursting == [False] * bursts
+
+
+async def test_router_watchdog_repeats_px4_wake_up_until_the_vehicle_is_heard(
+    manager: AutoPilotManager, lifecycle: Lifecycle, dev: SerialBoards
+) -> None:
+    node = dev.node("ttyACM0")
+    router = serial_board_on(manager, lifecycle, pixhawk_at(node, PX4), dev.link(node))
+    router.running = False
+    manager.vehicle_manager = AsyncMock()
+    manager.vehicle_manager.burst_heartbeat.side_effect = [RuntimeError("mavlink2rest is not up yet"), None]
+    manager.vehicle_manager.is_heart_beating.side_effect = [False, False, True]
+
+    await manager._restart_router_if_dead()  # restarts, the burst fails
+    await manager._restart_router_if_dead()  # still silent, bursts again
+    await manager._restart_router_if_dead()  # heard, done
+    await manager._restart_router_if_dead()
+
+    assert router.restarts == 1
+    assert manager.vehicle_manager.burst_heartbeat.await_count == 2
+    assert manager.vehicle_manager.is_heart_beating.await_count == 3
+    assert not manager._heartbeat_burst_pending
+
+
+async def test_px4_wake_up_gives_up_on_a_silent_vehicle_until_requested_again(
+    manager: AutoPilotManager, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setattr(AutoPilotManager, "HEARTBEAT_BURST_MAX_RETRIES", 3)
+    manager.vehicle_manager = AsyncMock()
+    manager.vehicle_manager.is_heart_beating.return_value = False
+    bursts = manager.vehicle_manager.burst_heartbeat
+
+    await manager._wake_up_px4(pixhawk_at("/dev/ttyACM0", PX4))
+    for _ in range(5):
+        await manager._retry_heartbeat_burst()
+
+    assert bursts.await_count == 1 + 3
+    assert not manager._heartbeat_burst_pending
+
+    await manager._wake_up_px4(pixhawk_at("/dev/ttyACM0", PX4))
+    await manager._retry_heartbeat_burst()
+    assert bursts.await_count == 1 + 3 + 1 + 1
+    assert manager._heartbeat_burst_pending
+
+
+async def test_px4_wake_up_retry_does_not_hold_the_lifecycle_lock(
+    manager: AutoPilotManager, lifecycle: Lifecycle, dev: SerialBoards
+) -> None:
+    node = dev.node("ttyACM0")
+    serial_board_on(manager, lifecycle, pixhawk_at(node, PX4), dev.link(node))
+    manager._heartbeat_burst_pending = True
+    manager.vehicle_manager = AsyncMock()
+    locked_while_waiting = []
+
+    async def is_heart_beating() -> bool:
+        locked_while_waiting.append(manager._lifecycle_lock.locked())
+        return True
+
+    manager.vehicle_manager.is_heart_beating = is_heart_beating
+    await manager._restart_router_if_dead()
+
+    assert locked_while_waiting == [False]
