@@ -13,6 +13,7 @@
     "serve": "echo 'This is a preview server for testing the built website. Please use `dev` command over `serve`.\nStarting preview server in 5 seconds..\n';sleep 5; vite preview",
     "lint": "eslint --max-warnings=0 --ext .js,.vue --ignore-path .gitignore --ignore-pattern src/components/vue-tour src && stylelint 'src/**/*.{vue,css,scss}'",
     "type-check": "bun run i18n:json && vue-tsc --noEmit --pretty false | tsc-baseline --ignoreMessages check",
+    "test": "bun test ./tests",
     "type-check:baseline": "bun run i18n:json && vue-tsc --noEmit --pretty false | tsc-baseline --ignoreMessages save",
     "lint:css": "stylelint 'src/**/*.{vue,css,scss}'",
     "lint:css:fix": "stylelint 'src/**/*.{vue,css,scss}' --fix",
