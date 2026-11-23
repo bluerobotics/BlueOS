@@ -129,6 +129,10 @@ COPY --from=download-binaries \
 
 # Copy frontend built on frontend-builder to this stage
 COPY --from=frontend-builder /home/pi/frontend/dist /home/pi/frontend
+
+# Served by nginx as /blueos-version: GIT_DESCRIBE_TAGS, then the commit date.
+ARG GIT_COMMIT_DATE
+RUN printf '%s\n%s\n' "$GIT_DESCRIBE_TAGS" "$GIT_COMMIT_DATE" > /home/pi/frontend/blueos-version
 COPY --from=install-services-and-libs /home/pi/.venv /usr/blueos/venv
 
 RUN <<-EOF
