@@ -261,8 +261,10 @@ class Extension:
             async for line in client.images.pull(
                 tag, repo=self.source.docker, tag=self.tag, auth=docker_auth, stream=True
             ):
-                # TODO - Plug Error detection from docker image here
                 yield json.dumps(line).encode("utf-8")
+                # Docker reports pull errors in-band and still ends the stream normally
+                if error := line.get("error") or (line.get("errorDetail", {}) or {}).get("message"):
+                    raise RuntimeError(str(error))
             # Make sure to add correct tag if a digest was used since docker messes up the tag
             if self.digest:
                 await client.images.tag(tag, f"{self.source.docker}:{self.tag}")
