@@ -77,6 +77,8 @@ async def streamer(gen: AsyncGenerator[str | bytes, None], heartbeats: float = -
         finally:
             if heartbeat_task:
                 heartbeat_task.cancel()
+                # so no late heartbeat can land after the end-of-stream marker
+                await asyncio.gather(heartbeat_task, return_exceptions=True)
             await queue.put(None)
 
     asyncio.create_task(generator_wrapper(gen, queue))

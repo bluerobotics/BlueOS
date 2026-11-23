@@ -3,7 +3,7 @@ from typing import AsyncGenerator
 
 import pytest
 
-from commonwealth.utils.streaming import idle_timeout
+from commonwealth.utils.streaming import idle_timeout, streamer
 
 pytestmark = pytest.mark.asyncio
 
@@ -50,3 +50,15 @@ async def test_idle_timeout_closes_inner_generator() -> None:
     await anext(gen)
     await gen.aclose()
     assert closed == [True]
+
+
+async def test_streamer_heartbeats_stop_before_the_end_of_stream() -> None:
+    async def pulls() -> AsyncGenerator[bytes, None]:
+        for _ in range(2):
+            await asyncio.sleep(0.05)
+            yield b"pull"
+
+    lines = [line async for line in streamer(pulls(), heartbeats=0.01)]
+    assert any('"fragment": -1' in line for line in lines)
+    assert '"fragment": 1' in lines[-1]
+    assert not [task for task in asyncio.all_tasks() if "send_heartbeat" in repr(task)]
