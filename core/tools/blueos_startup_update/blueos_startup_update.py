@@ -10,7 +10,7 @@ import shlex
 import subprocess
 import time
 from pathlib import Path
-from typing import List, Optional, Tuple
+from typing import Callable, List, Optional, Tuple
 
 import appdirs
 from commonwealth.utils.commands import load_file, locate_file, run_command, save_file
@@ -931,34 +931,7 @@ def locate_boot_file(candidates: List[str]) -> Optional[str]:
     return located
 
 
-def main() -> int:
-    start = time.time()
-    # check if boot_loop_detector exists
-    if os.path.isfile(BOOT_LOOP_DETECTOR):
-        logger.warning("It seems we the startup patches were just applied on the last boot. skipping patches...")
-        return
-    current_git_version = os.getenv("GIT_DESCRIBE_TAGS")
-    match = re.match(r"(?P<tag>.*)-(?P<commit_number>\d+)-(?P<commit_hash>[a-z0-9]+)", current_git_version)
-    tag, commit_number, commit_hash = match["tag"], match["commit_number"], match["commit_hash"]
-    logger.info(f"Running BlueOS: {tag=}, {commit_number=}, {commit_hash=}")
-    # pylint: disable=global-statement
-    global config_file
-    global cmdline_file
-    config_file = locate_boot_file(["/boot/firmware/config.txt", "/boot/config.txt"])
-    logger.info(f"config.txt found at {config_file}")
-    cmdline_file = locate_boot_file(["/boot/firmware/cmdline.txt", "/boot/cmdline.txt"])
-    logger.info(f"cmdline.txt found at {cmdline_file}")
-
-    if not run_command_is_working():
-        logger.error("Critical error: Something is wrong with the host computer, run_command is not working.")
-        logger.error("Ignoring host computer configuration for now.")
-        return 0
-
-    host_os = get_host_os()
-    logger.info(f"Host OS: {host_os}")
-    host_cpu = get_cpu_type()
-    logger.info(f"Host CPU: {host_cpu}")
-
+def select_patches(host_cpu: CpuType, host_os: HostOs) -> List[Tuple[str, Callable[[], bool]]]:
     # TODO: parse tag as semver and check before applying patches
     patches_to_apply = [
         ("startup", update_startup),
@@ -990,6 +963,38 @@ def main() -> int:
         )
     if host_os == HostOs.Bookworm:
         patches_to_apply.extend([("wpa", fix_wpa_service), ("networkmanager", configure_network_manager)])
+    return patches_to_apply
+
+
+def main() -> int:
+    start = time.time()
+    # check if boot_loop_detector exists
+    if os.path.isfile(BOOT_LOOP_DETECTOR):
+        logger.warning("It seems we the startup patches were just applied on the last boot. skipping patches...")
+        return
+    current_git_version = os.getenv("GIT_DESCRIBE_TAGS")
+    match = re.match(r"(?P<tag>.*)-(?P<commit_number>\d+)-(?P<commit_hash>[a-z0-9]+)", current_git_version)
+    tag, commit_number, commit_hash = match["tag"], match["commit_number"], match["commit_hash"]
+    logger.info(f"Running BlueOS: {tag=}, {commit_number=}, {commit_hash=}")
+    # pylint: disable=global-statement
+    global config_file
+    global cmdline_file
+    config_file = locate_boot_file(["/boot/firmware/config.txt", "/boot/config.txt"])
+    logger.info(f"config.txt found at {config_file}")
+    cmdline_file = locate_boot_file(["/boot/firmware/cmdline.txt", "/boot/cmdline.txt"])
+    logger.info(f"cmdline.txt found at {cmdline_file}")
+
+    if not run_command_is_working():
+        logger.error("Critical error: Something is wrong with the host computer, run_command is not working.")
+        logger.error("Ignoring host computer configuration for now.")
+        return 0
+
+    host_os = get_host_os()
+    logger.info(f"Host OS: {host_os}")
+    host_cpu = get_cpu_type()
+    logger.info(f"Host CPU: {host_cpu}")
+
+    patches_to_apply = select_patches(host_cpu, host_os)
 
     logger.info("The following patches will be applied if needed:")
     for name, patch in patches_to_apply:

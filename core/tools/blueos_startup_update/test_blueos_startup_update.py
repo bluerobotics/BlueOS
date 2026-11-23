@@ -25,7 +25,7 @@ exec(  # pylint: disable=exec-used
     compile(MODULE_PATH.read_text(encoding="utf-8"), str(MODULE_PATH), "exec"), blueos_startup_update.__dict__
 )
 
-from commonwealth.utils.general import CpuType
+from commonwealth.utils.general import CpuType, HostOs
 
 
 class Distribution(NamedTuple):
@@ -918,3 +918,34 @@ def test_network_manager_conf_keys_are_case_sensitive_for_the_migration() -> Non
 
     assert not changed
     assert not written
+
+
+PATCHES_FOR_EVERY_HOST = [
+    "startup",
+    "userdata",
+    "nginx",
+    "dns",
+    "ssh",
+    "noIPV6",
+    "swap",
+    "cgroups",
+    "dhcpcd_wait",
+]
+PATCHES_FOR_CPU = {
+    CpuType.PI3: ["revert_update_dwc2", "clean_config_pi3"],
+    CpuType.PI4: ["navigator", "dwc2", "i2c4"],
+    CpuType.PI5: ["navigator", "dwc2", "i2c4"],
+    CpuType.Other: [],
+}
+PATCHES_FOR_OS = {
+    HostOs.Bullseye: [],
+    HostOs.Bookworm: ["wpa", "networkmanager"],
+    HostOs.Other: [],
+}
+
+
+@pytest.mark.parametrize("host_os", PATCHES_FOR_OS)
+@pytest.mark.parametrize("host_cpu", PATCHES_FOR_CPU)
+def test_select_patches_by_host(host_cpu: CpuType, host_os: HostOs) -> None:
+    selected = [name for name, _ in blueos_startup_update.select_patches(host_cpu, host_os)]
+    assert selected == PATCHES_FOR_EVERY_HOST + PATCHES_FOR_CPU[host_cpu] + PATCHES_FOR_OS[host_os]
