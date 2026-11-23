@@ -123,6 +123,10 @@
           nav
           dense
         >
+          <v-divider
+            v-if="i > 0 && computed_menu[i - 1].extension && !menu.extension"
+            class="my-1"
+          />
           <v-list-item-group :color="menu.new_page ? undefined : 'primary'">
             <v-list-group
               v-if="menu.submenus"
@@ -577,7 +581,10 @@ export default Vue.extend({
 
       const filteredDefaultMenu = this.menus.filter((menu) => !menu.advanced || settings.is_pirate_mode)
 
-      return [...filteredDefaultMenu, ...foundExtensions].sort((a, b) => a.title.localeCompare(b.title))
+      // Built-in entries keep the order of menus.ts; installed extensions go on top, by name.
+      foundExtensions.sort((a, b) => a.title.localeCompare(b.title))
+
+      return [...foundExtensions, ...filteredDefaultMenu] as menuItem[]
     },
     steps() {
       return [
