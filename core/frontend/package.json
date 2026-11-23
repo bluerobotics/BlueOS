@@ -12,6 +12,7 @@
     "build": "bun run i18n:json && NODE_ENV=production vite build",
     "serve": "echo 'This is a preview server for testing the built website. Please use `dev` command over `serve`.\nStarting preview server in 5 seconds..\n';sleep 5; vite preview",
     "lint": "eslint --max-warnings=0 --ext .js,.vue --ignore-path .gitignore --ignore-pattern src/components/vue-tour src",
+    "test:unit": "bun test src/components/kraken",
     "i18n:extract": "bun scripts/extract-i18n.ts",
     "i18n:json": "for po in src/i18n/*_*.po; do [ -f \"$po\" ] || continue; ttag po2json \"$po\" > \"$po.json\"; done"
   },
