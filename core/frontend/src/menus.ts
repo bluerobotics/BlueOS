@@ -42,6 +42,13 @@ const menus = [
     text: t`Visualize disk usage and delete files/folders.`,
   },
   {
+    title: t`Extensions`,
+    icon: 'mdi-puzzle',
+    route: '/tools/extensions-manager',
+    advanced: false,
+    text: t`Manage BlueOS extensions`,
+  },
+  {
     title: t`File Browser`,
     icon: 'mdi-file-tree',
     route: '/tools/file-browser',

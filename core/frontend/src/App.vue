@@ -576,18 +576,7 @@ export default Vue.extend({
 
       const filteredDefaultMenu = this.menus.filter((menu) => !menu.advanced || settings.is_pirate_mode)
 
-      const extensions: menuItem[] = [
-        {
-          title: t`Extensions`,
-          icon: 'mdi-puzzle',
-          route: '/tools/extensions-manager',
-          advanced: false,
-          text: t`Manage BlueOS extensions`,
-        },
-        ...foundExtensions,
-      ] as menuItem[]
-
-      return [...filteredDefaultMenu, ...extensions].sort((a, b) => a.title.localeCompare(b.title))
+      return [...filteredDefaultMenu, ...foundExtensions].sort((a, b) => a.title.localeCompare(b.title))
     },
     steps() {
       return [
