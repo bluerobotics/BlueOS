@@ -927,7 +927,6 @@ PATCHES_FOR_EVERY_HOST = [
     "dns",
     "ssh",
     "noIPV6",
-    "swap",
     "cgroups",
     "dhcpcd_wait",
 ]
@@ -949,7 +948,10 @@ PATCHES_FOR_OS = {
 @pytest.mark.parametrize("host_cpu", PATCHES_FOR_CPU)
 def test_select_patches_by_host(host_cpu: CpuType, host_os: HostOs) -> None:
     selected = [name for name, _ in blueos_startup_update.select_patches(host_cpu, host_os)]
-    assert selected == PATCHES_FOR_EVERY_HOST + PATCHES_FOR_CPU[host_cpu] + PATCHES_FOR_OS[host_os]
+    common = list(PATCHES_FOR_EVERY_HOST)
+    if host_os != HostOs.Trixie:
+        common.insert(PATCHES_FOR_EVERY_HOST.index("noIPV6") + 1, "swap")
+    assert selected == common + PATCHES_FOR_CPU[host_cpu] + PATCHES_FOR_OS[host_os]
 
 
 def run_ipv6_patch(host_os: HostOs, files: Dict[str, str]) -> Tuple[bool, Dict[str, str]]:

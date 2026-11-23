@@ -960,6 +960,9 @@ def select_patches(host_cpu: CpuType, host_os: HostOs) -> List[Tuple[str, Callab
         ("cgroups", update_cgroups),
         ("dhcpcd_wait", remove_dhcpcd_wait),
     ]
+    # Trixie has no dphys-swapfile, the image configures zram instead
+    if host_os == HostOs.Trixie:
+        patches_to_apply = [(name, patch) for name, patch in patches_to_apply if name != "swap"]
 
     if host_cpu == CpuType.PI3:
         patches_to_apply.extend(
