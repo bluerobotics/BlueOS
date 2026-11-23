@@ -339,20 +339,22 @@ class Extension:
 
     async def uninstall(self) -> None:
         old_settings = self.settings
-        self._save_settings()
 
         try:
             await self.remove(old_settings.container_name())
         except ContainerNotFound:
+            self._save_settings()
             # If container was not found we must try to remove the image since it will be lost
             try:
                 async with DockerCtx() as client:
                     await client.images.delete(old_settings.fullname(), force=True, noprune=False)
             except Exception:
                 pass
-        except Exception:
-            # If its other exception we should just ignore since the main loop will take care
-            pass
+        except Exception as error:
+            # The entry stays, otherwise the container is orphaned and, if it was the last one, recovery brings it back
+            logger.warning(f"Unable to remove container of {self.identifier}:{self.tag}, keeping its settings: {error}")
+        else:
+            self._save_settings()
         finally:
             if self.tag.startswith(TEMP_EXTENSION_TAG_PREFIX):
                 self.temp_extension_activity.pop(self.tag, None)
