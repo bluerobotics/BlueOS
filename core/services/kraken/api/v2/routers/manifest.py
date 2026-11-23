@@ -2,6 +2,7 @@ from functools import wraps
 from typing import Any, Callable, Tuple
 
 from fastapi import APIRouter, HTTPException, status
+from fastapi.responses import PlainTextResponse
 from fastapi_versioning import versioned_api_route
 
 from manifest import ManifestManager
@@ -82,6 +83,25 @@ async def fetch_consolidated(readme: bool = True) -> list[RepositoryEntry]:
     """
     entries = await manifest_manager.fetch_consolidated()
     return entries if readme else [entry.without_readme() for entry in entries]
+
+
+@manifest_router_v2.get(
+    "/consolidated/{extension_identifier}/{tag}/readme",
+    status_code=status.HTTP_200_OK,
+    response_class=PlainTextResponse,
+)
+@manifest_to_http_exception
+async def fetch_consolidated_readme(extension_identifier: str, tag: str) -> str:
+    """
+    Get the readme of one version of an extension from the consolidated manifests.
+    """
+    ext = await manifest_manager.fetch_extension(extension_identifier)
+    if not ext:
+        raise ExtensionEntryNotFound(f"Extension {extension_identifier} not found")
+    version = ext.versions.get(tag)
+    if not version:
+        raise ExtensionEntryNotFound(f"Version {tag} of extension {extension_identifier} not found")
+    return version.readme or ""
 
 
 @manifest_router_v2.get("/tags/{manifest_identifier}/{extension_identifier}/", status_code=status.HTTP_200_OK)
