@@ -170,6 +170,7 @@ def test_broken_settings_file_falls_back_to_defaults(settings_dir: Path, content
         "uap0": ["blueos-hotspot"],
     }
     json.loads((settings_dir / "settings-4.json").read_text(encoding="utf-8"))
+    assert len(list(settings_dir.glob("settings-4.json.invalid-*"))) == 1
 
 
 @pytest.mark.usefixtures("settings_dir")
