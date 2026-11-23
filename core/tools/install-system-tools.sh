@@ -4,6 +4,7 @@
 # Immediately exit on errors
 set -e
 
+# Keep in sync with the tools copied by the "install-system-tools" step in the Dockerfile.
 TOOLS=(
     ardupilot_tools
     filebrowser

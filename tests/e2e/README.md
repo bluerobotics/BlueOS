@@ -40,6 +40,9 @@ docker build --platform linux/amd64 \
   --tag blueos-core:dev --file core/Dockerfile core
 ```
 
+Without `GIT_DESCRIBE_TAGS` the image gets `0.0.0-999-g00000000`. The distance 999 marks a local build: the
+UI shows it as the version and never treats it as a tag build.
+
 Run it from the repository root. Then set it in `tests/e2e/.env`:
 
 ```
