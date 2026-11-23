@@ -1,5 +1,6 @@
 import asyncio
 import base64
+import contextlib
 import copy
 import hashlib
 import json
@@ -316,10 +317,13 @@ class Extension:
                 f"Failed to re-enable {running_ext.identifier}:{running_ext.tag} after pull failure: {enable_error}"
             )
 
-    async def _pull_docker_image(self, docker_auth: Optional[str]) -> AsyncGenerator[bytes, None]:
-        """Pull Docker image and yield progress updates."""
+    async def _pull_docker_image(
+        self, docker_auth: Optional[str], docker: Optional[Any] = None
+    ) -> AsyncGenerator[bytes, None]:
+        """Pull Docker image and yield progress updates, reusing `docker` when the caller already has a client."""
         tag = f"{self.source.docker}:{self.tag}" + (f"@{self.digest}" if self.digest else "")
-        async with DockerCtx() as client:
+        docker_ctx: Any = contextlib.nullcontext(docker) if docker else DockerCtx()
+        async with docker_ctx as client:
             async for line in client.images.pull(
                 tag, repo=self.source.docker, tag=self.tag, auth=docker_auth, stream=True
             ):
@@ -426,28 +430,17 @@ class Extension:
         try:
             async with DockerCtx() as client:
                 # Checks if image exists locally, if not tries to pull it
-                try:
-                    image = await client.images.inspect(img_name)
-                except Exception:
-                    try:
-                        logger.info(f"Image not found locally, going to pull extension {self.identifier}:{self.tag}")
-                        self.lock(self.unique_entry)
+                image_id = await self._local_image_id(client)
+                if image_id is None:
+                    logger.info(f"Image not found locally, going to pull extension {self.identifier}:{self.tag}")
+                    self.lock(self.unique_entry)
+                    async for _ in self._pull_docker_image(self._prepare_docker_auth(), client):
+                        pass
+                    image_id = await self._local_image_id(client)
+                    if image_id is None:
+                        raise ExtensionPullFailed(f"Image {self.identifier}:{self.tag} missing after pull")
 
-                        tag = img_name + (f"@{self.digest}" if self.digest else "")
-                        await client.images.pull(tag, repo=self.source.docker, tag=self.tag)
-                        # Make sure to add correct tag if a digest was used since docker messes up the tag
-                        if self.digest:
-                            await client.images.tag(tag, img_name)
-                    except Exception as error:
-                        raise ExtensionPullFailed(f"Failed to pull extension {self.identifier}:{self.tag}") from error
-                    try:
-                        image = await client.images.inspect(img_name)
-                    except Exception as error:
-                        raise ExtensionPullFailed(
-                            f"Failed to inspect pulled extension {self.identifier}:{self.tag}"
-                        ) from error
-
-                container = await Extension._start_or_create(client, ext.container_name(), config, image["Id"])
+                container = await Extension._start_or_create(client, ext.container_name(), config, image_id)
                 # If the container is already running, this returns 304 Not Modified
                 await container.start()
                 logger.info(f"Extension {self.identifier}:{self.tag} started")
