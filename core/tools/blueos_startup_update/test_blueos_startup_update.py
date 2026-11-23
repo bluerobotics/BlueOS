@@ -1117,3 +1117,56 @@ def test_ipv6_sysctl_conf_stays_required_before_trixie() -> None:
         run_ipv6_patch(HostOs.Bookworm, {})
     needs_restart, files = run_ipv6_patch(HostOs.Bookworm, {"/etc/sysctl.conf": ""})
     assert needs_restart and "/etc/sysctl.d/99-blueos.conf" not in files
+
+
+def provision_script_heredoc(tag: str) -> str:
+    provision_script = (REPOSITORY_PATH / "deploy/pimod/provision_trixie.sh").read_text(encoding="utf-8")
+    heredoc = re.search(rf"<< '{tag}'\n(.*?)\n{tag}\n", provision_script, re.DOTALL)
+    assert heredoc, f"provision_trixie.sh no longer writes the {tag} file"
+    return heredoc.group(1) + "\n"
+
+
+def test_image_provisioning_writes_the_network_manager_template() -> None:
+    assert provision_script_heredoc("CONF") == blueos_startup_update.NETWORK_MANAGER_CONF_TEMPLATE
+
+
+def test_image_provisioning_writes_what_the_ipv6_patch_requires() -> None:
+    _, files = run_ipv6_patch(HostOs.Trixie, {})
+    assert provision_script_heredoc("SYSCTL").split() == files["/etc/sysctl.d/99-blueos.conf"].split()
+    needs_restart, _ = run_ipv6_patch(
+        HostOs.Trixie, {"/etc/sysctl.d/99-blueos.conf": provision_script_heredoc("SYSCTL")}
+    )
+    assert not needs_restart, "the image would reboot once on its first boot"
+
+
+# Output of `apt-get -s purge` in a debian:trixie container. A simulated purge prints Purg, a simulated remove Remv
+APT_SIMULATED_PURGE = """Reading package lists...
+The following packages will be REMOVED:
+  cloud-init* rpi-cloud-init-mods*
+0 upgraded, 0 newly installed, 2 to remove and 0 not upgraded.
+Purg cloud-init [25.1-1]
+Purg rpi-cloud-init-mods [1.0]
+"""
+
+
+@pytest.mark.parametrize(
+    "simulation, unexpected",
+    [
+        (APT_SIMULATED_PURGE, ""),
+        (APT_SIMULATED_PURGE + "Purg netplan.io [1.1]\n", "netplan.io"),
+        (APT_SIMULATED_PURGE.replace("Purg", "Remv") + "Remv netplan.io [1.1]\n", "netplan.io"),
+        ("Reading package lists...\n", ""),
+    ],
+)
+def test_image_provisioning_purge_guard_reads_what_apt_prints(simulation: str, unexpected: str) -> None:
+    script = (REPOSITORY_PATH / "deploy/pimod/provision_trixie.sh").read_text(encoding="utf-8")
+    function = re.search(r"^unexpected_removals\(\) \{\n.*?^\}\n", script, re.DOTALL | re.MULTILINE)
+    assert function, "provision_trixie.sh no longer checks what the purge removes"
+    result = subprocess.run(
+        ["bash", "-c", f"{function.group(0)}\nunexpected_removals"],
+        input=simulation,
+        capture_output=True,
+        text=True,
+        check=True,
+    )
+    assert result.stdout.strip() == unexpected
