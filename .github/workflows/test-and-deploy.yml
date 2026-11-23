@@ -303,7 +303,7 @@ jobs:
 
       - name: Run tests
         env:
-          E2E_BOOTSTRAP_IMAGE: bluerobotics/blueos-bootstrap:master
+          E2E_BOOTSTRAP_IMAGE: bluerobotics/blueos-bootstrap:1.4-dev
         run: uv run pytest -v --log-cli-level=DEBUG
 
       - name: Upload logs
