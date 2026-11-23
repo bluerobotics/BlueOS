@@ -187,6 +187,9 @@ class Serial(BaseModel):
     --serial3 /dev/ttyAMA1
     --serial4 /dev/ttyAMA2
     --serial5 /dev/ttyAMA3
+
+    The ttyAMA numbers above are the Navigator ones on Bullseye. See AutoPilotManager.get_serials for the
+    Bookworm and Trixie ones.
     """
 
     port: str
