@@ -6,7 +6,7 @@ import {
   openPanel, OriginalBoard, restoreBoard, saveBoard, selectStableFirmware, Vehicle, waitSerialsLoaded,
 } from '@/fixtures/autopilot'
 import { openSelect } from '@/fixtures/ui'
-import { expect, preparePage, test } from '@/fixtures/vehicle'
+import { expect, expectedBoard, preparePage, test } from '@/fixtures/vehicle'
 
 let original: OriginalBoard | undefined
 
@@ -86,6 +86,7 @@ test.describe.serial('Autopilot Firmware', () => {
   })
 
   test('Scenario 4: a serial combobox lists the Navigator paths', async ({ page }) => {
+    test.skip(!expectedBoard?.startsWith('Navigator'), 'needs a Navigator')
     await openPanel(page, 'serial-configuration-panel')
     await waitSerialsLoaded(page)
     await page.getByTestId('serial-port-C').click()
