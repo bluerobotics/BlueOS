@@ -1,6 +1,9 @@
+import asyncio
 import sys
 from pathlib import Path
+from types import SimpleNamespace
 from typing import Any
+from unittest.mock import AsyncMock
 
 import pytest
 
@@ -19,6 +22,35 @@ for name, module in _saved.items():
         sys.modules.pop(name, None)
 
 pytestmark = pytest.mark.asyncio
+
+
+async def test_the_reconnect_watchdog_survives_wpa_supplicant_refusing_commands(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    manager = WifiManager.__new__(WifiManager)
+    manager.connection_status = None  # type: ignore[assignment]
+    manager._ignored_reconnection_networks = []
+    manager._settings_manager = SimpleNamespace(settings=SimpleNamespace(smart_hotspot_enabled=False))  # type: ignore
+    monkeypatch.setattr(manager, "get_current_network", AsyncMock(return_value=None))
+    enable_saved_networks = AsyncMock(side_effect=RuntimeError("FAIL"))
+    monkeypatch.setattr(manager, "enable_saved_networks", enable_saved_networks)
+    monkeypatch.setattr(manager.wpa, "send_command_reconnect", AsyncMock(side_effect=RuntimeError("FAIL")))
+    sleeps = 0
+
+    async def fake_sleep(_seconds: float) -> None:
+        nonlocal sleeps
+        sleeps += 1
+        if sleeps == 4:
+            raise asyncio.CancelledError
+
+    monkeypatch.setattr(asyncio, "sleep", fake_sleep)
+
+    with pytest.raises(asyncio.CancelledError):
+        await manager.auto_reconnect(0)
+
+    # It went through the failing watchdog pass and kept looping
+    enable_saved_networks.assert_awaited_once()
+    assert sleeps == 4
 
 
 async def test_reports_unavailable_without_a_socket() -> None:

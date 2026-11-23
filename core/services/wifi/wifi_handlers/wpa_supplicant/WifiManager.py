@@ -452,8 +452,16 @@ class WifiManager(AbstractWifiManager):
             if not networks_reenabled and seconds_disconnected >= seconds_before_reconnecting:
                 logger.debug("Watchdog activated.")
                 logger.debug("Trying to reconnect to available networks.")
-                await self.enable_saved_networks(self._ignored_reconnection_networks)
-                await self.wpa.send_command_reconnect()
+                # wpa_supplicant answers FAIL while the interface is disabled (e.g. rfkill-blocked), and an
+                # exception here would end the watchdog for good
+                try:
+                    await self.enable_saved_networks(self._ignored_reconnection_networks)
+                except Exception:
+                    logger.exception("Could not re-enable the saved networks.")
+                try:
+                    await self.wpa.send_command_reconnect()
+                except Exception:
+                    logger.exception("Could not ask wpa_supplicant to reconnect.")
                 try:
                     if self._settings_manager.settings.smart_hotspot_enabled in [None, True]:
                         logger.debug("Starting smart-hotspot.")
