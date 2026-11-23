@@ -262,7 +262,7 @@ async def finalize_extension(
     temp_extension = temp_extensions[0]
 
     # Finalize the extension
-    new_extension = await Extension.finalize_temporary_extension(temp_extension, body.identifier, body)
+    new_extension = await Extension.finalize_temporary_extension(temp_extension, body)
 
     # Install the extension
     return StreamingResponse(streamer(new_extension.install()))
