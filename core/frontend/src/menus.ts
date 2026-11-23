@@ -35,18 +35,18 @@ const menus = [
     text: t`Manage BlueOS versions and update to the latest available.`,
   },
   {
-    title: t`File Browser`,
-    icon: 'mdi-file-tree',
-    route: '/tools/file-browser',
-    advanced: true,
-    text: t`Browse all the files in BlueOS. Useful for fetching logs, tweaking configurations, and development.`,
-  },
-  {
     title: t`Disk`,
     icon: 'mdi-harddisk',
     route: '/tools/disk',
     advanced: true,
     text: t`Visualize disk usage and delete files/folders.`,
+  },
+  {
+    title: t`File Browser`,
+    icon: 'mdi-file-tree',
+    route: '/tools/file-browser',
+    advanced: true,
+    text: t`Browse all the files in BlueOS. Useful for fetching logs, tweaking configurations, and development.`,
   },
   {
     title: t`Log Browser`,
@@ -70,18 +70,18 @@ const menus = [
     text: t`View detailed MAVLink traffic coming from your vehicle.`,
   },
   {
-    title: t`NMEA Injector`,
-    icon: 'mdi-map-marker',
-    route: '/tools/nmea-injector',
-    advanced: true,
-    text: t`Used for forwarding UDP NMEA streams into ArduPilot.`,
-  },
-  {
     title: t`Network Test`,
     icon: 'mdi-speedometer',
     route: '/tools/network-test',
     show: true,
     text: t`Test link speed between topside computer and your vehicle.`,
+  },
+  {
+    title: t`NMEA Injector`,
+    icon: 'mdi-map-marker',
+    route: '/tools/nmea-injector',
+    advanced: true,
+    text: t`Used for forwarding UDP NMEA streams into ArduPilot.`,
   },
   {
     title: t`Ping Sonar Devices`,
