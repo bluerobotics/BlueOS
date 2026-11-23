@@ -4,10 +4,9 @@ import traceback
 from typing import Any, List
 
 import aiohttp
-from commonwealth.settings.manager import Manager
 from loguru import logger
 
-from config import DEFAULT_EXTENSIONS, SERVICE_NAME
+from config import DEFAULT_EXTENSIONS
 from extension.exceptions import IncompatibleExtension
 from extension.extension import Extension
 from extension.models import ExtensionSource
@@ -16,13 +15,11 @@ from jobs import JobsManager
 from jobs.models import Job, JobMethod
 from manifest import ManifestManager
 from manifest.exceptions import ManifestBackendOffline
-from settings import ExtensionSettings, SettingsV2
+from settings import ExtensionSettings
 
 
 class Kraken:
     def __init__(self) -> None:
-        self._manager: Manager = Manager(SERVICE_NAME, SettingsV2)
-        self._settings = self._manager.settings
         self.is_running = True
         self.manifest = ManifestManager.instance()
 
