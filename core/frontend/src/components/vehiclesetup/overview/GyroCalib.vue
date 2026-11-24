@@ -38,6 +38,7 @@
             v-if="ins_gyr_cal"
             :param="ins_gyr_cal"
             :label="t`Calibrate gyroscopes automatically`"
+            :auto-set="true"
           />
         </div>
       </v-card-text>
