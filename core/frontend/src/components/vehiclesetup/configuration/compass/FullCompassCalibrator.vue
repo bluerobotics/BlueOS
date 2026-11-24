@@ -169,8 +169,12 @@ export default {
     compasses_calibrated(): number {
       return Object.keys(this.fitness).length
     },
+    // Only the compasses selected in compass_mask are calibrated
+    compasses_to_calibrate(): number {
+      return this.compass_mask.toString(2).replace(/0/g, '').length
+    },
     all_compasses_calibrated(): boolean {
-      return this.compasses_calibrated === this.compasses.length
+      return this.compasses_calibrated > 0 && this.compasses_calibrated === this.compasses_to_calibrate
     },
   },
   watch: {
