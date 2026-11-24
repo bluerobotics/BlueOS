@@ -137,6 +137,7 @@
           class="ma-1"
           :block="$vuetify.breakpoint.xs"
           :disabled="restarting || installing_firmware"
+          data-testid="restart-autopilot-button"
           @click="restart_autopilot"
         >
           {{ t`Restart autopilot` }}
