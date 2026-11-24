@@ -28,7 +28,10 @@
         <v-alert v-if="state === states.CALIBRATED" type="success">
           {{ t`Calibration Successful` }}
         </v-alert>
-        <v-btn v-if="state === states.IDLE" class="primary" @click="doCalibration">
+        <v-alert v-if="state === states.FAILED" type="error">
+          {{ error_message }}
+        </v-alert>
+        <v-btn v-if="state === states.IDLE || state === states.FAILED" class="primary" @click="doCalibration">
           {{ t`Start Calibration` }}
         </v-btn>
         <SpinningLogo v-if="state === states.CALIBRATION_STARTED" size="15%" />
@@ -39,6 +42,7 @@
 </template>
 
 <script lang="ts">
+import { t } from 'ttag'
 
 import SpinningLogo from '@/components/common/SpinningLogo.vue'
 import mavlink2rest from '@/libs/MAVLink2Rest'
@@ -50,6 +54,7 @@ const states = {
   WAITING_FOR_RESPONSE: 1,
   CALIBRATION_STARTED: 2,
   CALIBRATED: 3,
+  FAILED: 4,
 }
 
 export default {
@@ -62,6 +67,7 @@ export default {
       dialog: false,
       calibrating: false,
       state: states.IDLE,
+      error_message: '',
     }
   },
   computed: {
@@ -100,14 +106,15 @@ export default {
       this.state = states.CALIBRATION_STARTED
       const ack_listener = mavlink2rest.startListening('COMMAND_ACK').setCallback((message) => {
         if (message?.message?.command?.type === 'MAV_CMD_PREFLIGHT_CALIBRATION') {
-          if (message.message.result.type !== 'MAV_RESULT_ACCEPTED') {
-            console.error(
-              `Unexpected answer to quick accel calibration: ${message.result.type}`,
-            )
-          }
           clearTimeout(timeout)
-          this.state = states.CALIBRATED
           ack_listener.discard()
+          if (message.message.result.type !== 'MAV_RESULT_ACCEPTED') {
+            console.error(`Unexpected answer to quick accel calibration: ${message.message.result.type}`)
+            this.error_message = t`Calibration failed: ${message.message.result.type}`
+            this.state = states.FAILED
+            return
+          }
+          this.state = states.CALIBRATED
           setTimeout(() => { this.dialog = false }, 2000)
           setTimeout(() => { this.state = states.IDLE }, 3000)
         }
