@@ -551,17 +551,25 @@ export default Vue.extend({
       this.chosen_firmware_url = null
       this.available_firmwares = []
       this.cloud_firmware_options_status = CloudFirmwareOptionsStatus.Fetching
+      const vehicle = this.chosen_vehicle
       await back_axios({
         method: 'get',
         url: `${autopilot.API_URL}/available_firmwares`,
         timeout: 30000,
-        params: { vehicle: this.chosen_vehicle, board_name: this.target_board?.name },
+        params: { vehicle, board_name: this.target_board?.name },
       })
         .then((response) => {
+          // A newer request was made for another vehicle, this response is stale
+          if (vehicle !== this.chosen_vehicle) {
+            return
+          }
           this.available_firmwares = response.data
           this.cloud_firmware_options_status = CloudFirmwareOptionsStatus.FetchSucceeded
         })
         .catch((error) => {
+          if (vehicle !== this.chosen_vehicle) {
+            return
+          }
           this.cloud_firmware_options_status = CloudFirmwareOptionsStatus.FetchFailed
           notifier.pushError('FIRMWARE_FETCH_FAIL', error)
         })
