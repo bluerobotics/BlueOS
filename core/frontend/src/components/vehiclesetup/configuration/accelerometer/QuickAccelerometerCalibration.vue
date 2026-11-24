@@ -60,7 +60,6 @@ export default {
   data() {
     return {
       dialog: false,
-      calibrating: false,
       state: states.IDLE,
     }
   },
@@ -71,7 +70,6 @@ export default {
   },
   methods: {
     doCalibration() {
-      this.calibrating = true
       mavlink2rest.sendMessage({
         header: {
           system_id: 255,
