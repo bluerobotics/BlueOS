@@ -24,6 +24,11 @@ MANIFEST_JSON=""
 IMAGE_ROOTFS=""
 RESTART_BACKUP=""
 MOUNTPOINT=""
+SIZE_ARG=""
+IMAGE_SIZE=""
+EXPAND_FS=1
+OUTPUT_PATH=""
+COMPRESS=""
 
 usage() {
     echo "Usage: $0 <image_path> <vehicle_type> <firmware_version> [options]"
@@ -39,6 +44,11 @@ usage() {
     echo "  --extension ID[:TAG]            Install the image and enable it (repeatable)."
     echo "  --extension-disabled ID[:TAG]   Install the image but leave it disabled (repeatable)."
     echo "                                  Tag defaults to the newest stable manifest version."
+    echo "  --size SIZE                     Grow the image to SIZE bytes (IEC suffixes allowed, e.g. 113G),"
+    echo "                                  rounded down to 1 MiB. Must not be smaller than the image. Implies --no-expand."
+    echo "  --no-expand                     Install expand_fs.service but leave it disabled, the partition is never grown"
+    echo "  --output PATH                   Output .img path (default: <image>_<vehicle_type>_customized.img here)"
+    echo "  --compress zip|xz               Trim free space, then write PATH.zip or PATH.img.xz plus .sha256 files"
     echo "  --dry-run                       Print firmware URL, param set, and extensions; do not write an image"
     echo ""
     echo "Examples:"
@@ -47,6 +57,7 @@ usage() {
     echo "  $0 BlueOS-pi4.img bluerov2 4.5.3 --param-set 'Heavy BlueROV2' --dry-run"
     echo "  $0 BlueOS-pi4.img bluerov2 4.5.3 --extension bluerobotics.cockpit"
     echo "  $0 BlueOS-pi5.img blueboat120 4.6.2 --extension some.extension:v1.2.3 --extension-disabled another.ext"
+    echo "  $0 BlueOS-pi4.img bluerov2 4.7.3 --size 113G --output /tmp/production.img --compress zip"
     exit 1
 }
 
@@ -726,8 +737,20 @@ prepare_first_boot() {
     sudo sed -i -E 's# init=/usr/lib/raspi-config/init_resize\.sh( |$)#\1#; s# quiet( |$)#\1#' "$cmdline"
     sudo install -m 755 "${SCRIPT_DIR}/../expand_fs.sh" "${rootfs}/usr/bin/expand_fs.sh"
     sudo install -m 644 "${SCRIPT_DIR}/files/expand_fs.service" "${rootfs}/etc/systemd/system/expand_fs.service"
-    sudo ln -sf /etc/systemd/system/expand_fs.service \
-        "${rootfs}/etc/systemd/system/multi-user.target.wants/expand_fs.service"
+    local expand_wants="${rootfs}/etc/systemd/system/multi-user.target.wants/expand_fs.service"
+    if [ "$EXPAND_FS" -eq 1 ]; then
+        sudo ln -sf /etc/systemd/system/expand_fs.service "$expand_wants"
+    else
+        # production images are built at their final size, the unit must keep the partition as shipped
+        sudo rm -f "$expand_wants"
+    fi
+    # Raspberry Pi OS one-shot that only runs resize2fs, which expand_fs.sh already does (or is not wanted)
+    sudo rm -f "${rootfs}/etc/init.d/resize2fs_once" "${rootfs}"/etc/rc?.d/[SK]??resize2fs_once
+
+    # fake-hwclock restores this before NTP syncs; the stock 2022 date would stamp first boot host keys and logs
+    if [ -f "${rootfs}/etc/fake-hwclock.data" ]; then
+        date -u '+%Y-%m-%d %H:%M:%S' | sudo tee "${rootfs}/etc/fake-hwclock.data" >/dev/null
+    fi
 
     # bcm_27xx.sh reboots as soon as an EEPROM update is staged in /boot. The bootloader applies it on the next boot.
     local eeprom="${rootfs}/lib/systemd/system/rpi-eeprom-update.service"
@@ -738,6 +761,312 @@ prepare_first_boot() {
             exit 1
         fi
     fi
+}
+
+# Value KEY is left with after sourcing a dphys-swapfile config (last assignment wins), FALLBACK when unset.
+# The image's file is parsed instead of sourced so none of it runs on the build host.
+dphys_conf_value() {
+    local conf="$1"
+    local key="$2"
+    local fallback="${3:-}"
+    awk -v key="$key" -v fallback="$fallback" '
+        { sub(/^[[:space:]]+/, "") }
+        index($0, key "=") == 1 {
+            v = substr($0, length(key) + 2)
+            sub(/[[:space:]]+#.*$/, "", v)
+            sub(/[[:space:]]+$/, "", v)
+            gsub(/^["\047]|["\047]$/, "", v)
+            found = 1
+        }
+        END { print (found ? v : fallback) }
+    ' "$conf"
+}
+
+# dphys-swapfile dd's its whole swap file on first boot, ~40 s of SD IO fighting containerd.
+# Its setup keeps an existing file whose byte size is CONF_SWAPSIZE MiB, so writing that file here skips the work.
+prepare_swapfile() {
+    local rootfs="$1"
+    local conf="${rootfs}/etc/dphys-swapfile"
+    if [ ! -f "$conf" ] || [ ! -f "${rootfs}/sbin/dphys-swapfile" ] \
+        || ! sudo test -L "${rootfs}/etc/systemd/system/multi-user.target.wants/dphys-swapfile.service"; then
+        echo "Note: dphys-swapfile is not installed and enabled in the image, no swap file prepared"
+        return 0
+    fi
+    # Pi 5 kernels use 16 KiB pages and reject a 4 KiB swap header, and dphys-swapfile would keep the file anyway
+    if [ -e "${rootfs}/boot/kernel_2712.img" ]; then
+        echo "Note: image ships the 16 KiB page Pi 5 kernel, swap file left to dphys-swapfile"
+        return 0
+    fi
+    local swapfile size maxswap
+    swapfile="$(dphys_conf_value "$conf" CONF_SWAPFILE /var/swap)"
+    size="$(dphys_conf_value "$conf" CONF_SWAPSIZE)"
+    maxswap="$(dphys_conf_value "$conf" CONF_MAXSWAP 2048)"
+    if [ -z "$size" ]; then
+        echo "Note: CONF_SWAPSIZE is empty, swap size depends on the unit's RAM and can't be precomputed"
+        return 0
+    fi
+    if ! [[ "$size" =~ ^[1-9][0-9]*$ && "$maxswap" =~ ^[0-9]*$ && "$swapfile" == /* ]]; then
+        echo "Error: unsupported dphys-swapfile config in $conf" \
+            "(CONF_SWAPFILE='$swapfile' CONF_SWAPSIZE='$size' CONF_MAXSWAP='$maxswap')" >&2
+        exit 1
+    fi
+    # an empty CONF_MAXSWAP means no limit
+    if [ -n "$maxswap" ] && [ "$size" -gt "$maxswap" ]; then
+        size="$maxswap"
+    fi
+
+    local file="${rootfs}${swapfile}"
+    local avail current=0
+    avail="$(df -m --output=avail "$(dirname "$file")" | tail -n 1 | tr -d ' ')"
+    if sudo test -f "$file"; then
+        current=$(($(sudo stat -c %s "$file") / 1048576))
+    fi
+    # dphys-swapfile caps the size at 50% of free space plus the current file. Below 2x it would shrink and
+    # rewrite the file on first boot. The 6G stock image has ~2.4G free, plenty for the overlays' 1024 MiB.
+    if [ $((avail + current)) -lt $((size * 2)) ]; then
+        echo "Error: a ${size} MiB swap file needs $((size * 2)) MiB free on the image rootfs," \
+            "only $((avail + current)) MiB available. Use --size or lower CONF_SWAPSIZE" >&2
+        exit 1
+    fi
+
+    # swapon rejects files with holes, so write real zeros instead of fallocate
+    sudo rm -f "$file"
+    sudo dd if=/dev/zero of="$file" bs=1M count="$size" conv=fsync status=none
+    sudo chown root:root "$file"
+    sudo chmod 600 "$file"
+    # Every flashed unit shares this header. Nothing refers to swap by UUID, a cleared one just avoids a shared value.
+    if ! sudo mkswap -p 4096 -U clear "$file" >/dev/null 2>&1; then
+        sudo mkswap -p 4096 "$file" >/dev/null
+    fi
+
+    local nblocks bsize
+    read -r nblocks bsize < <(sudo stat -c '%b %B' "$file")
+    if [ "$(sudo stat -c %s "$file")" -ne $((size * 1048576)) ] || [ $((nblocks * bsize)) -lt $((size * 1048576)) ] \
+        || [ "$(sudo blkid -p -o value -s TYPE "$file")" != "swap" ]; then
+        echo "Error: $file is not a fully allocated ${size} MiB swap file" >&2
+        exit 1
+    fi
+
+    # same comment lines dphys-swapfile appends to fstab when it creates the file
+    local fstab="${rootfs}/etc/fstab"
+    local note1="# a swapfile is not a swap partition, no line here"
+    local note2="#   use  dphys-swapfile swap[on|off]  for that"
+    local kept
+    kept="$(sudo grep -vxF -e "$note1" -e "$note2" "$fstab" || true)"
+    {
+        [ -z "$kept" ] || printf '%s\n' "$kept"
+        printf '%s\n' "$note1" "$note2"
+    } | sudo tee "$fstab" >/dev/null
+
+    echo "Prepared swap file ${swapfile} (${size} MiB)"
+}
+
+# Prints SIZE in bytes, rounded down to 1 MiB so the grown partition still ends on a MiB boundary
+parse_image_size() {
+    local size="$1"
+    local current="${2:-0}"
+    local bytes
+    if ! bytes="$(numfmt --from=iec "$size" 2>/dev/null)" || ! [[ "$bytes" =~ ^[0-9]+$ ]]; then
+        echo "Error: --size must be bytes or a K/M/G/T size (got '$size')" >&2
+        exit 1
+    fi
+    bytes=$((bytes / 1048576 * 1048576))
+    if [ "$bytes" -eq 0 ] || [ "$bytes" -lt "$current" ]; then
+        echo "Error: --size $size (${bytes} bytes) is smaller than the image (${current} bytes)" >&2
+        exit 1
+    fi
+    echo "$bytes"
+}
+
+# Grows the image file and its root partition to SIZE, so the unit never resizes on first boot.
+# The image stays sparse. PARTUUIDs in cmdline.txt and fstab derive from the disk identifier, so it must survive.
+grow_image_offline() {
+    local img="$1"
+    local size="$2"
+    local disk_id
+    disk_id="$(sfdisk --disk-id "$img")"
+    truncate -s "$size" "$img"
+    echo ", +" | sfdisk --no-reread --no-tell-kernel --wipe never --wipe-partitions never -N 2 "$img"
+    if [ "$(sfdisk --disk-id "$img")" != "$disk_id" ]; then
+        echo "Error: sfdisk changed the disk identifier of $img" >&2
+        exit 1
+    fi
+}
+
+# resize2fs refuses an unmounted filesystem that was not checked first
+resize_rootfs_offline() {
+    local part="$1"
+    local rc=0
+    # 1 means e2fsck fixed something and the filesystem is now clean
+    sudo e2fsck -f -p "$part" || rc=$?
+    if [ "$rc" -gt 1 ]; then
+        echo "Error: e2fsck on $part failed with exit code $rc" >&2
+        exit 1
+    fi
+    sudo resize2fs "$part"
+}
+
+# find runs as root since most of the rootfs is root-only. Extra arguments are find tests, -mindepth 1 is implied.
+remove_found() {
+    local rootfs="$1"
+    local dir="${rootfs}/$2"
+    shift 2
+    sudo test -d "$dir" || return 0
+    local f
+    while IFS= read -r -d '' f; do
+        echo "Removing ${f#"${rootfs}/"}"
+        sudo rm -rf "$f"
+    done < <(sudo find "$dir" -mindepth 1 "$@" -print0)
+}
+
+# Drops the BlueOS core key that is about to be deleted. Keys shipped on purpose stay.
+remove_core_authorized_key() {
+    local rootfs="$1"
+    local pub="${rootfs}/root/.config/blueos/.ssh/id_rsa.pub"
+    local keys="${rootfs}/home/pi/.ssh/authorized_keys"
+    if ! sudo test -f "$pub" || ! sudo test -f "$keys"; then
+        return 0
+    fi
+    local key remaining
+    key="$(sudo awk '{ print $2; exit }' "$pub")"
+    if [ -z "$key" ] || ! sudo grep -qF -- "$key" "$keys"; then
+        return 0
+    fi
+    remaining="$(sudo grep -vF -- "$key" "$keys" || true)"
+    if [ -z "${remaining//[[:space:]]/}" ]; then
+        echo "Removing home/pi/.ssh/authorized_keys (only held the BlueOS core key)"
+        sudo rm -f "$keys"
+    else
+        echo "Removing the BlueOS core key from home/pi/.ssh/authorized_keys"
+        printf '%s\n' "$remaining" | sudo tee "$keys" >/dev/null
+    fi
+}
+
+# Every unit flashed from this image must generate its own identity on first boot. Anything the build
+# (overlays, dockerd, chroot tools) left behind would otherwise be shared by all of them.
+sanitize_identity() {
+    local rootfs="$1"
+    # an empty rootfs would point the removals below at the build host
+    if [ -z "$rootfs" ] || [ "$rootfs" = "/" ]; then
+        echo "Error: sanitize_identity needs an image rootfs (got '$rootfs')" >&2
+        exit 1
+    fi
+    local machine_id="${rootfs}/etc/machine-id"
+    local id=""
+    if sudo test -f "$machine_id"; then
+        id="$(sudo cat "$machine_id")"
+    fi
+    if ! sudo test -f "$machine_id" || { [ -n "$id" ] && [ "$id" != "uninitialized" ]; }; then
+        # systemd's first boot marker, the stock image ships it
+        echo "Resetting etc/machine-id to uninitialized"
+        echo "uninitialized" | sudo tee "$machine_id" >/dev/null
+    fi
+    local dbus_id="${rootfs}/var/lib/dbus/machine-id"
+    if sudo test -f "$dbus_id" && ! sudo test -L "$dbus_id"; then
+        echo "Replacing var/lib/dbus/machine-id with a link to /etc/machine-id"
+        sudo ln -sf /etc/machine-id "$dbus_id"
+    fi
+
+    remove_found "$rootfs" etc/ssh -maxdepth 1 -name 'ssh_host_*'
+    local regen="regenerate_ssh_host_keys.service"
+    local regen_wants="${rootfs}/etc/systemd/system/multi-user.target.wants/${regen}"
+    # the unit disables itself after creating the keys, so it must be enabled again
+    if [ -f "${rootfs}/lib/systemd/system/${regen}" ] && ! sudo test -L "$regen_wants"; then
+        echo "Enabling ${regen}"
+        sudo mkdir -p "$(dirname "$regen_wants")"
+        sudo ln -sf "/lib/systemd/system/${regen}" "$regen_wants"
+    fi
+
+    # dockerd writes engine-id when it starts, so this runs after the extensions pull
+    remove_found "$rootfs" var/lib/docker -maxdepth 1 -name engine-id
+    local log
+    if sudo test -d "${rootfs}/var/lib/docker/containers"; then
+        while IFS= read -r -d '' log; do
+            echo "Truncating ${log#"${rootfs}/"}"
+            sudo truncate -s 0 "$log"
+        done < <(sudo find "${rootfs}/var/lib/docker/containers" -mindepth 2 -maxdepth 2 -name '*-json.log' -size +0 -print0)
+    fi
+
+    # BlueOS core generates this pair per unit and authorizes the public key for pi
+    remove_core_authorized_key "$rootfs"
+    remove_found "$rootfs" root/.config/blueos/.ssh -maxdepth 1 \( -name id_rsa -o -name id_rsa.pub \)
+
+    remove_found "$rootfs" var/lib/systemd -maxdepth 1 -name random-seed
+    remove_found "$rootfs" var/lib/dhcpcd -maxdepth 1 -name '*.lease*'
+    remove_found "$rootfs" var/lib/dhcpcd5 -maxdepth 1 -name '*.lease*'
+    remove_found "$rootfs" root -maxdepth 1 -name .bash_history
+    remove_found "$rootfs" home -maxdepth 2 -name .bash_history
+    remove_found "$rootfs" tmp -maxdepth 1
+    remove_found "$rootfs" var/tmp -maxdepth 1
+}
+
+attach_image() {
+    local img="$1"
+    echo "Setting up loop device for $img..."
+    LOOP_DEVICE="$(sudo losetup -fP --show "$img")"
+    echo "Loop device created: $LOOP_DEVICE"
+    sleep 2
+
+    echo "Available partitions:"
+    ls -la "${LOOP_DEVICE}"* || true
+
+    if [ ! -e "${LOOP_DEVICE}p2" ]; then
+        echo "Error: Root partition ${LOOP_DEVICE}p2 not found"
+        exit 1
+    fi
+}
+
+mount_image() {
+    echo "Mounting ${LOOP_DEVICE}p2 to $MOUNTPOINT..."
+    sudo mount "${LOOP_DEVICE}p2" "$MOUNTPOINT"
+    IMAGE_ROOTFS="$MOUNTPOINT"
+    sudo mount "${LOOP_DEVICE}p1" "$MOUNTPOINT/boot"
+}
+
+detach_image() {
+    if is_mounted "$IMAGE_ROOTFS"; then
+        restore_container_restarts "$IMAGE_ROOTFS"
+        umount_nested "$IMAGE_ROOTFS"
+        sudo umount "$IMAGE_ROOTFS"
+    fi
+    sudo losetup -d "$LOOP_DEVICE"
+    LOOP_DEVICE=""
+    IMAGE_ROOTFS=""
+}
+
+# Discards on a loop device punch holes in the file, so free space stays sparse and compresses to nothing.
+# zerofree is not available on the build hosts. fstrim only discards free blocks, the written swap file stays.
+trim_image() {
+    local img="$1"
+    attach_image "$img"
+    mount_image
+    sudo fstrim -v "$MOUNTPOINT/boot" || echo "Warning: could not trim the boot partition" >&2
+    sudo fstrim -v "$MOUNTPOINT"
+    detach_image
+}
+
+# Checksums hold basenames so they verify from wherever the files are copied to
+compress_image() {
+    local img="$1"
+    local dir name out
+    dir="$(dirname "$img")"
+    name="$(basename "$img")"
+    case "$COMPRESS" in
+        zip) out="${name%.img}.zip" ;;
+        xz) out="${name}.xz" ;;
+    esac
+    (
+        cd "$dir"
+        # zip would add to a stale archive instead of replacing it
+        rm -f "$out"
+        echo "Compressing $name to $out..."
+        case "$COMPRESS" in
+            zip) zip -9 -j "$out" "$name" ;;
+            xz) xz -T0 -9 -k "$name" ;;
+        esac
+        sha256sum "$name" >"${name}.sha256"
+        sha256sum "$out" >"${out}.sha256"
+    )
 }
 
 main() {
@@ -767,6 +1096,38 @@ main() {
                     EXTENSION_ENABLED+=(false)
                 fi
                 shift 2
+                ;;
+            --size | --output | --compress)
+                if [ $# -lt 2 ]; then
+                    echo "Error: $1 requires a value"
+                    usage
+                fi
+                case "$1" in
+                    --size)
+                        parse_image_size "$2" >/dev/null
+                        SIZE_ARG="$2"
+                        EXPAND_FS=0
+                        ;;
+                    --output)
+                        if [[ "$2" != *.img ]]; then
+                            echo "Error: --output must end in .img (got '$2')"
+                            exit 1
+                        fi
+                        OUTPUT_PATH="$2"
+                        ;;
+                    --compress)
+                        if [ "$2" != "zip" ] && [ "$2" != "xz" ]; then
+                            echo "Error: --compress must be zip or xz (got '$2')"
+                            exit 1
+                        fi
+                        COMPRESS="$2"
+                        ;;
+                esac
+                shift 2
+                ;;
+            --no-expand)
+                EXPAND_FS=0
+                shift
                 ;;
             --dry-run)
                 DRY_RUN=1
@@ -820,12 +1181,37 @@ main() {
             exit 1
         fi
         IMAGE_PATH="$(cd "$(dirname "$IMAGE_PATH")" && pwd)/$(basename "$IMAGE_PATH")"
+        if [ -n "$OUTPUT_PATH" ]; then
+            if [ ! -d "$(dirname "$OUTPUT_PATH")" ]; then
+                echo "Error: Output directory '$(dirname "$OUTPUT_PATH")' not found"
+                exit 1
+            fi
+            # main works from SCRIPT_DIR, a relative --output must stay relative to the caller
+            OUTPUT_PATH="$(cd "$(dirname "$OUTPUT_PATH")" && pwd)/$(basename "$OUTPUT_PATH")"
+        fi
+        if [ -n "$SIZE_ARG" ]; then
+            IMAGE_SIZE="$(parse_image_size "$SIZE_ARG" "$(stat -c %s "$IMAGE_PATH")")"
+        fi
+        if [ -n "$COMPRESS" ]; then
+            require_cmd "$COMPRESS"
+        fi
+    elif [ -n "$SIZE_ARG" ]; then
+        IMAGE_SIZE="$(parse_image_size "$SIZE_ARG")"
     fi
 
     configure_vehicle
     ensure_board
 
     if [ "$DRY_RUN" -eq 1 ]; then
+        if [ -n "$IMAGE_SIZE" ]; then
+            echo "Image size: ${IMAGE_SIZE} bytes"
+        fi
+        if [ "$EXPAND_FS" -eq 0 ]; then
+            echo "expand_fs.service: disabled"
+        fi
+        if [ -n "$COMPRESS" ]; then
+            echo "Compression: $COMPRESS"
+        fi
         ensure_work_dir
         apply_firmware_and_params ""
         if [ "${#EXTENSIONS[@]}" -gt 0 ]; then
@@ -839,32 +1225,23 @@ main() {
 
     local base_name customized_img
     base_name="$(basename "$IMAGE_PATH" .img)"
-    customized_img="${base_name}_${VEHICLE_TYPE}_customized.img"
+    customized_img="${OUTPUT_PATH:-${base_name}_${VEHICLE_TYPE}_customized.img}"
     MOUNTPOINT="${SCRIPT_DIR}/mountpoint"
 
     echo "Creating customized image: $customized_img"
     cp "$IMAGE_PATH" "$customized_img"
+    if [ -n "$IMAGE_SIZE" ]; then
+        echo "Growing $customized_img to ${IMAGE_SIZE} bytes..."
+        grow_image_offline "$customized_img" "$IMAGE_SIZE"
+    fi
 
     mkdir -p "$MOUNTPOINT"
 
-    echo "Setting up loop device for $customized_img..."
-    LOOP_DEVICE="$(sudo losetup -fP --show "$customized_img")"
-    echo "Loop device created: $LOOP_DEVICE"
-    sleep 2
-
-    echo "Available partitions:"
-    ls -la "${LOOP_DEVICE}"* || true
-
-    local root_partition="${LOOP_DEVICE}p2"
-    if [ ! -e "$root_partition" ]; then
-        echo "Error: Root partition $root_partition not found"
-        exit 1
+    attach_image "$customized_img"
+    if [ -n "$IMAGE_SIZE" ]; then
+        resize_rootfs_offline "${LOOP_DEVICE}p2"
     fi
-
-    echo "Mounting $root_partition to $MOUNTPOINT..."
-    sudo mount "$root_partition" "$MOUNTPOINT"
-    IMAGE_ROOTFS="$MOUNTPOINT"
-    sudo mount "${LOOP_DEVICE}p1" "$MOUNTPOINT/boot"
+    mount_image
 
     echo "Copying overlay files from $OVERLAY_DIR..."
     sudo cp -r "$OVERLAY_DIR"/. "$MOUNTPOINT/"
@@ -880,19 +1257,19 @@ main() {
         apply_extensions "$MOUNTPOINT"
     fi
     apply_firmware_and_params "$MOUNTPOINT"
+    stop_image_dockerd
+    prepare_swapfile "$MOUNTPOINT"
 
     echo "Unmounting and cleaning up..."
-    stop_image_dockerd
-    # dockerd writes engine-id when it starts, so this goes after the extensions pull
-    sudo rm -f "$MOUNTPOINT/var/lib/docker/engine-id"
-    if is_mounted "$IMAGE_ROOTFS"; then
-        restore_container_restarts "$IMAGE_ROOTFS"
-        umount_nested "$IMAGE_ROOTFS"
-        sudo umount "$IMAGE_ROOTFS"
+    sanitize_identity "$MOUNTPOINT"
+    detach_image
+
+    if [ -n "$IMAGE_SIZE" ] || [ -n "$COMPRESS" ]; then
+        trim_image "$customized_img"
     fi
-    sudo losetup -d "$LOOP_DEVICE"
-    LOOP_DEVICE=""
-    IMAGE_ROOTFS=""
+    if [ -n "$COMPRESS" ]; then
+        compress_image "$customized_img"
+    fi
 
     echo ""
     echo "Image customization complete!"
