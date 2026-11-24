@@ -101,12 +101,15 @@
 </template>
 
 <script lang="ts">
+import { t } from 'ttag'
 import Vue, { PropType } from 'vue'
 
 import RebootButton from '@/components/utils/RebootButton.vue'
 import mavlink2rest from '@/libs/MAVLink2Rest'
 import Listener from '@/libs/MAVLink2Rest/Listener'
-import { MavCmd, MAVLinkType, MavResult } from '@/libs/MAVLink2Rest/mavlink2rest-ts/messages/mavlink2rest-enum'
+import {
+  MagCalStatus, MavCmd, MAVLinkType, MavResult,
+} from '@/libs/MAVLink2Rest/mavlink2rest-ts/messages/mavlink2rest-enum'
 import autopilot_data from '@/store/autopilot'
 import { Dictionary } from '@/types/common'
 import { deviceId } from '@/utils/deviceid_decoder'
@@ -118,6 +121,19 @@ enum states {
   CALIBRATING,
   DONE,
   FAILED,
+}
+
+function failureReason(status: MagCalStatus): string {
+  switch (status) {
+    case MagCalStatus.MAG_CAL_FAILED:
+      return t`failed`
+    case MagCalStatus.MAG_CAL_BAD_ORIENTATION:
+      return t`bad orientation`
+    case MagCalStatus.MAG_CAL_BAD_RADIUS:
+      return t`bad radius`
+    default:
+      return status
+  }
 }
 
 export default {
@@ -207,6 +223,8 @@ export default {
       this.status_text = `Calibration failed: ${reason}`
       this.status_type = 'error'
       this.state = states.FAILED
+      this.progress_listener?.discard()
+      this.report_listener?.discard()
     },
     async cancelCalibration() {
       mavlink2rest.sendCommandLong(MavCmd.MAV_CMD_DO_CANCEL_MAG_CAL)
@@ -242,6 +260,11 @@ export default {
         ).setFrequency(0)
         this.report_listener = mavlink2rest.startListening(MAVLinkType.MAG_CAL_REPORT).setCallback(
           (message) => {
+            const status = message.message.cal_status.type
+            if (status !== MagCalStatus.MAG_CAL_SUCCESS) {
+              this.calibrationFailed(failureReason(status))
+              return
+            }
             const name = this.compasses[message.message.compass_id].deviceName ?? 'unknown'
             // we need to use Vue.set when adding a key to a dict to ensure reactivity...
             Vue.set(this.fitness, name, message.message.fitness)
