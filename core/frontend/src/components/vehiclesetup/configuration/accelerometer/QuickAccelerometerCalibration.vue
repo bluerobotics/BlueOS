@@ -117,8 +117,8 @@ export default {
       })
       timeout = setTimeout(() => {
         ack_listener.discard()
-        this.state = states.IDLE
-        this.dialog = false
+        this.error_message = t`Calibration failed: no answer from the vehicle`
+        this.state = states.FAILED
       }, 5000)
     },
   },
