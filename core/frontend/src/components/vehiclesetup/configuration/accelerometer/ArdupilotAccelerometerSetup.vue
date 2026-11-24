@@ -11,7 +11,7 @@
         <tbody>
           <tr v-for="accelerometer in ardupilot_sensors.accelerometers" :key="accelerometer.deviceIdNumber">
             <td>{{ accelerometer.deviceName }}</td>
-            <td>
+            <td data-testid="accelerometer-calibration">
               <v-icon
                 v-if="ardupilot_sensors.accelerometers_calibrated[accelerometer.param]"
                 v-tooltip="t`Sensor is calibrated and good to use`"

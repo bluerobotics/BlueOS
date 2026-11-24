@@ -7,6 +7,7 @@
       <v-btn
         color="primary"
         class="ma-2"
+        data-testid="quick-accel-calibration-button"
         v-bind="attrs"
         v-on="on"
       >
@@ -14,7 +15,7 @@
       </v-btn>
     </template>
 
-    <v-card>
+    <v-card data-testid="quick-accel-calibration-dialog">
       <v-card-title class="text-h5">
         {{ t`Accelerometer Calibration` }}
       </v-card-title>
@@ -25,13 +26,18 @@
         </div>
       </v-card-text>
       <v-card-actions>
-        <v-alert v-if="state === states.CALIBRATED" type="success">
+        <v-alert v-if="state === states.CALIBRATED" type="success" data-testid="quick-accel-calibration-success">
           {{ t`Calibration Successful` }}
         </v-alert>
-        <v-alert v-if="state === states.FAILED" type="error">
+        <v-alert v-if="state === states.FAILED" type="error" data-testid="quick-accel-calibration-failure">
           {{ error_message }}
         </v-alert>
-        <v-btn v-if="state === states.IDLE || state === states.FAILED" class="primary" @click="doCalibration">
+        <v-btn
+          v-if="state === states.IDLE || state === states.FAILED"
+          class="primary"
+          data-testid="quick-accel-calibration-start-button"
+          @click="doCalibration"
+        >
           {{ t`Start Calibration` }}
         </v-btn>
         <SpinningLogo v-if="state === states.CALIBRATION_STARTED" size="15%" />

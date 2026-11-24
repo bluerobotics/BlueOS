@@ -2,6 +2,7 @@
   <v-btn
     v-if="rebootRequired"
     color="warning"
+    data-testid="reboot-autopilot-button"
     @click="rebootVehicle"
   >
     {{ t`Reboot Autopilot` }}

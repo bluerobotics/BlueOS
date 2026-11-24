@@ -8,6 +8,7 @@
       <v-btn
         color="primary"
         class="ma-2"
+        data-testid="full-accel-calibration-button"
         v-bind="attrs"
         v-on="on"
       >
@@ -15,8 +16,11 @@
       </v-btn>
     </template>
 
-    <v-card>
-      <v-card-title class="text-h5">
+    <v-card data-testid="full-accel-calibration-dialog">
+      <v-card-title
+        class="text-h5"
+        data-testid="full-accel-calibration-title"
+      >
         {{ t`Accelerometer Calibration` }}
       </v-card-title>
       <div class="ma-6">
@@ -29,6 +33,7 @@
         v-if="![states.IDLE, states.WAITING_FOR_VEHICLE_RESPONSE].includes(state)"
         dense
         :type="current_state_type"
+        data-testid="full-accel-calibration-prompt"
       >
         <strong>{{ current_state_text }}</strong>
       </v-alert>
@@ -40,13 +45,29 @@
         :style="{ height: '320px' }"
       />
       <v-card-actions class="justify-center">
-        <v-btn v-if="show_start_button" :loading="start_button_loading" class="primary" @click="startCalibration">
+        <v-btn
+          v-if="show_start_button"
+          :loading="start_button_loading"
+          class="primary"
+          data-testid="full-accel-calibration-start-button"
+          @click="startCalibration"
+        >
           {{ t`Start Calibration` }}
         </v-btn>
-        <v-btn v-if="show_next_button" class="primary" @click="nextStep">
+        <v-btn
+          v-if="show_next_button"
+          class="primary"
+          data-testid="full-accel-calibration-next-button"
+          @click="nextStep"
+        >
           {{ t`Next` }}
         </v-btn>
-        <v-btn v-if="show_ok_button" class="primary" @click="cleanup">
+        <v-btn
+          v-if="show_ok_button"
+          class="primary"
+          data-testid="full-accel-calibration-ok-button"
+          @click="cleanup"
+        >
           {{ t`Ok` }}
         </v-btn>
       </v-card-actions>

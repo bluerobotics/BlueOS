@@ -6,6 +6,7 @@
     <template #activator="{ on, attrs }">
       <v-btn
         color="primary"
+        data-testid="full-compass-calibration-button"
         v-bind="attrs"
         v-on="on"
       >
@@ -13,8 +14,11 @@
       </v-btn>
     </template>
 
-    <v-card>
-      <v-card-title class="text-h5 grey lighten-2 black--text">
+    <v-card data-testid="full-compass-calibration-dialog">
+      <v-card-title
+        class="text-h5 grey lighten-2 black--text"
+        data-testid="full-compass-calibration-title"
+      >
         {{ t`Onboard Compass Calibration` }}
       </v-card-title>
       <v-card-text class="pa-10">
@@ -28,7 +32,7 @@
             <span v-html="t`A valid global region/position is <strong>recomended</strong> for Onboard Calibration to estimate the local world magnetic field.`" />
           </p>
         </span>
-        <span v-else-if="state === states.CALIBRATING">
+        <span v-else-if="state === states.CALIBRATING" data-testid="full-compass-calibration-instructions">
           {{ t`Spin your vehicle around all of its axes until the progress bar completes.` }}
         </span>
 
@@ -41,6 +45,7 @@
         <v-alert
           v-if="status_text"
           :type="status_type"
+          data-testid="full-compass-calibration-status"
         >
           {{ status_text }}
         </v-alert>
@@ -52,7 +57,7 @@
             </th>
           </thead>
           <tbody>
-            <tr v-for="(fit, compass_id) of fitness" :key="compass_id">
+            <tr v-for="(fit, compass_id) of fitness" :key="compass_id" data-testid="full-compass-calibration-fitness">
               <td>{{ compasses[compass_id]?.deviceName ?? 'unknown' }}</td>
               <td>
                 <calibrationQualityIndicator :quality="fit" />
@@ -66,6 +71,7 @@
           color="blue-grey"
           height="25"
           class="mt-5 mb-5"
+          data-testid="full-compass-calibration-progress"
         >
           <template #default="{ value }">
             <strong>{{ Math.ceil(value) }}%</strong>
@@ -80,18 +86,34 @@
           v-if="state !== states.CALIBRATING && state !== states.FAILED"
           color="primary"
           :disabled="!compass_mask || !coordinates"
+          data-testid="full-compass-calibration-calibrate-button"
           @click="calibrate()"
         >
           {{ t`Calibrate` }}
         </v-btn>
-        <v-btn v-if="state === states.DONE" color="primary" @click="dismiss">
+        <v-btn
+          v-if="state === states.DONE"
+          color="primary"
+          data-testid="full-compass-calibration-dismiss-button"
+          @click="dismiss"
+        >
           {{ t`Dismiss` }}
         </v-btn>
         <RebootButton />
-        <v-btn v-if="state == states.CALIBRATING" color="red" @click="cancelCalibration()">
+        <v-btn
+          v-if="state == states.CALIBRATING"
+          color="red"
+          data-testid="full-compass-calibration-cancel-button"
+          @click="cancelCalibration()"
+        >
           {{ t`Cancel` }}
         </v-btn>
-        <v-btn v-if="state == states.FAILED" color="primary" @click="reset()">
+        <v-btn
+          v-if="state == states.FAILED"
+          color="primary"
+          data-testid="full-compass-calibration-ok-button"
+          @click="reset()"
+        >
           {{ t`Ok` }}
         </v-btn>
         <v-spacer />

@@ -33,7 +33,7 @@
             <div class="d-flex flex-column">
               <v-expansion-panels>
                 <v-expansion-panel>
-                  <v-expansion-panel-header>
+                  <v-expansion-panel-header data-testid="full-compass-calibration-panel">
                     {{ t`Full (Onboard) Calibration` }}
                   </v-expansion-panel-header>
                   <v-expansion-panel-content>
@@ -45,7 +45,7 @@
                   </v-expansion-panel-content>
                 </v-expansion-panel>
                 <v-expansion-panel>
-                  <v-expansion-panel-header>
+                  <v-expansion-panel-header data-testid="large-vehicle-calibration-panel">
                     {{ t`Large Vehicle Calibration` }}
                   </v-expansion-panel-header>
                   <v-expansion-panel-content>
@@ -58,7 +58,7 @@
                 </v-expansion-panel>
 
                 <v-expansion-panel>
-                  <v-expansion-panel-header>
+                  <v-expansion-panel-header data-testid="compass-learn-panel">
                     {{ t`Compass Learn` }}
                   </v-expansion-panel-header>
                   <v-expansion-panel-content>
@@ -112,6 +112,7 @@
                   text-color="white"
                   x-small
                   class="calibration-chip"
+                  data-testid="compass-calibration-chip"
                 >
                   {{ compass_calibration_type[compass.param].calibration_short }}
                 </v-chip>

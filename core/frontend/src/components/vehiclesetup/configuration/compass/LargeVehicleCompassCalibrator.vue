@@ -7,6 +7,7 @@
       <v-btn
         color="primary"
         class="start-btn"
+        data-testid="large-vehicle-calibration-button"
         v-bind="attrs"
         v-on="on"
       >
@@ -14,7 +15,7 @@
       </v-btn>
     </template>
 
-    <v-card>
+    <v-card data-testid="large-vehicle-calibration-dialog">
       <v-card-title class="text-h5 grey lighten-2 black--text">
         {{ t`Large Vehicle Compass Calibration` }}
       </v-card-title>
@@ -28,13 +29,19 @@
         <v-alert
           v-if="status_text"
           :type="status_type"
+          data-testid="large-vehicle-calibration-status"
         >
           {{ status_text }}
         </v-alert>
         <StatusTextWatcher :style="`display : ${status_type === 'error' ? 'block' : 'none'};`" />
       </v-card-text>
       <v-card-actions class="justify-center">
-        <v-btn color="primary" :disabled="calibrating || !compass_mask || !coordinates" @click="calibrate()">
+        <v-btn
+          color="primary"
+          :disabled="calibrating || !compass_mask || !coordinates"
+          data-testid="large-vehicle-calibration-calibrate-button"
+          @click="calibrate()"
+        >
           {{ t`Calibrate` }}
         </v-btn>
         <reboot-button />
