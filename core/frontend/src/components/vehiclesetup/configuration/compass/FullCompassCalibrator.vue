@@ -52,8 +52,8 @@
             </th>
           </thead>
           <tbody>
-            <tr v-for="(fit, compass) of fitness" :key="compass">
-              <td>{{ compass }}</td>
+            <tr v-for="(fit, compass_id) of fitness" :key="compass_id">
+              <td>{{ compasses[compass_id]?.deviceName ?? 'unknown' }}</td>
               <td>
                 <calibrationQualityIndicator :quality="fit" />
               </td>
@@ -265,9 +265,8 @@ export default {
               this.calibrationFailed(failureReason(status))
               return
             }
-            const name = this.compasses[message.message.compass_id].deviceName ?? 'unknown'
             // we need to use Vue.set when adding a key to a dict to ensure reactivity...
-            Vue.set(this.fitness, name, message.message.fitness)
+            Vue.set(this.fitness, message.message.compass_id, message.message.fitness)
           },
         ).setFrequency(0)
       } catch (error) {
