@@ -135,6 +135,9 @@ jobs:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           # The action hard-fails on actors without write access, the permission job already checked this one.
           allowed_non_write_users: ${{ github.actor }}
+          # Since v1.0.288 the action skips PRs from forks by default. The permission job gates the actor and only
+          # the trusted base is checked out, so fork PRs are safe to review.
+          allow_fork_prs: "true"
           claude_args: |
             --model claude-opus-4-7
             --max-turns 40
