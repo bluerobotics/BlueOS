@@ -47,7 +47,6 @@ import autopilot_data from '@/store/autopilot'
 
 const states = {
   IDLE: 0,
-  WAITING_FOR_RESPONSE: 1,
   CALIBRATION_STARTED: 2,
   CALIBRATED: 3,
 }
@@ -93,7 +92,6 @@ export default {
           confirmation: 1,
         },
       })
-      this.state = states.WAITING_FOR_RESPONSE
       let timeout = 0
       this.state = states.CALIBRATION_STARTED
       const ack_listener = mavlink2rest.startListening('COMMAND_ACK').setCallback((message) => {
