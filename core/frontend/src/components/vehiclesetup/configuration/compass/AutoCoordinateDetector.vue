@@ -8,7 +8,10 @@
       </template>
       <span>{{ mavlink_lat ? t`Valid GPS position` : t`No valid GPS position` }}</span>
     </v-tooltip>
-    <b>{{ t`Vehicle coordinates:` }}</b> {{ mavlink_lat?.toFixed(5) ?? t`N/A` }} {{ mavlink_lon?.toFixed(5) ?? t`N/A` }}
+    <b>{{ t`Vehicle coordinates:` }}</b>
+    <span data-testid="vehicle-coordinates">
+      {{ mavlink_lat?.toFixed(5) ?? t`N/A` }} {{ mavlink_lon?.toFixed(5) ?? t`N/A` }}
+    </span>
     <br>
     <template v-if="!mavlink_lat && supports_setting_position">
       <v-icon dense :color="geoip_lat ? 'green' : 'red'">

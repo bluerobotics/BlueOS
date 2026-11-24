@@ -22,7 +22,7 @@
             <tr v-for="item in valid_table_items" :key="item.name">
               <td>{{ item.name }}</td>
               <td>{{ item.value }}</td>
-              <td style="min-width: 150px;">
+              <td style="min-width: 150px;" data-testid="gyro-offsets">
                 {{ renderVec3(item.offsets) }}
               </td>
               <td>{{ item.calibration_temperature?.toFixed(1) }}</td>
@@ -45,12 +45,13 @@
       <v-card-actions class="justify-center">
         <v-btn
           color="primary"
+          data-testid="gyro-calibrate-button"
           @click="calibrate"
         >
           {{ t`Calibrate Gyroscopes` }}
         </v-btn>
       </v-card-actions>
-      <v-card-actions class="justify-center">
+      <v-card-actions class="justify-center" data-testid="gyro-calibration-status">
         {{ calibration_status }}
       </v-card-actions>
     </v-card>

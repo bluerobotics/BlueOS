@@ -6,6 +6,7 @@
     <template #activator="{ on, attrs }">
       <v-btn
         color="primary"
+        data-testid="level-horizon-button"
         v-bind="attrs"
         v-on="on"
       >
@@ -13,8 +14,11 @@
       </v-btn>
     </template>
 
-    <v-card>
-      <v-card-title class="text-h5">
+    <v-card data-testid="level-horizon-dialog">
+      <v-card-title
+        class="text-h5"
+        data-testid="level-horizon-title"
+      >
         {{ t`Accelerometer Calibration` }}
       </v-card-title>
       <v-card-text>
@@ -56,7 +60,7 @@
             <line x1="10" y1="0" x2="35" y2="0" stroke="#ffa000" stroke-width="3" stroke-linecap="round" />
             <circle r="4" fill="none" stroke="#ffa000" stroke-width="2.5" />
           </svg>
-          <div class="attitude-readout">
+          <div class="attitude-readout" data-testid="level-horizon-attitude">
             <span>{{ t`Roll: ${rollDeg.toFixed(1)}°` }}</span>
             <span>{{ t`Pitch: ${pitchDeg.toFixed(1)}°` }}</span>
           </div>
@@ -65,13 +69,19 @@
           v-if="status_text"
           :type="status_type"
           class="mt-2"
+          data-testid="level-horizon-status"
         >
           {{ status_text }}
         </v-alert>
         <status-text-watcher :style="`display : ${status_type === 'error' ? 'block' : 'none'};`" />
       </v-card-text>
       <v-card-actions class="justify-center">
-        <v-btn color="primary" :disabled="calibrating" @click="calibrate()">
+        <v-btn
+          color="primary"
+          :disabled="calibrating"
+          data-testid="level-horizon-calibrate-button"
+          @click="calibrate()"
+        >
           {{ t`Calibrate` }}
         </v-btn>
       </v-card-actions>

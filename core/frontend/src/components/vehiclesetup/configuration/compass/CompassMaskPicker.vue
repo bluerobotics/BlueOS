@@ -14,6 +14,7 @@
                 :label="device.deviceName"
                 :value="device.id"
                 :background-color="getCompassColor(device.deviceIdNumber - 1)"
+                data-testid="compass-mask-checkbox"
               />
             </div>
           </v-col>

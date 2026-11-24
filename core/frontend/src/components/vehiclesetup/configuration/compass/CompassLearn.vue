@@ -7,12 +7,13 @@
       <v-btn
         color="primary"
         :disabled="!learn_param || !is_supported.result"
+        data-testid="compass-learn-button"
         v-bind="attrs"
         v-on="on"
       >
         {{ t`Start Compass Learn` }}
       </v-btn>
-      <span v-if="!is_supported.result" class="ml-2" style="color: red;">
+      <span v-if="!is_supported.result" class="ml-2" style="color: red;" data-testid="compass-learn-unsupported">
         {{ is_supported.reason }}
       </span>
     </template>

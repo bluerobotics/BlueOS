@@ -40,14 +40,18 @@
                 </td>
                 <td>{{ bus_name(baro.busType) }} {{ baro.bus }}</td>
                 <td>{{ `0x${baro.address}` }}</td>
-                <td>{{ baro_status[baro.param] }}</td>
-                <td>{{ baro_ground_pressure[baro.param] }}</td>
+                <td data-testid="baro-pressure">
+                  {{ baro_status[baro.param] }}
+                </td>
+                <td data-testid="baro-ground-pressure">
+                  {{ baro_ground_pressure[baro.param] }}
+                </td>
               </tr>
             </tbody>
           </template>
         </v-simple-table>
       </v-card-text>
-      <v-card-actions class="justify-center pt-4">
+      <v-card-actions class="justify-center pt-4" data-testid="baro-calibration-status">
         {{ calibration_status }}
       </v-card-actions>
       <v-card-actions class="justify-center pa-2">
@@ -55,6 +59,7 @@
           v-tooltip="t`Calibrate all barometers to ground level`"
           color="primary"
           :disabled="disable_button"
+          data-testid="baro-calibrate-button"
           @click="calibrate"
         >
           {{ t`Calibrate` }}
