@@ -628,6 +628,15 @@ msgstr ""
 msgid "Calibration Successful"
 msgstr ""
 
+#: src/components/vehiclesetup/configuration/accelerometer/QuickAccelerometerCalibration.vue
+#, javascript-format
+msgid "Calibration failed: ${ 0 }"
+msgstr ""
+
+#: src/components/vehiclesetup/configuration/accelerometer/QuickAccelerometerCalibration.vue
+msgid "Calibration failed: no answer from the vehicle"
+msgstr ""
+
 #: src/components/vehiclesetup/overview/GyroCalib.vue
 msgid "Calibration temperature (°C)"
 msgstr ""
@@ -1263,7 +1272,7 @@ msgstr ""
 msgid "Extension installed successfully."
 msgstr ""
 
-#: src/App.vue
+#: src/menus.ts
 msgid "Extensions"
 msgstr ""
 
@@ -1868,7 +1877,7 @@ msgid ""
 "<b>\"CompassLearn: finished\"</b>."
 msgstr ""
 
-#: src/App.vue
+#: src/menus.ts
 msgid "Manage BlueOS extensions"
 msgstr ""
 
@@ -3975,12 +3984,24 @@ msgstr ""
 msgid "an automatically assigned port"
 msgstr ""
 
+#: src/components/vehiclesetup/configuration/compass/FullCompassCalibrator.vue
+msgid "bad orientation"
+msgstr ""
+
+#: src/components/vehiclesetup/configuration/compass/FullCompassCalibrator.vue
+msgid "bad radius"
+msgstr ""
+
 #: src/components/ethernet/InterfaceCard.vue
 msgid "dynamic IP"
 msgstr ""
 
 #: src/components/vehiclesetup/MotorDetection.vue
 msgid "external movement"
+msgstr ""
+
+#: src/components/vehiclesetup/configuration/compass/FullCompassCalibrator.vue
+msgid "failed"
 msgstr ""
 
 #: src/components/video-manager/VideoThumbnail.vue
