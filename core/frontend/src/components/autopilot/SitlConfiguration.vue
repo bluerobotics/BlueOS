@@ -13,7 +13,17 @@
       :menu-props="{ contentClass: 'sitl-frame-select-menu' }"
       class="ma-1 pa-0"
       @change="changeSitlFrame"
-    />
+    >
+      <template #selection="{ item }">
+        <div
+          class="v-select__selection v-select__selection--comma"
+          :class="{ 'v-select__selection--disabled': autopilot.restarting || setting }"
+          data-testid="sitl-frame-selection"
+        >
+          {{ item.text }}
+        </div>
+      </template>
+    </v-select>
     <v-snackbar
       v-model="show_success"
       color="success"
