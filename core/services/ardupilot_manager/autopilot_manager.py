@@ -54,6 +54,13 @@ class AutoPilotManager(metaclass=Singleton):
         self._start_fail_count = 0
         self._max_start_failures = 10
 
+        # Kept out of setup(), a new one per start downloads and parses the whole ArduPilot manifest again
+        self.firmware_manager = FirmwareManager(
+            self._settings_manager.settings.firmware_folder,
+            self._settings_manager.settings.defaults_folder,
+            self._settings_manager.settings.user_firmware_folder,
+        )
+
         self.autopilot_default_endpoints = [
             Endpoint(
                 name="GCS Server Link",
@@ -154,11 +161,6 @@ class AutoPilotManager(metaclass=Singleton):
 
         self._load_endpoints()
         self.ardupilot_subprocess: Optional[Any] = None
-        self.firmware_manager = FirmwareManager(
-            self._settings_manager.settings.firmware_folder,
-            self._settings_manager.settings.defaults_folder,
-            self._settings_manager.settings.user_firmware_folder,
-        )
         self.vehicle_manager = VehicleManager()
         self._heartbeat_fail_count = 0  # Consecutive heartbeat failures
         self._max_heartbeat_failures = 10  # Threshold for restarting Ardupilot after consecutive heartbeat failures
