@@ -2,10 +2,11 @@
 // How to run: BLUEOS_URL=http://<ip> bun --cwd e2e e2e parameters.spec.ts
 import { Locator, Page } from '@playwright/test'
 
+import {
+  LOAD_TIMEOUT, parameterRow, parameterValue, searchParameter, waitParameters,
+} from '@/fixtures/parameters'
+import { openSelect } from '@/fixtures/ui'
 import { expect, test } from '@/fixtures/vehicle'
-
-// 5 seconds above the autopilot firmware test, the parameter list is slower to arrive
-const BACKEND_TIMEOUT = 65_000
 
 // Set by a scenario after it writes on the vehicle, so a failure still puts the original value back
 let restore: ((page: Page) => Promise<void>) | undefined
@@ -17,27 +18,6 @@ function restoreLater(search: string, name: string, value: number): void {
     await searchParameter(page, search)
     await writeValue(page, name, value)
   }
-}
-
-async function waitParameters(page: Page): Promise<void> {
-  // Save is only enabled once every parameter and its metadata are loaded
-  await expect(page.getByTestId('parameters-download-button'), 'the parameters should load')
-    .toBeEnabled({ timeout: BACKEND_TIMEOUT })
-}
-
-async function searchParameter(page: Page, search: string): Promise<void> {
-  await page.getByTestId('parameter-search').fill(search)
-  await expect(page.getByTestId('parameters-table').locator('mark').first(), `"${search}" should match something`)
-    .toBeVisible()
-}
-
-function parameterRow(page: Page, name: string): Locator {
-  const cell = page.getByTestId('parameter-name').filter({ hasText: new RegExp(`^\\s*${name}\\s*$`) })
-  return page.getByRole('row').filter({ has: cell })
-}
-
-function parameterValue(page: Page, name: string): Locator {
-  return parameterRow(page, name).getByTestId('parameter-value')
 }
 
 async function readValue(page: Page, name: string): Promise<number> {
@@ -85,13 +65,6 @@ function hertz(value: number): RegExp {
   return new RegExp(`^\\s*${value} \\[Hz\\]\\s*$`)
 }
 
-async function openSelect(page: Page, testId: string): Promise<Locator> {
-  await page.getByTestId(testId).click()
-  const menu = page.locator('.menuable__content__active')
-  await expect(menu, `the ${testId} list should open`).toBeVisible()
-  return menu
-}
-
 test.describe.serial('Parameters', () => {
   test.setTimeout(300_000)
 
@@ -128,7 +101,7 @@ test.describe.serial('Parameters', () => {
     await test.step(`change ${name} from ${original} to ${changed} Hz`, async () => {
       restoreLater(search, name, original)
       await writeValue(page, name, changed)
-      await expect(value, `${name} should show ${changed}`).toHaveText(hertz(changed), { timeout: BACKEND_TIMEOUT })
+      await expect(value, `${name} should show ${changed}`).toHaveText(hertz(changed), { timeout: LOAD_TIMEOUT })
     })
 
     await test.step('the new value survives a reload', async () => {
@@ -143,7 +116,7 @@ test.describe.serial('Parameters', () => {
       await expect(loader, `${name} should be listed to be written`).toContainText(name)
       await page.getByTestId('parameters-write-button').click()
       await expect(page.getByTestId('parameters-write-success'), 'the parameters should be written')
-        .toContainText('Parameters written successfully', { timeout: BACKEND_TIMEOUT })
+        .toContainText('Parameters written successfully', { timeout: LOAD_TIMEOUT })
       await page.getByTestId('parameters-loader-close-button').click()
     })
 
@@ -180,7 +153,7 @@ test.describe.serial('Parameters', () => {
       restoreLater('log_bitmask', 'LOG_BITMASK', original)
       await page.getByTestId('parameter-save-button').click()
       const shown = expect(value, `${name} should be ${enabled ? 'off' : 'on'}`)
-      await (enabled ? shown.not : shown).toContainText(name, { timeout: BACKEND_TIMEOUT })
+      await (enabled ? shown.not : shown).toContainText(name, { timeout: LOAD_TIMEOUT })
     })
 
     await test.step('the new value survives a reload', async () => {
@@ -194,7 +167,7 @@ test.describe.serial('Parameters', () => {
       await setChecked(first, enabled)
       await page.getByTestId('parameter-save-button').click()
       const shown = expect(value, `${name} should be ${enabled ? 'on' : 'off'} again`)
-      await (enabled ? shown : shown.not).toContainText(name, { timeout: BACKEND_TIMEOUT })
+      await (enabled ? shown : shown.not).toContainText(name, { timeout: LOAD_TIMEOUT })
       await reloadAndSearch(page, 'log_bitmask')
       await openParameter(page, 'LOG_BITMASK')
       await setChecked(custom, true)
@@ -215,7 +188,7 @@ test.describe.serial('Parameters', () => {
       await expect(async () => {
         await options.evaluate((menu) => menu.scrollTo(0, menu.scrollHeight))
         await expect(option).toBeAttached({ timeout: 1000 })
-      }, `the ${name} option should exist`).toPass({ timeout: BACKEND_TIMEOUT })
+      }, `the ${name} option should exist`).toPass({ timeout: LOAD_TIMEOUT })
     }
     await page.keyboard.press('Escape')
     await closeParameter(page)
