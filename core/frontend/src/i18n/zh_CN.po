@@ -10,7 +10,7 @@ msgstr ""
 "X-Crowdin-File-ID: 24\n"
 "Project-Id-Version: blueos\n"
 "Language-Team: Chinese Simplified\n"
-"PO-Revision-Date: 2026-11-20 01:41\n"
+"PO-Revision-Date: 2026-11-25 11:28\n"
 
 #: src/components/notifications/NotificationGroupCard.vue
 #, javascript-format
@@ -585,6 +585,15 @@ msgstr "校准"
 #: src/components/vehiclesetup/configuration/accelerometer/QuickAccelerometerCalibration.vue
 msgid "Calibration Successful"
 msgstr "校准成功"
+
+#: src/components/vehiclesetup/configuration/accelerometer/QuickAccelerometerCalibration.vue
+#, javascript-format
+msgid "Calibration failed: ${ 0 }"
+msgstr ""
+
+#: src/components/vehiclesetup/configuration/accelerometer/QuickAccelerometerCalibration.vue
+msgid "Calibration failed: no answer from the vehicle"
+msgstr ""
 
 #: src/components/vehiclesetup/overview/GyroCalib.vue
 msgid "Calibration temperature (°C)"
@@ -1212,7 +1221,7 @@ msgstr "可执行文件路径"
 msgid "Extension installed successfully."
 msgstr "扩展安装成功。"
 
-#: src/App.vue
+#: src/menus.ts
 msgid "Extensions"
 msgstr "扩展"
 
@@ -1788,7 +1797,7 @@ msgstr "未安装 Major Tom"
 msgid "Make sure you have a valid region/position specified, then click start and drive the vehicle around in manual mode until you see the message <b>\"CompassLearn: finished\"</b>."
 msgstr "请确保已指定有效的区域/位置，然后点击开始，并在手动模式下驾驶载具四处移动，直到看到消息 <b>\"CompassLearn: finished\"</b>。"
 
-#: src/App.vue
+#: src/menus.ts
 msgid "Manage BlueOS extensions"
 msgstr "管理 BlueOS 扩展"
 
@@ -3737,6 +3746,14 @@ msgstr "已有令牌"
 msgid "an automatically assigned port"
 msgstr "自动分配的端口"
 
+#: src/components/vehiclesetup/configuration/compass/FullCompassCalibrator.vue
+msgid "bad orientation"
+msgstr ""
+
+#: src/components/vehiclesetup/configuration/compass/FullCompassCalibrator.vue
+msgid "bad radius"
+msgstr ""
+
 #: src/components/ethernet/InterfaceCard.vue
 msgid "dynamic IP"
 msgstr "动态 IP"
@@ -3744,6 +3761,10 @@ msgstr "动态 IP"
 #: src/components/vehiclesetup/MotorDetection.vue
 msgid "external movement"
 msgstr "外部运动"
+
+#: src/components/vehiclesetup/configuration/compass/FullCompassCalibrator.vue
+msgid "failed"
+msgstr ""
 
 #: src/components/video-manager/VideoThumbnail.vue
 msgid "fetching..."
