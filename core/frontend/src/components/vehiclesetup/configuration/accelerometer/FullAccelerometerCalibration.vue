@@ -191,6 +191,30 @@ export default {
         },
       })
     },
+    // The new values only come with the PARAM_VALUEs sent by the save, a missed one keeps the old calibration
+    readCalibration() {
+      const imus = ['INS_ACC', 'INS_ACC2', 'INS_ACC3']
+      const kinds = ['OFFS', 'SCAL']
+      const axes = ['X', 'Y', 'Z']
+      const names = imus.flatMap((imu) => kinds.flatMap((kind) => axes.map((axis) => `${imu}${kind}_${axis}`)))
+        .filter((name) => autopilot_data.parameter(name))
+      for (const name of names) {
+        mavlink2rest.sendMessage({
+          header: {
+            system_id: 255,
+            component_id: 0,
+            sequence: 0,
+          },
+          message: {
+            type: 'PARAM_REQUEST_READ',
+            param_index: -1,
+            target_system: autopilot_data.system_id,
+            target_component: 1,
+            param_id: [...name.padEnd(16, '\0')],
+          },
+        })
+      }
+    },
     cleanup() {
       this.dialog = false
       // delay resetting the state to wait for the close animation to finish
@@ -222,6 +246,7 @@ export default {
               this.state = CalState.SUCCESS
               this.cleanup()
               ack_listener.discard()
+              this.readCalibration()
               break
             case AccelcalVehiclePos.ACCELCAL_VEHICLE_POS_FAILED:
               this.state = CalState.FAIL
