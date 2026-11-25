@@ -87,6 +87,12 @@ export async function installFirmware(page: Page): Promise<void> {
     .toContainText('Successfully installed new firmware')
 }
 
+export async function openAutopilot(page: Page): Promise<void> {
+  await page.goto('/vehicle/autopilot')
+  await expect(page.getByTestId('autopilot-board-name'), 'the current board should be known')
+    .toHaveText(/^\s*(?!Unknown)\S/, { timeout: BACKEND_TIMEOUT })
+}
+
 export async function saveBoard(page: Page, board: string): Promise<OriginalBoard> {
   if (board !== 'SITL') {
     return { board }
