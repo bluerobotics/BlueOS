@@ -81,7 +81,13 @@ export async function changeBoard(page: Page, board: RegExp | string): Promise<v
 export async function installFirmware(page: Page): Promise<void> {
   await page.getByTestId('install-firmware-button').click()
   const progress = page.getByTestId('install-firmware-progress')
-  await expect(progress, 'the progress message should be shown').toBeVisible()
+  // Firmware without a Blue Robotics parameter set asks before installing
+  const untested = page.getByRole('button', { name: 'Install anyway' })
+  await expect(progress.or(untested), 'the progress message should be shown').toBeVisible()
+  if (await untested.isVisible()) {
+    await untested.click()
+    await expect(progress, 'the progress message should be shown').toBeVisible()
+  }
   await expect(progress, 'the install should finish').toBeHidden({ timeout: INSTALL_TIMEOUT })
   await expect(page.getByTestId('install-firmware-result'), 'the success message should be shown')
     .toContainText('Successfully installed new firmware')
