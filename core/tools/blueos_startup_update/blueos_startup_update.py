@@ -6,6 +6,7 @@ import json
 import logging
 import os
 import re
+import shlex
 import subprocess
 import time
 from pathlib import Path
@@ -746,11 +747,26 @@ def fix_wpa_service() -> bool:
     return True
 
 
+def write_file_keeping_owner_and_mode(file_path: str, content: str) -> bool:
+    # save_file and upload_file do not keep the owner and mode of the file
+    result = run_command(f"printf %s {shlex.quote(content)} | sudo tee {shlex.quote(file_path)}", check=False)
+    if result.returncode != 0:
+        logger.error(f"Failed to write {file_path}: {result.stderr}")
+    return result.returncode == 0
+
+
+def write_network_manager_conf(file_path: str, content: str, backup: bool) -> bool:
+    if backup:
+        backup_path = f"{file_path}.before_networkmanager_fix.bak"
+        result = run_command(f"sudo cp {shlex.quote(file_path)} {shlex.quote(backup_path)}", check=False)
+        if result.returncode != 0:
+            logger.warning(f"Failed to back up {file_path}: {result.stderr}")
+    return write_file_keeping_owner_and_mode(file_path, content)
+
+
 def configure_network_manager() -> bool:
-    """
-    Ensures NetworkManager.conf has [main] section with dns=none set if dns is not already configured
-    """
-    logger.info("Configuring NetworkManager DNS settings...")
+    """Ensures NetworkManager.conf has dns=none in [main] and unmanaged-devices in [keyfile]"""
+    logger.info("Configuring NetworkManager settings...")
     file_path = "/etc/NetworkManager/NetworkManager.conf"
 
     config = configparser.ConfigParser()
@@ -770,18 +786,37 @@ managed=false
 wifi.scan-rand-mac-address=no
 
 [keyfile]
-unmanaged-devices=interface:eth0;interface:usb0
+unmanaged-devices=interface-name:eth0;interface-name:usb0
 """
-        run_command(f"echo '{content}' | sudo tee {file_path}", check=False)
-        return True
+        return write_network_manager_conf(file_path, content, backup=False)
 
-    config.read_string(result.stdout)
+    # "interface:" is not a valid NetworkManager device spec
+    migrated = re.sub(
+        r"^[ \t]*unmanaged-devices[ \t]*=.*$",
+        lambda m: re.sub(r"\binterface:", "interface-name:", m.group(0)),
+        result.stdout,
+        flags=re.MULTILINE,
+    )
+    has_old_device_spec = migrated != result.stdout
+
+    def log_migration(written: bool) -> bool:
+        if written and has_old_device_spec:
+            logger.warning(
+                "Migrated the old 'interface:' device spec in NetworkManager.conf to 'interface-name:'."
+                " NetworkManager stops managing the devices listed in unmanaged-devices and the host will restart"
+                f" once. Backup: {file_path}.before_networkmanager_fix.bak"
+            )
+        return written
+
+    config.read_string(migrated)
 
     # Check if we need to make changes
     if ("main" in config.sections() and "dns" in config["main"]) and (
         "keyfile" in config.sections() and "unmanaged-devices" in config["keyfile"]
     ):
-        return False
+        if not has_old_device_spec:
+            return False
+        return log_migration(write_network_manager_conf(file_path, migrated, backup=True))
 
     # Add our settings if needed
     if "main" not in config:
@@ -793,7 +828,7 @@ unmanaged-devices=interface:eth0;interface:usb0
     if "keyfile" not in config:
         config.add_section("keyfile")
     if "unmanaged-devices" not in config["keyfile"]:
-        config["keyfile"]["unmanaged-devices"] = "interface:eth0;interface:usb0"
+        config["keyfile"]["unmanaged-devices"] = "interface-name:eth0;interface-name:usb0"
 
     # Write back if changes were made
     content = ""
@@ -803,8 +838,7 @@ unmanaged-devices=interface:eth0;interface:usb0
             content += f"{key}={value}\n"
         content += "\n"
 
-    run_command(f"echo '{content}' | sudo tee {file_path}", check=False)
-    return True
+    return log_migration(write_network_manager_conf(file_path, content, backup=True))
 
 
 def check_available_space(required_mb: int) -> bool:
