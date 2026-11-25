@@ -11,6 +11,7 @@ from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.routing import APIRoute
 from fastapi.staticfiles import StaticFiles
 from loguru import logger
+from starlette.datastructures import Headers
 
 
 class PrettyJSONResponse(JSONResponse):
@@ -46,6 +47,21 @@ class GenericErrorHandlingRoute(APIRoute):
                 raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=error_msg) from error
 
         return custom_route_handler
+
+
+class RevalidatedStaticFiles(StaticFiles):
+    """
+    Image builds pin every file mtime, so the Last-Modified and ETag validators never change between releases.
+    Always answer with the full file and make the browser ask again instead of reusing a stale copy.
+    """
+
+    def is_not_modified(self, response_headers: Headers, request_headers: Headers) -> bool:
+        return False
+
+    def file_response(self, *args: Any, **kwargs: Any) -> Response:
+        response = super().file_response(*args, **kwargs)
+        response.headers["Cache-Control"] = "no-cache"
+        return response
 
 
 def use_local_docs_assets(app: FastAPI, static_directory: str = "/usr/blueos/static") -> None:

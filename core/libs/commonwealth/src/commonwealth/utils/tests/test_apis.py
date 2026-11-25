@@ -1,6 +1,9 @@
+from pathlib import Path
+
 from commonwealth.utils.apis import (
     GenericErrorHandlingRoute,
     PrettyJSONResponse,
+    RevalidatedStaticFiles,
     StackedHTTPException,
 )
 from fastapi import FastAPI, HTTPException, status
@@ -74,3 +77,39 @@ def test_stacked_http_exception_includes_cause_message() -> None:
     exception = StackedHTTPException(status_code=status.HTTP_404_NOT_FOUND, error=RuntimeError("missing"))
     assert exception.status_code == status.HTTP_404_NOT_FOUND
     assert "missing" in exception.detail
+
+
+def static_client(tmp_path: Path, html: bool = False) -> TestClient:
+    (tmp_path / "index.html").write_text("<html>index</html>")
+    (tmp_path / "file.txt").write_text("content")
+    app = FastAPI()
+    app.mount("/", RevalidatedStaticFiles(directory=str(tmp_path), html=html))
+    return TestClient(app)
+
+
+def test_revalidated_static_files_sends_no_cache(tmp_path: Path) -> None:
+    response = static_client(tmp_path).get("/file.txt")
+
+    assert response.status_code == status.HTTP_200_OK
+    assert response.text == "content"
+    assert response.headers["cache-control"] == "no-cache"
+
+
+def test_revalidated_static_files_ignores_validators(tmp_path: Path) -> None:
+    client = static_client(tmp_path)
+    first = client.get("/file.txt")
+
+    by_etag = client.get("/file.txt", headers={"If-None-Match": first.headers["etag"]})
+    by_date = client.get("/file.txt", headers={"If-Modified-Since": first.headers["last-modified"]})
+
+    assert by_etag.status_code == status.HTTP_200_OK
+    assert by_date.status_code == status.HTTP_200_OK
+    assert by_etag.text == by_date.text == "content"
+
+
+def test_revalidated_static_files_serves_index_for_html(tmp_path: Path) -> None:
+    response = static_client(tmp_path, html=True).get("/")
+
+    assert response.status_code == status.HTTP_200_OK
+    assert response.text == "<html>index</html>"
+    assert response.headers["cache-control"] == "no-cache"
