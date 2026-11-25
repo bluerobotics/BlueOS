@@ -1,10 +1,11 @@
 import os
 import re
+import shlex
 import subprocess
 import sys
 from pathlib import Path
 from types import ModuleType
-from typing import Callable, Dict, List, NamedTuple, Optional, Tuple
+from typing import Any, Callable, Dict, List, NamedTuple, Optional, Tuple
 from unittest.mock import patch
 
 import pytest
@@ -845,3 +846,75 @@ def test_overlay_that_is_not_compiled_is_not_configured(distribution: Distributi
     skipped = [f"dtoverlay={name}" for name in blueos_startup_update.INSTALL_ONLY_OVERLAYS]
     expected = [line for line in with_overlays[distribution.config_file].splitlines() if line not in skipped]
     assert without_overlays[distribution.config_file].splitlines() == expected
+
+
+def configure_network_manager_on(existing: Optional[str], write_fails: bool = False) -> Tuple[bool, str]:
+    """Runs the patch against a fake NetworkManager.conf, returns whether it changed it and what it wrote"""
+    written: List[str] = []
+
+    def run_command(command: str, **_kwargs: Any) -> "subprocess.CompletedProcess[str]":
+        if command.startswith("test -f"):
+            stdout = existing or ""
+            return subprocess.CompletedProcess(command, 0 if existing is not None else 1, stdout, "")
+        written.append(command)
+        return subprocess.CompletedProcess(command, 1 if write_fails else 0, "", "")
+
+    with patch.object(blueos_startup_update, "run_command", run_command):
+        changed = blueos_startup_update.configure_network_manager()
+    return changed, written[0] if written else ""
+
+
+def test_network_manager_conf_uses_valid_device_specs() -> None:
+    changed, written = configure_network_manager_on(None)
+
+    assert changed
+    assert "unmanaged-devices=interface-name:eth0;interface-name:usb0" in written
+
+
+def test_network_manager_conf_with_the_old_device_specs_is_fixed() -> None:
+    changed, written = configure_network_manager_on(
+        "[main]\ndns=none\n\n[keyfile]\nunmanaged-devices=interface:eth0;interface:usb0\n"
+    )
+
+    assert changed
+    assert "unmanaged-devices=interface-name:eth0;interface-name:usb0" in written
+    assert "interface:" not in written
+
+
+def test_network_manager_conf_with_the_right_device_specs_is_left_alone() -> None:
+    changed, written = configure_network_manager_on(
+        "[main]\ndns=none\n\n[keyfile]\nunmanaged-devices=interface-name:eth0;interface-name:usb0\n"
+    )
+
+    assert not changed
+    assert not written
+
+
+@pytest.mark.parametrize("existing", [None, "[main]\ndns=none\n\n[keyfile]\nunmanaged-devices=interface:eth0\n"])
+def test_network_manager_conf_that_cannot_be_written_does_not_ask_for_a_restart(existing: Optional[str]) -> None:
+    changed, _ = configure_network_manager_on(existing, write_fails=True)
+
+    assert not changed
+
+
+def test_network_manager_conf_migration_only_changes_the_unmanaged_devices_line() -> None:
+    existing = (
+        "# managed by the user\n[main]\nPlugins=ifupdown,keyfile\nDNS=none\n\n"
+        "[keyfile]\n# do not touch\nunmanaged-devices = interface:eth0;interface:usb0;interface-name:wlan1\n\n"
+        "[logging]\nunmanaged-devices=interface:left-alone\n"
+    )
+    expected = existing.replace(
+        "devices = interface:eth0;interface:usb0;", "devices = interface-name:eth0;interface-name:usb0;"
+    )
+
+    changed, written = configure_network_manager_on(existing)
+
+    assert changed
+    assert written == f"printf %s {shlex.quote(expected)} | sudo tee /etc/NetworkManager/NetworkManager.conf"
+
+
+def test_network_manager_conf_keys_are_case_sensitive_for_the_migration() -> None:
+    changed, written = configure_network_manager_on("[main]\ndns=none\n\n[keyfile]\nUnmanaged-Devices=interface:eth0\n")
+
+    assert not changed
+    assert not written
