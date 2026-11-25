@@ -19,6 +19,7 @@
             :items="board_options"
             :label="t`Available boards`"
             data-testid="available-boards-select"
+            :menu-props="{ contentClass: 'available-boards-select-menu' }"
             required
           />
 
