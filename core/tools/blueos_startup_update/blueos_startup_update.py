@@ -6,13 +6,20 @@ import json
 import logging
 import os
 import re
+import shlex
 import subprocess
 import time
 from pathlib import Path
-from typing import List, Optional, Tuple
+from typing import Callable, List, Optional, Tuple
 
 import appdirs
-from commonwealth.utils.commands import load_file, locate_file, run_command, save_file
+from commonwealth.utils.commands import (
+    HostFileError,
+    load_file,
+    locate_file,
+    run_command,
+    save_file,
+)
 from commonwealth.utils.general import CpuType, HostOs, get_cpu_type, get_host_os
 from commonwealth.utils.logs import InterceptHandler, init_logger
 from loguru import logger
@@ -191,12 +198,30 @@ def boot_config_get_available_section(config_content: List[str]) -> List[str]:
     return section
 
 
+def boot_config_shares_sections_between_boards() -> bool:
+    # One config.txt serves every board on Trixie, so a board must not touch the other boards' sections
+    return get_host_os() == HostOs.Trixie
+
+
 def boot_config_filter_conflicting_configuration_at_section(
-    config_content: List[str], config_pattern_match: str, config: str, section_name: str
+    config_content: List[str],
+    config_pattern_match: str,
+    config: str,
+    section_name: str,
+    keep_other_board_sections: bool = False,
 ) -> List[str]:
     regex_flags = re.IGNORECASE | re.DOTALL | re.MULTILINE
 
     (section_start, section_end) = boot_config_get_or_append_section(config_content, section_name)
+
+    def in_other_board_section(index: int) -> bool:
+        # Filters such as [HDMI:0] or [gpio4=1] are headers too, and are not boards
+        headers = [
+            header["name"].lower()
+            for line in config_content[: index + 1]
+            if (header := re.match(r"^\[(?P<name>[^\]]+)\]", line))
+        ]
+        return bool(headers) and headers[-1] in {"pi3", "pi4", "pi5"} - {section_name.lower()}
 
     return [
         line
@@ -204,6 +229,8 @@ def boot_config_filter_conflicting_configuration_at_section(
         if (
             # If it's not protected
             re.match(f"^.*#.*{CONFIG_USER_PROTECTION_WORD}.*$", line, regex_flags)
+            # Or it belongs to another board that shares this config.txt
+            or (keep_other_board_sections and in_other_board_section(i))
             # Then remove the conflicting configuration...
             or not (
                 re.match(config_pattern_match, line, regex_flags)
@@ -242,12 +269,14 @@ def boot_config_normalize_section_order(
     (section_start, section_end) = boot_config_get_or_append_section(config_content, section_name)
     section_body = config_content[section_start + 1 : section_end]
     # The user also writes an empty dtoverlay=, so the patch does not own every copy of it.
-    match_patterns = [pattern for board_line, pattern in managed_entries if board_line != BOOT_CONFIG_END_OVERLAY_SCOPE]
-
     def is_managed(line: str) -> bool:
         if boot_config_line_is_protected(line):
             return False
-        return any(re.match(pattern, line, regex_flags) for pattern in match_patterns)
+        return any(
+            re.match(pattern, line, regex_flags)
+            for board_line, pattern in managed_entries
+            if board_line != BOOT_CONFIG_END_OVERLAY_SCOPE
+        )
 
     user_lines = [line for line in section_body if line and not is_managed(line)]
 
@@ -263,7 +292,16 @@ def boot_config_normalize_section_order(
     for board_line, pattern in managed_entries:
         if board_line == BOOT_CONFIG_END_OVERLAY_SCOPE and not earlier_directive_present:
             continue
-        if any(boot_config_line_is_protected(line) and re.match(pattern, line, regex_flags) for line in section_body):
+        # A protected line replaces the board line in its slot. Left with the user lines, it would land after
+        # the overlays the user keeps, and the firmware would apply a dtparam to the wrong overlay.
+        protected = [
+            line
+            for line in section_body
+            if boot_config_line_is_protected(line) and re.match(pattern, line, regex_flags)
+        ]
+        if protected:
+            board_lines.extend(protected)
+            user_lines = [line for line in user_lines if line not in protected]
             continue
         board_lines.append(board_line)
 
@@ -277,6 +315,10 @@ def boot_config_normalize_section_order(
         if user_line == BOOT_CONFIG_END_OVERLAY_SCOPE and not boot_config_overlay_is_open(board_lines):
             continue
         board_lines.append(user_line)
+
+    # A user overlay that stays in the section would take the lines written below the section, too
+    if boot_config_overlay_is_open(board_lines):
+        board_lines.append(BOOT_CONFIG_END_OVERLAY_SCOPE)
 
     config_content[section_start + 1 : section_end] = board_lines
 
@@ -544,7 +586,11 @@ def update_dwc2() -> bool:
 
     # Remove any unprotected and conflicting dwc2 overlay configuration
     config_content = boot_config_filter_conflicting_configuration_at_section(
-        config_content, dwc2_overlay_match_pattern, dwc2_overlay_config, section_name
+        config_content,
+        dwc2_overlay_match_pattern,
+        dwc2_overlay_config,
+        section_name,
+        boot_config_shares_sections_between_boards(),
     )
     boot_config_normalize_section_order(config_content, section_name, managed_entries)
 
@@ -603,7 +649,7 @@ def update_navigator_overlays() -> bool:
     for (config, config_match_pattern) in navigator_configs_with_match_patterns:
         # Remove any unprotected and conflicting configuration of peripherals
         config_content = boot_config_filter_conflicting_configuration_at_section(
-            config_content, config_match_pattern, config, section_name
+            config_content, config_match_pattern, config, section_name, boot_config_shares_sections_between_boards()
         )
 
     boot_config_normalize_section_order(config_content, section_name, managed_entries)
@@ -682,8 +728,14 @@ def ensure_ipv6_disabled() -> bool:
         ),
     ]
 
-    sysctl_config_path = "/etc/sysctl.conf"
-    sysctl_config_file = load_file(sysctl_config_path)
+    # Trixie's systemd-sysctl no longer reads /etc/sysctl.conf, only /etc/sysctl.d
+    sysctl_config_path = "/etc/sysctl.d/99-blueos.conf" if get_host_os() == HostOs.Trixie else "/etc/sysctl.conf"
+    try:
+        sysctl_config_file = load_file(sysctl_config_path)
+    except HostFileError:
+        if get_host_os() != HostOs.Trixie:
+            raise
+        sysctl_config_file = ""
 
     # Make sure every required entry is in the file and uncommented
     needs_update = False
@@ -743,20 +795,8 @@ def fix_wpa_service() -> bool:
     return True
 
 
-def configure_network_manager() -> bool:
-    """
-    Ensures NetworkManager.conf has [main] section with dns=none set if dns is not already configured
-    """
-    logger.info("Configuring NetworkManager DNS settings...")
-    file_path = "/etc/NetworkManager/NetworkManager.conf"
-
-    config = configparser.ConfigParser()
-
-    # Try to read existing file
-    result = run_command(f"test -f {file_path} && cat {file_path}", check=False)
-    if result.returncode != 0:
-        # File doesn't exist, create with template
-        content = """[main]
+# deploy/pimod/provision_trixie.sh writes the same content into the image, a test keeps them equal
+NETWORK_MANAGER_CONF_TEMPLATE = """[main]
 plugins=ifupdown,keyfile
 dns=none
 
@@ -767,18 +807,51 @@ managed=false
 wifi.scan-rand-mac-address=no
 
 [keyfile]
-unmanaged-devices=interface:eth0;interface:usb0
+unmanaged-devices=interface-name:eth0;interface-name:usb0
 """
-        run_command(f"echo '{content}' | sudo tee {file_path}", check=False)
-        return True
 
-    config.read_string(result.stdout)
+
+def configure_network_manager() -> bool:
+    """
+    Ensures NetworkManager.conf has dns=none in [main] and the unmanaged-devices entry in [keyfile],
+    and migrates the invalid "interface:" device spec that earlier versions wrote to "interface-name:"
+    """
+    logger.info("Configuring NetworkManager DNS settings...")
+    file_path = "/etc/NetworkManager/NetworkManager.conf"
+
+    config = configparser.ConfigParser()
+
+    # Try to read existing file
+    result = run_command(f"test -f {file_path} && cat {file_path}", check=False)
+    if result.returncode != 0:
+        # File doesn't exist, create with template
+        tee = run_command(f"echo '{NETWORK_MANAGER_CONF_TEMPLATE}' | sudo tee {file_path}", check=False)
+        return tee.returncode == 0
+
+    # "interface:" is not a NetworkManager device spec, so earlier versions wrote an entry that was ignored.
+    # Only that line is rewritten, so the user's comments and layout are kept. NetworkManager keys are case-sensitive.
+    migrated_lines = []
+    section = ""
+    for line in result.stdout.splitlines(keepends=True):
+        header = re.match(r"\s*\[([^\]]+)\]", line)
+        if header:
+            section = header.group(1)
+        if section == "keyfile" and re.match(r"\s*unmanaged-devices\s*=", line):
+            line = re.sub(r"\binterface:", "interface-name:", line)
+        migrated_lines.append(line)
+    migrated = "".join(migrated_lines)
+    has_old_device_spec = migrated != result.stdout
+
+    config.read_string(migrated)
 
     # Check if we need to make changes
     if ("main" in config.sections() and "dns" in config["main"]) and (
         "keyfile" in config.sections() and "unmanaged-devices" in config["keyfile"]
     ):
-        return False
+        if not has_old_device_spec:
+            return False
+        write = f"printf %s {shlex.quote(migrated)} | sudo tee {file_path}"
+        return run_command(write, check=False).returncode == 0
 
     # Add our settings if needed
     if "main" not in config:
@@ -790,7 +863,7 @@ unmanaged-devices=interface:eth0;interface:usb0
     if "keyfile" not in config:
         config.add_section("keyfile")
     if "unmanaged-devices" not in config["keyfile"]:
-        config["keyfile"]["unmanaged-devices"] = "interface:eth0;interface:usb0"
+        config["keyfile"]["unmanaged-devices"] = "interface-name:eth0;interface-name:usb0"
 
     # Write back if changes were made
     content = ""
@@ -800,8 +873,7 @@ unmanaged-devices=interface:eth0;interface:usb0
             content += f"{key}={value}\n"
         content += "\n"
 
-    run_command(f"echo '{content}' | sudo tee {file_path}", check=False)
-    return True
+    return run_command(f"echo '{content}' | sudo tee {file_path}", check=False).returncode == 0
 
 
 def check_available_space(required_mb: int) -> bool:
@@ -914,6 +986,46 @@ def locate_boot_file(candidates: List[str]) -> Optional[str]:
     return located
 
 
+def select_patches(host_cpu: CpuType, host_os: HostOs) -> List[Tuple[str, Callable[[], bool]]]:
+    # TODO: parse tag as semver and check before applying patches
+    patches_to_apply = [
+        ("startup", update_startup),
+        ("userdata", ensure_user_data_structure_is_in_place),
+        ("nginx", ensure_nginx_permissions),
+        ("dns", create_dns_conf_host_link),
+        ("ssh", fix_ssh_ownership),
+        ("noIPV6", ensure_ipv6_disabled),
+        ("swap", update_swap_size),
+        ("cgroups", update_cgroups),
+        ("dhcpcd_wait", remove_dhcpcd_wait),
+    ]
+    # Trixie has no dphys-swapfile, the image configures zram instead
+    if host_os == HostOs.Trixie:
+        patches_to_apply = [(name, patch) for name, patch in patches_to_apply if name != "swap"]
+
+    if host_cpu == CpuType.PI3:
+        patches_to_apply.append(("revert_update_dwc2", revert_update_dwc2))
+        # Trixie images ship one config.txt with a section per board, and current firmware ignores the other boards'
+        # sections, so the Pi3 keeps them to let the same SD card boot on a Pi4 or Pi5
+        if host_os != HostOs.Trixie:
+            patches_to_apply.append(("clean_config_pi3", clean_config_pi3))
+
+    if host_cpu in [CpuType.PI4, CpuType.PI5]:
+        patches_to_apply.extend(
+            [
+                ("navigator", update_navigator_overlays),
+                ("dwc2", update_dwc2),
+                ("i2c4", update_i2c4_symlink),
+            ]
+        )
+    if host_os == HostOs.Bookworm:
+        patches_to_apply.append(("wpa", fix_wpa_service))
+    # Trixie keeps wpa_supplicant as the NetworkManager-driven D-Bus service, so it has no wpa patch
+    if host_os in [HostOs.Bookworm, HostOs.Trixie]:
+        patches_to_apply.append(("networkmanager", configure_network_manager))
+    return patches_to_apply
+
+
 def main() -> int:
     start = time.time()
     # check if boot_loop_detector exists
@@ -942,37 +1054,7 @@ def main() -> int:
     host_cpu = get_cpu_type()
     logger.info(f"Host CPU: {host_cpu}")
 
-    # TODO: parse tag as semver and check before applying patches
-    patches_to_apply = [
-        ("startup", update_startup),
-        ("userdata", ensure_user_data_structure_is_in_place),
-        ("nginx", ensure_nginx_permissions),
-        ("dns", create_dns_conf_host_link),
-        ("ssh", fix_ssh_ownership),
-        ("noIPV6", ensure_ipv6_disabled),
-        ("swap", update_swap_size),
-        ("cgroups", update_cgroups),
-        ("dhcpcd_wait", remove_dhcpcd_wait),
-    ]
-
-    if host_cpu == CpuType.PI3:
-        patches_to_apply.extend(
-            [
-                ("revert_update_dwc2", revert_update_dwc2),
-                ("clean_config_pi3", clean_config_pi3),
-            ]
-        )
-
-    if host_cpu in [CpuType.PI4, CpuType.PI5]:
-        patches_to_apply.extend(
-            [
-                ("navigator", update_navigator_overlays),
-                ("dwc2", update_dwc2),
-                ("i2c4", update_i2c4_symlink),
-            ]
-        )
-    if host_os == HostOs.Bookworm:
-        patches_to_apply.extend([("wpa", fix_wpa_service), ("networkmanager", configure_network_manager)])
+    patches_to_apply = select_patches(host_cpu, host_os)
 
     logger.info("The following patches will be applied if needed:")
     for name, patch in patches_to_apply:

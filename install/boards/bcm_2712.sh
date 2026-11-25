@@ -82,6 +82,19 @@ for STRING in \
     line_number=$((line_number + 1))
 done
 
+# An overlay already in the section (Trixie ships dtoverlay=nospi10 in [pi5]) is now the last directive, and the lines
+# written below the section would be applied to it. Close it, as blueos_startup_update does.
+close_overlay_scope() {
+    local last_directive
+    last_directive=$(awk -v header="[$1]" '
+        $0 == header { in_section = 1; next }
+        /^\[/ { in_section = 0 }
+        in_section && /^[[:space:]]*[^#[:space:]]/ { last = NR; text = $0 }
+        END { if (text ~ /^[[:space:]]*dtoverlay=[[:space:]]*[^[:space:]]/) print last }' "$CONFIG_FILE")
+    [ -z "$last_directive" ] || sed -i "${last_directive}a dtoverlay=" "$CONFIG_FILE"
+}
+close_overlay_scope pi5
+
 # Check for valid modules file to load kernel modules
 if [ -f "/etc/modules" ]; then
     MODULES_FILE="/etc/modules"

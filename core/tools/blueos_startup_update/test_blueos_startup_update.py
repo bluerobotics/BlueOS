@@ -1,10 +1,12 @@
+# pylint: disable=too-many-lines
 import os
 import re
+import shlex
 import subprocess
 import sys
 from pathlib import Path
 from types import ModuleType
-from typing import Callable, Dict, List, NamedTuple, Optional, Tuple
+from typing import Any, Callable, Dict, List, NamedTuple, Optional, Tuple
 from unittest.mock import patch
 
 import pytest
@@ -24,7 +26,7 @@ exec(  # pylint: disable=exec-used
     compile(MODULE_PATH.read_text(encoding="utf-8"), str(MODULE_PATH), "exec"), blueos_startup_update.__dict__
 )
 
-from commonwealth.utils.general import CpuType
+from commonwealth.utils.general import CpuType, HostOs
 
 
 class Distribution(NamedTuple):
@@ -35,6 +37,7 @@ class Distribution(NamedTuple):
     stock_cmdline: str
     # Boards this release runs on, whether or not a Navigator can be used with them
     cpu_types: Tuple[CpuType, ...]
+    host_os: HostOs
 
 
 # Boards a Navigator can be used with, and the install script that sets them up while building the
@@ -45,6 +48,10 @@ NAVIGATOR_INSTALL_SCRIPTS = {
     CpuType.PI4: "install/boards/bcm_27xx.sh",
     CpuType.PI5: "install/boards/bcm_2712.sh",
 }
+
+# Configures every board at once for an image that can't know which board it will boot on, so it
+# writes one section per board instead of a single one
+MULTI_BOARD_INSTALL_SCRIPT = "install/boards/bcm_multi.sh"
 
 ALL_INSTALL_SCRIPTS = sorted(
     str(script.relative_to(REPOSITORY_PATH)) for script in (REPOSITORY_PATH / "install" / "boards").glob("*.sh")
@@ -175,6 +182,64 @@ dtoverlay=dwc2,dr_mode=host
 [all]
 """
 
+# Stock config.txt of a Trixie 64-bit image, read back from the Raspberry Pi OS image before BlueOS touched it.
+# It already holds a [pi5] section, and enables the 64-bit kernel for every board.
+TRIXIE_STOCK_CONFIG_TXT = """# For more options and information see
+# http://rptl.io/configtxt
+# Some settings may impact device functionality. See link above for details
+
+# Uncomment some or all of these to enable the optional hardware interfaces
+#dtparam=i2c_arm=on
+#dtparam=i2s=on
+#dtparam=spi=on
+
+# Enable audio (loads snd_bcm2835)
+dtparam=audio=on
+
+# Additional overlays and parameters are documented
+# /boot/firmware/overlays/README
+
+# Automatically load overlays for detected cameras
+camera_auto_detect=1
+
+# Automatically load overlays for detected DSI displays
+display_auto_detect=1
+
+# Automatically load initramfs files, if found
+auto_initramfs=1
+
+# Enable DRM VC4 V3D driver
+dtoverlay=vc4-kms-v3d
+max_framebuffers=2
+
+# Don't have the firmware create an initial video= setting in cmdline.txt.
+# Use the kernel's default instead.
+disable_fw_kms_setup=1
+
+# Run in 64-bit mode
+arm_64bit=1
+
+# Disable compensation for displays with overscan
+disable_overscan=1
+
+# Run as fast as firmware / board allows
+arm_boost=1
+
+[cm4]
+# Enable host mode on the 2711 built-in XHCI USB controller.
+# This line should be removed if the legacy DWC2 controller is required
+# (e.g. for USB device mode) or if USB support is not required.
+otg_mode=1
+
+[cm5]
+dtoverlay=dwc2,dr_mode=host
+
+[pi5]
+dtoverlay=nospi10
+
+[all]
+"""
+
 STOCK_CMDLINE_TXT = (
     "console=serial0,115200 console=tty1 root=PARTUUID=41964984-02 rootfstype=ext4 fsck.repair=yes rootwait\n"
 )
@@ -188,6 +253,7 @@ BULLSEYE = Distribution(
     stock_config=BULLSEYE_STOCK_CONFIG_TXT,
     stock_cmdline=STOCK_CMDLINE_TXT,
     cpu_types=(CpuType.PI3, CpuType.PI4),
+    host_os=HostOs.Bullseye,
 )
 
 BOOKWORM = Distribution(
@@ -197,17 +263,28 @@ BOOKWORM = Distribution(
     stock_config=BOOKWORM_STOCK_CONFIG_TXT,
     stock_cmdline=STOCK_CMDLINE_TXT,
     cpu_types=(CpuType.PI3, CpuType.PI4, CpuType.PI5),
+    host_os=HostOs.Bookworm,
+)
+
+TRIXIE = Distribution(
+    name="trixie",
+    config_file="/boot/firmware/config.txt",
+    cmdline_file="/boot/firmware/cmdline.txt",
+    stock_config=TRIXIE_STOCK_CONFIG_TXT,
+    stock_cmdline=STOCK_CMDLINE_TXT,
+    cpu_types=(CpuType.PI3, CpuType.PI4, CpuType.PI5),
+    host_os=HostOs.Trixie,
 )
 
 # Every distribution and Navigator capable board combination that can reach a user
 NAVIGATOR_BOARDS = [
     pytest.param(distribution, cpu_type, id=f"{distribution.name}-{cpu_type.name}")
-    for distribution in (BULLSEYE, BOOKWORM)
+    for distribution in (BULLSEYE, BOOKWORM, TRIXIE)
     for cpu_type in distribution.cpu_types
     if cpu_type in NAVIGATOR_INSTALL_SCRIPTS
 ]
 
-DISTRIBUTIONS = [pytest.param(distribution, id=distribution.name) for distribution in (BULLSEYE, BOOKWORM)]
+DISTRIBUTIONS = [pytest.param(distribution, id=distribution.name) for distribution in (BULLSEYE, BOOKWORM, TRIXIE)]
 
 # What Bookworm leaves at /boot once it has moved the boot partition to /boot/firmware. Writing to
 # it configures nothing, and the write still succeeds, which is how the original bug shipped.
@@ -239,6 +316,12 @@ def bash_words(word_list: str) -> List[str]:
     return result.stdout.splitlines()
 
 
+def multi_board_sections() -> Dict[str, List[str]]:
+    content = (REPOSITORY_PATH / MULTI_BOARD_INSTALL_SCRIPT).read_text(encoding="utf-8")
+    calls = re.findall(r"^write_board_section (\w+) \\\n((?:\s+\"[^\n]*\n?)+)", content, re.MULTILINE)
+    return {name: bash_words(lines.replace("\\\n", " ").strip()) for name, lines in calls}
+
+
 def install_script_section(script_name: str) -> str:
     """Board section an install script tags its configuration with."""
     content = (REPOSITORY_PATH / script_name).read_text(encoding="utf-8")
@@ -247,6 +330,16 @@ def install_script_section(script_name: str) -> str:
     assert section_match, f"{script_name} does not tag its configuration with a board section"
 
     return section_match.group(1)
+
+
+def installed_section(insertions: List[str], distribution_configuration: List[str]) -> List[str]:
+    """Section after an install script, which also closes a distribution overlay that would stay open."""
+    closing = [blueos_startup_update.BOOT_CONFIG_END_OVERLAY_SCOPE]
+    return (
+        insertions
+        + distribution_configuration
+        + (closing * blueos_startup_update.boot_config_overlay_is_open(distribution_configuration))
+    )
 
 
 def install_script_configuration(script_name: str) -> Tuple[List[str], List[str]]:
@@ -309,6 +402,8 @@ def apply_boot_config_patches(
         blueos_startup_update, "save_file", fake_save_file
     ), patch.object(blueos_startup_update, "get_cpu_type", lambda: cpu_type), patch.object(
         blueos_startup_update, "overlay_is_compiled", lambda _: overlay_compiled
+    ), patch.object(
+        blueos_startup_update, "get_host_os", lambda: distribution.host_os
     ):
         # Every patch has to run, the startup script does not stop at the first one that applies
         return {patch_function.__name__: patch_function() for patch_function in patches}
@@ -361,7 +456,7 @@ def test_startup_patches_match_install_script(distribution: Distribution, cpu_ty
     headers = patched_config.count(f"[{section_name}]")
     assert headers == 1, f"expected exactly one [{section_name}] in config.txt, found {headers}"
     assert sorted(section_configuration(patched_config, section_name)) == sorted(
-        insertions + distribution_configuration
+        installed_section(insertions, distribution_configuration)
     )
 
     # An overlay of another board would drive the wrong pins of the Navigator
@@ -428,7 +523,7 @@ def test_startup_patches_replace_conflicting_configuration(distribution: Distrib
 
     patched_lines = files[distribution.config_file].splitlines()
     assert sorted(section_configuration(files[distribution.config_file], section_name)) == sorted(
-        insertions + distribution_configuration
+        installed_section(insertions, distribution_configuration)
     )
     for conflicting_line in conflicting.splitlines():
         assert conflicting_line not in patched_lines
@@ -621,6 +716,40 @@ def test_pi3_cleanup_keeps_distribution_sections(distribution: Distribution) -> 
     assert not any(applied.values()), "the cleanup did not converge, a reboot loop would follow"
 
 
+def boot_patches(cpu_type: CpuType) -> Tuple[Callable[[], bool], ...]:
+    boot_patch_names = {"revert_update_dwc2", "clean_config_pi3", "navigator", "dwc2", "cgroups"}
+    selected = blueos_startup_update.select_patches(cpu_type, HostOs.Trixie)
+    return tuple(patch_function for name, patch_function in selected if name in boot_patch_names)
+
+
+def test_trixie_boards_leave_each_others_sections_alone() -> None:
+    """The same SD card moves between a Pi3, a Pi4 and a Pi5, each boot must keep the other boards' sections."""
+    files = stock_files(TRIXIE)
+    files[TRIXIE.config_file] += "\n[pi3]\ndtoverlay=uart1\n[all]\n\n[pi4]\ndtoverlay=uart3\n[all]\n"
+    files[TRIXIE.config_file] = files[TRIXIE.config_file].replace("[pi5]\n", "[pi5]\ndtoverlay=uart3-pi5\n", 1)
+
+    for cpu_type in (CpuType.PI5, CpuType.PI3, CpuType.PI4, CpuType.PI3, CpuType.PI4):
+        apply_boot_config_patches(cpu_type, TRIXIE, files, boot_patches(cpu_type))
+        assert section_configuration(files[TRIXIE.config_file], "pi3") == ["dtoverlay=uart1"]
+        assert "dtoverlay=uart3" in section_configuration(files[TRIXIE.config_file], "pi4")
+        assert "dtoverlay=uart3-pi5" in section_configuration(files[TRIXIE.config_file], "pi5")
+
+    applied = apply_boot_config_patches(CpuType.PI4, TRIXIE, files, boot_patches(CpuType.PI4))
+    assert not any(applied.values()), "swapping boards would reboot forever"
+
+
+def test_trixie_boards_ignore_filter_headers_that_are_not_boards() -> None:
+    files = stock_files(TRIXIE)
+    files[TRIXIE.config_file] += "\n[HDMI:0]\ndtoverlay=vc4-kms-v3d,cma-128\n[gpio4=1]\ndtparam=audio=off\n[all]\n"
+
+    for cpu_type in (CpuType.PI4, CpuType.PI5):
+        apply_boot_config_patches(cpu_type, TRIXIE, files)
+        assert "dtoverlay=vc4-kms-v3d,cma-128" in section_configuration(files[TRIXIE.config_file], "HDMI:0")
+
+    applied = apply_boot_config_patches(CpuType.PI4, TRIXIE, files)
+    assert not any(applied.values())
+
+
 def test_bcm28xx_enables_the_peripherals_a_pi3_needs() -> None:
     # Pi zero/1/2/3 have no startup patch to cross-check this script against, so these lines
     # are the only description of what the onboard peripherals need
@@ -681,7 +810,7 @@ def test_install_scripts_probe_selects_the_real_boot_partition(
     assert probe, f"{script_name} no longer probes for the boot partition, /boot may be an inert Bookworm stub"
 
     # A Pi5 is newer than Bullseye, so boot files at /boot are never its boot partition
-    if expected == "boot" and script_name == NAVIGATOR_INSTALL_SCRIPTS[CpuType.PI5]:
+    if expected == "boot" and script_name in (NAVIGATOR_INSTALL_SCRIPTS[CpuType.PI5], MULTI_BOARD_INSTALL_SCRIPT):
         expected = None
 
     for directory, boot_files in layout.items():
@@ -731,21 +860,26 @@ def test_image_build_checks_what_the_install_scripts_write() -> None:
     # the mistake shows. That check only runs on the upstream repository, where nobody reads it
     # until a release ships, so it stopping matching the install scripts has to fail here instead.
     workflow = WORKFLOW_PATH.read_text(encoding="utf-8")
-    sections = {install_script_section(script): script for script in NAVIGATOR_INSTALL_SCRIPTS.values()}
+    # A board section header starts the lines the image has to hold in that section
+    written: Dict[Tuple[str, str], List[str]] = {}
+    for board in ("bcm_27xx", "bcm_2712"):
+        script_name = f"install/boards/{board}.sh"
+        written[(board, install_script_section(script_name))] = install_script_configuration(script_name)[1]
+    for section_name, lines in multi_board_sections().items():
+        written[("bcm_multi", section_name)] = lines
 
     checked = []
-    for words in re.findall(r"EXPECTED=\((.*?)\)", workflow, re.DOTALL):
-        expected = bash_words(words)
-        headers = [line for line in expected if line.startswith("[")]
-        assert len(headers) == 1, f"{expected} does not look for exactly one board section"
-        section_name = headers[0].strip("[]")
-        assert section_name in sections, f"no install script writes a [{section_name}] section"
-        _, insertions = install_script_configuration(sections[section_name])
-        for line in expected:
-            assert line in headers or line in insertions, f"{sections[section_name]} does not write {line!r}"
-        checked.append(section_name)
+    for board, words in re.findall(r"^\s*(bcm_\w+)\)\n(?:[^\n]*\n)*?\s*EXPECTED=\((.*?)\)", workflow, re.MULTILINE):
+        section_name = ""
+        for line in bash_words(words):
+            if line.startswith("["):
+                section_name = line.strip("[]")
+                assert (board, section_name) in written, f"{board} does not write a [{section_name}] section"
+                checked.append((board, section_name))
+            else:
+                assert line in written[(board, section_name)], f"{board} does not write {line!r}"
 
-    assert sorted(checked) == sorted(sections), f"{sorted(sections)} are built as images, {sorted(checked)} are checked"
+    assert sorted(checked) == sorted(written), f"{sorted(written)} are built as images, {sorted(checked)} are checked"
 
     # cmdline.txt is reached through a path of its own, so it is checked separately, and every board
     # script writes the same two things to it whether or not a Navigator can be used with the board
@@ -845,3 +979,199 @@ def test_overlay_that_is_not_compiled_is_not_configured(distribution: Distributi
     skipped = [f"dtoverlay={name}" for name in blueos_startup_update.INSTALL_ONLY_OVERLAYS]
     expected = [line for line in with_overlays[distribution.config_file].splitlines() if line not in skipped]
     assert without_overlays[distribution.config_file].splitlines() == expected
+
+
+def configure_network_manager_on(existing: Optional[str], write_fails: bool = False) -> Tuple[bool, str]:
+    """Runs the patch against a fake NetworkManager.conf, returns whether it changed it and what it wrote"""
+    written: List[str] = []
+
+    def run_command(command: str, **_kwargs: Any) -> "subprocess.CompletedProcess[str]":
+        if command.startswith("test -f"):
+            stdout = existing or ""
+            return subprocess.CompletedProcess(command, 0 if existing is not None else 1, stdout, "")
+        written.append(command)
+        return subprocess.CompletedProcess(command, 1 if write_fails else 0, "", "")
+
+    with patch.object(blueos_startup_update, "run_command", run_command):
+        changed = blueos_startup_update.configure_network_manager()
+    return changed, written[0] if written else ""
+
+
+def test_network_manager_conf_uses_valid_device_specs() -> None:
+    changed, written = configure_network_manager_on(None)
+
+    assert changed
+    assert "unmanaged-devices=interface-name:eth0;interface-name:usb0" in written
+
+
+def test_network_manager_conf_with_the_old_device_specs_is_fixed() -> None:
+    changed, written = configure_network_manager_on(
+        "[main]\ndns=none\n\n[keyfile]\nunmanaged-devices=interface:eth0;interface:usb0\n"
+    )
+
+    assert changed
+    assert "unmanaged-devices=interface-name:eth0;interface-name:usb0" in written
+    assert "interface:" not in written
+
+
+def test_network_manager_conf_with_the_right_device_specs_is_left_alone() -> None:
+    changed, written = configure_network_manager_on(
+        "[main]\ndns=none\n\n[keyfile]\nunmanaged-devices=interface-name:eth0;interface-name:usb0\n"
+    )
+
+    assert not changed
+    assert not written
+
+
+@pytest.mark.parametrize("existing", [None, "[main]\ndns=none\n\n[keyfile]\nunmanaged-devices=interface:eth0\n"])
+def test_network_manager_conf_that_cannot_be_written_does_not_ask_for_a_restart(existing: Optional[str]) -> None:
+    changed, _ = configure_network_manager_on(existing, write_fails=True)
+
+    assert not changed
+
+
+def test_network_manager_conf_migration_only_changes_the_unmanaged_devices_line() -> None:
+    existing = (
+        "# managed by the user\n[main]\nPlugins=ifupdown,keyfile\nDNS=none\n\n"
+        "[keyfile]\n# do not touch\nunmanaged-devices = interface:eth0;interface:usb0;interface-name:wlan1\n\n"
+        "[logging]\nunmanaged-devices=interface:left-alone\n"
+    )
+    expected = existing.replace(
+        "devices = interface:eth0;interface:usb0;", "devices = interface-name:eth0;interface-name:usb0;"
+    )
+
+    changed, written = configure_network_manager_on(existing)
+
+    assert changed
+    assert written == f"printf %s {shlex.quote(expected)} | sudo tee /etc/NetworkManager/NetworkManager.conf"
+
+
+def test_network_manager_conf_keys_are_case_sensitive_for_the_migration() -> None:
+    changed, written = configure_network_manager_on("[main]\ndns=none\n\n[keyfile]\nUnmanaged-Devices=interface:eth0\n")
+
+    assert not changed
+    assert not written
+
+
+PATCHES_FOR_EVERY_HOST = [
+    "startup",
+    "userdata",
+    "nginx",
+    "dns",
+    "ssh",
+    "noIPV6",
+    "cgroups",
+    "dhcpcd_wait",
+]
+PATCHES_FOR_CPU = {
+    CpuType.PI3: ["revert_update_dwc2", "clean_config_pi3"],
+    CpuType.PI4: ["navigator", "dwc2", "i2c4"],
+    CpuType.PI5: ["navigator", "dwc2", "i2c4"],
+    CpuType.Other: [],
+}
+PATCHES_FOR_OS = {
+    HostOs.Bullseye: [],
+    HostOs.Bookworm: ["wpa", "networkmanager"],
+    HostOs.Trixie: ["networkmanager"],
+    HostOs.Other: [],
+}
+
+
+@pytest.mark.parametrize("host_os", PATCHES_FOR_OS)
+@pytest.mark.parametrize("host_cpu", PATCHES_FOR_CPU)
+def test_select_patches_by_host(host_cpu: CpuType, host_os: HostOs) -> None:
+    selected = [name for name, _ in blueos_startup_update.select_patches(host_cpu, host_os)]
+    common = list(PATCHES_FOR_EVERY_HOST)
+    if host_os != HostOs.Trixie:
+        common.insert(PATCHES_FOR_EVERY_HOST.index("noIPV6") + 1, "swap")
+    for_cpu = list(PATCHES_FOR_CPU[host_cpu])
+    if host_os == HostOs.Trixie and "clean_config_pi3" in for_cpu:
+        for_cpu.remove("clean_config_pi3")
+    assert selected == common + for_cpu + PATCHES_FOR_OS[host_os]
+
+
+def run_ipv6_patch(host_os: HostOs, files: Dict[str, str]) -> Tuple[bool, Dict[str, str]]:
+    def fake_load_file(path: str) -> str:
+        if path not in files:
+            raise blueos_startup_update.HostFileError(f"Failed to read {path}")
+        return files[path]
+
+    def fake_save_file(path: str, content: str, _backup_identifier: str) -> None:
+        files[path] = content
+
+    with patch.object(blueos_startup_update, "load_file", fake_load_file), patch.object(
+        blueos_startup_update, "save_file", fake_save_file
+    ), patch.object(blueos_startup_update, "get_host_os", lambda: host_os):
+        return blueos_startup_update.ensure_ipv6_disabled(), files
+
+
+def test_ipv6_is_disabled_through_sysctl_d_on_trixie() -> None:
+    needs_restart, files = run_ipv6_patch(HostOs.Trixie, {"/etc/sysctl.conf": ""})
+    assert needs_restart
+    assert files["/etc/sysctl.d/99-blueos.conf"].split() == [
+        "net.ipv6.conf.all.disable_ipv6=1",
+        "net.ipv6.conf.default.disable_ipv6=1",
+        "net.ipv6.conf.lo.disable_ipv6=1",
+    ]
+    assert files["/etc/sysctl.conf"] == ""
+    assert not run_ipv6_patch(HostOs.Trixie, files)[0], "the patch did not converge"
+
+
+def test_ipv6_sysctl_conf_stays_required_before_trixie() -> None:
+    with pytest.raises(blueos_startup_update.HostFileError):
+        run_ipv6_patch(HostOs.Bookworm, {})
+    needs_restart, files = run_ipv6_patch(HostOs.Bookworm, {"/etc/sysctl.conf": ""})
+    assert needs_restart and "/etc/sysctl.d/99-blueos.conf" not in files
+
+
+def provision_script_heredoc(tag: str) -> str:
+    provision_script = (REPOSITORY_PATH / "deploy/pimod/provision_trixie.sh").read_text(encoding="utf-8")
+    heredoc = re.search(rf"<< '{tag}'\n(.*?)\n{tag}\n", provision_script, re.DOTALL)
+    assert heredoc, f"provision_trixie.sh no longer writes the {tag} file"
+    return heredoc.group(1) + "\n"
+
+
+def test_image_provisioning_writes_the_network_manager_template() -> None:
+    assert provision_script_heredoc("CONF") == blueos_startup_update.NETWORK_MANAGER_CONF_TEMPLATE
+
+
+def test_image_provisioning_writes_what_the_ipv6_patch_requires() -> None:
+    _, files = run_ipv6_patch(HostOs.Trixie, {})
+    assert provision_script_heredoc("SYSCTL").split() == files["/etc/sysctl.d/99-blueos.conf"].split()
+    needs_restart, _ = run_ipv6_patch(
+        HostOs.Trixie, {"/etc/sysctl.d/99-blueos.conf": provision_script_heredoc("SYSCTL")}
+    )
+    assert not needs_restart, "the image would reboot once on its first boot"
+
+
+# Output of `apt-get -s purge` in a debian:trixie container. A simulated purge prints Purg, a simulated remove Remv
+APT_SIMULATED_PURGE = """Reading package lists...
+The following packages will be REMOVED:
+  cloud-init* rpi-cloud-init-mods*
+0 upgraded, 0 newly installed, 2 to remove and 0 not upgraded.
+Purg cloud-init [25.1-1]
+Purg rpi-cloud-init-mods [1.0]
+"""
+
+
+@pytest.mark.parametrize(
+    "simulation, unexpected",
+    [
+        (APT_SIMULATED_PURGE, ""),
+        (APT_SIMULATED_PURGE + "Purg netplan.io [1.1]\n", "netplan.io"),
+        (APT_SIMULATED_PURGE.replace("Purg", "Remv") + "Remv netplan.io [1.1]\n", "netplan.io"),
+        ("Reading package lists...\n", ""),
+    ],
+)
+def test_image_provisioning_purge_guard_reads_what_apt_prints(simulation: str, unexpected: str) -> None:
+    script = (REPOSITORY_PATH / "deploy/pimod/provision_trixie.sh").read_text(encoding="utf-8")
+    function = re.search(r"^unexpected_removals\(\) \{\n.*?^\}\n", script, re.DOTALL | re.MULTILINE)
+    assert function, "provision_trixie.sh no longer checks what the purge removes"
+    result = subprocess.run(
+        ["bash", "-c", f"{function.group(0)}\nunexpected_removals"],
+        input=simulation,
+        capture_output=True,
+        text=True,
+        check=True,
+    )
+    assert result.stdout.strip() == unexpected

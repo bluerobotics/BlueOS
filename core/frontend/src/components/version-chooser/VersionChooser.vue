@@ -556,7 +556,18 @@ export default Vue.extend({
           repository,
           tag,
         },
-      }).finally(() => { this.waitForBackendToRestart(true) })
+      }).catch((error) => {
+        // The backend is killed to restart, so a request without a response is expected
+        if (error.response?.data?.error) {
+          notifier.pushError('VERSION_CHOOSER_SET_FAIL', error.response.data.error, true)
+          return false
+        }
+        return true
+      }).then((restarting) => {
+        if (restarting !== false) {
+          this.waitForBackendToRestart(true)
+        }
+      })
     },
     backendIsOnline() {
       return new Promise((resolve) => {
@@ -863,6 +874,12 @@ export default Vue.extend({
           true,
         )
         window.location.reload()
+      }).catch((error) => {
+        notifier.pushError(
+          'VERSION_CHOOSER_BOOTSTRAP_SET_FAIL',
+          error.response?.data?.error ?? error.message,
+          true,
+        )
       })
     },
     async setVersion(args: string | string[]) {
