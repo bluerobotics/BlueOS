@@ -5,7 +5,8 @@ import pathlib
 import subprocess
 import time
 from contextlib import asynccontextmanager
-from typing import Any, AsyncIterator, List, Optional, Set, Tuple
+from enum import Enum
+from typing import Any, AsyncIterator, List, Optional, Set, Tuple, Union
 from uuid import uuid4
 
 import psutil
@@ -42,9 +43,18 @@ from typedefs import (
 )
 
 
+class RebootWait(Enum):
+    BACK = "back"
+    NEVER_LEFT = "never_left"
+    STILL_GONE = "still_gone"
+
+
 class AutoPilotManager(metaclass=Singleton):
     # pylint: disable=too-many-instance-attributes
     HEARTBEAT_BURST_MAX_RETRIES = 12
+    SERIAL_POLL_INTERVAL = 0.5
+    SERIAL_LEAVE_TIMEOUT = 10.0
+    SERIAL_RETURN_TIMEOUT = 40.0
 
     def __init__(self) -> None:
         self._settings_manager: PydanticManager[SettingsV1] = PydanticManager(SERVICE_NAME, SettingsV1)
@@ -304,12 +314,22 @@ class AutoPilotManager(metaclass=Singleton):
         if self._heartbeat_burst_pending:
             await self._retry_heartbeat_burst()
 
+    def _serial_master_place(self, board: FlightController) -> str:
+        master_endpoint = self.mavlink_manager.master_endpoint
+        # The router can hold another node of the board than its latest, but never one that is not the board's
+        if (
+            master_endpoint is not None
+            and master_endpoint.connection_type == EndpointType.Serial
+            and master_endpoint.place in self._serial_paths
+        ):
+            return master_endpoint.place
+        return board.path or ""
+
     def _locate_serial_board(self) -> Tuple[bool, Optional[FlightController]]:
         # A serial board that reboots or reconnects behind our back re-enumerates on a new device path while the
         # router keeps a handle to the old one
         board = self._current_board
         master_endpoint = self.mavlink_manager.master_endpoint
-        # A manual serial master endpoint can point the router at another node than the one of the board
         if (
             board is None
             or board.type != PlatformType.Serial
@@ -319,7 +339,10 @@ class AutoPilotManager(metaclass=Singleton):
             or master_endpoint.place not in self._serial_paths
         ):
             return False, None
-        place = os.path.realpath(master_endpoint.place)
+        return self._locate_serial_board_at(board, master_endpoint.place)
+
+    def _locate_serial_board_at(self, board: FlightController, place: str) -> Tuple[bool, Optional[FlightController]]:
+        place = os.path.realpath(place)
         serial = self._serial
         if serial is not None and serial.link:
             current = serial.current_path()
@@ -859,16 +882,6 @@ class AutoPilotManager(metaclass=Singleton):
         finally:
             self.should_be_running = True
 
-    async def _detect_serial_board(self, board: FlightController) -> Optional[FlightController]:
-        return next(
-            (
-                detected
-                for detected in await self.available_boards()
-                if detected.type == PlatformType.Serial and detected.platform == board.platform and detected.path
-            ),
-            None,
-        )
-
     async def restart_ardupilot(self) -> None:
         async with self._lifecycle_lock:
             board = self.current_board
@@ -879,45 +892,60 @@ class AutoPilotManager(metaclass=Singleton):
                 await self._start_ardupilot_locked()
                 return
 
+            # A start that failed forgets the board, which has to be recorded while its by-id link still exists
+            if self._serial is None:
+                await self._set_serial_board(board)
             await self.vehicle_manager.reboot_vehicle()
 
-            # The lifecycle lock already holds the router watchdog off, this only marks the router as
-            # down until start_serial re-arms it on the freshly detected path below.
-            self.mavlink_manager.should_be_running = False
-
-            try:
-                # A serial board re-enumerates on USB after rebooting, so its device path changes and
-                # the router keeps a stale handle. Wait for the board to drop first: this confirms the
-                # reboot landed and stops us from reopening the pre-reboot path. Boards reached through a
-                # separate USB-serial adapter never drop, so this wait is best-effort.
-                disconnect_deadline = time.monotonic() + 10.0
-                while time.monotonic() < disconnect_deadline:
-                    if await self._detect_serial_board(board) is None:
-                        break
-                    await asyncio.sleep(0.5)
-                else:
-                    logger.warning(f"{board.name} did not disconnect after reboot. Restarting its link anyway.")
-
-                reconnected_board = None
-                reconnect_deadline = time.monotonic() + 30.0
-                while reconnected_board is None and time.monotonic() < reconnect_deadline:
-                    await asyncio.sleep(0.5)
-                    reconnected_board = await self._detect_serial_board(board)
-                if reconnected_board is None:
-                    raise RuntimeError(f"Timed out waiting for {board.name} to reconnect after reboot.")
-
-                # Release the stale serial handle before reopening on the new path. We avoid the full
-                # kill/start cycle so runtime-only endpoints and the current router survive the reboot.
-                await self.mavlink_manager.stop()
-                await self.start_serial(reconnected_board)
+            # A serial board re-enumerates on USB after rebooting, so its device path changes and the router
+            # keeps a stale handle. Follow the board like the router watchdog does, which keeps running the
+            # autopilot if the board takes long to come back, or never comes back, and follows it later.
+            result = await self._wait_for_serial_reboot(board)
+            if isinstance(result, FlightController):
+                await self._follow_serial_board_locked(result)
                 self.should_be_running = True
-            except Exception:
-                try:
-                    await self.mavlink_manager.stop()
-                except Exception as error:
-                    logger.warning(f"Failed to stop Mavlink manager after serial restart failure: {error}")
-                self.should_be_running = False
-                raise
+                await self._wake_up_px4(result)
+                return
+            if result == RebootWait.STILL_GONE:
+                # The follow state stays as it was, the error is for whoever asked for the restart
+                message = f"{board.name} did not come back after reboot."
+                if self.should_be_running:
+                    message += " Following it when it does."
+                logger.warning(message)
+                raise RuntimeError(message)
+            if result == RebootWait.NEVER_LEFT:
+                logger.warning(f"{board.name} did not disconnect after reboot. Restarting its link anyway.")
+            # Back on the same path, or never gone: the router still holds a handle that may be stale
+            self._add_default_endpoints()
+            await self.mavlink_manager.restart(self._serial_master_endpoint(board))
+            self.should_be_running = True
+            self._serial_absence_reported = False
+            await self._wake_up_px4(board)
+
+    async def _wait_for_serial_reboot(self, board: FlightController) -> Union[RebootWait, FlightController]:
+        """Waits for a board that was just rebooted to leave its device path and come back, and tells how it ended.
+
+        The result is the board with its new device path if it came back on another one.
+
+        The router is released the first time the board is seen gone and not already back on another node.
+
+        Boards reached through a separate USB-serial adapter never leave, so waiting for that is best-effort.
+        """
+        place = self._serial_master_place(board)
+        now = time.monotonic()
+        leave_deadline, return_deadline = now + self.SERIAL_LEAVE_TIMEOUT, now + self.SERIAL_RETURN_TIMEOUT
+        left = False
+        while time.monotonic() < (return_deadline if left else leave_deadline):
+            await asyncio.sleep(self.SERIAL_POLL_INTERVAL)
+            gone, moved_board = await asyncio.to_thread(self._locate_serial_board_at, board, place)
+            if gone and moved_board is None and not left:
+                await self._follow_serial_board_locked(None)
+            left = left or gone
+            if moved_board is not None:
+                return moved_board
+            if left and not gone:
+                return RebootWait.BACK
+        return RebootWait.STILL_GONE if left else RebootWait.NEVER_LEFT
 
     def _get_configuration_endpoints(self) -> Set[Endpoint]:
         endpoints: Set[Endpoint] = set()
