@@ -76,8 +76,8 @@ export async function openFirmwares(page: Page, vehicle: Vehicle): Promise<Locat
 }
 
 // The list is sorted from the newest release, pick one of the two latest that is not the running one
-export async function selectStableFirmware(page: Page, running: string): Promise<string> {
-  const firmwares = await openSelect(page, 'firmware-version-select')
+export async function selectStableFirmware(page: Page, vehicle: Vehicle, running: string): Promise<string> {
+  const firmwares = await openFirmwares(page, vehicle)
   const stable = firmwares.getByRole('option', { name: /^STABLE-/ })
   await expect(stable.nth(1), 'at least two stable releases should be listed').toBeVisible()
   const latest = (await stable.allInnerTexts()).slice(0, 2).map((name) => name.trim())
@@ -173,8 +173,7 @@ export async function restoreBoard(page: Page, original: OriginalBoard): Promise
   if (await currentVehicle(page) === vehicle && await currentVersion(page) === version) {
     return
   }
-  await selectVehicle(page, vehicle)
-  const firmwares = await openSelect(page, 'firmware-version-select')
+  const firmwares = await openFirmwares(page, vehicle)
   await firmwares.getByRole('option', { name: `STABLE-${version}`, exact: true }).click()
   await installFirmware(page)
   await expectVehicle(page, vehicle)
