@@ -85,6 +85,11 @@ gh issue list --repo bluerobotics/BlueOS
 
 ### 4. Use `jq` to parse json
 
+### 5. Never touch i18n catalogs
+Never edit or regenerate `core/frontend/src/i18n/*.po` files, and never run `i18n:extract` in a PR.
+`.github/workflows/update-i18n.yml` regenerates `en.po` and opens "i18n: Update english source" PRs (plus a `[1.4]` variant for `1.4-dev`); other languages come through Crowdin.
+A local `i18n:check` failure from newly added strings is expected, leave the catalogs alone.
+
 ## Creating a New Service
 
 **Reference implementation:** [PR #3669](https://github.com/bluerobotics/BlueOS/pull/3669) (disk_usage service)
