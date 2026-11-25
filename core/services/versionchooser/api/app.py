@@ -10,11 +10,11 @@ from api.v1.routers import (
 from commonwealth.utils.apis import (
     GenericErrorHandlingRoute,
     PrettyJSONResponse,
+    RevalidatedStaticFiles,
     use_local_docs_assets,
 )
 from fastapi import FastAPI
 from fastapi.responses import HTMLResponse
-from fastapi.staticfiles import StaticFiles
 from fastapi_versioning import VersionedFastAPI
 
 application = FastAPI(
@@ -48,4 +48,6 @@ async def root() -> HTMLResponse:
 
 
 # Mount static files
-application.mount("/static", StaticFiles(directory=path.join(path.dirname(__file__), "static")), name="static")
+application.mount(
+    "/static", RevalidatedStaticFiles(directory=path.join(path.dirname(__file__), "static")), name="static"
+)
