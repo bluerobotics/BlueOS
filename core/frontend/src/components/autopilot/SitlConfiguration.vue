@@ -10,6 +10,7 @@
       :loading="autopilot.restarting || setting"
       :label="t`SITL frame`"
       data-testid="sitl-frame-select"
+      :menu-props="{ contentClass: 'sitl-frame-select-menu' }"
       class="ma-1 pa-0"
       @change="changeSitlFrame"
     />

@@ -122,6 +122,7 @@
             :items="vehicle_types"
             :label="t`Vehicle type`"
             data-testid="firmware-vehicle-select"
+            :menu-props="{ contentClass: 'firmware-vehicle-select-menu' }"
             :hint="vehicle_changed ? vehicle_change_warning : ''"
             :persistent-hint="vehicle_changed"
             required
@@ -160,6 +161,7 @@
             :items="showable_firmwares"
             :label="firmware_selector_label"
             data-testid="firmware-version-select"
+            :menu-props="{ contentClass: 'firmware-version-select-menu' }"
             :loading="loading_firmware_options"
             required
             @change="setCloudFirmwareChosen"
