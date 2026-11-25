@@ -60,6 +60,21 @@ export async function selectVehicle(page: Page, vehicle: Vehicle): Promise<void>
   await vehicles.getByRole('option', { name: vehicle.replace('Ardu', ''), exact: true }).click()
 }
 
+// The versions are fetched once per vehicle and a failed fetch is not retried, so reload to fetch them again
+export async function openFirmwares(page: Page, vehicle: Vehicle): Promise<Locator> {
+  let firmwares!: Locator
+  let attempt = 0
+  await expect(async () => {
+    if (attempt++) {
+      await openAutopilot(page)
+    }
+    await selectVehicle(page, vehicle)
+    firmwares = await openSelect(page, 'firmware-version-select')
+    await expect(firmwares.getByRole('option', { name: /^STABLE-/ }).first()).toBeVisible()
+  }, `the ${vehicle} firmwares should be listed`).toPass({ timeout: BACKEND_TIMEOUT * 3 })
+  return firmwares
+}
+
 // The list is sorted from the newest release, pick one of the two latest that is not the running one
 export async function selectStableFirmware(page: Page, running: string): Promise<string> {
   const firmwares = await openSelect(page, 'firmware-version-select')
