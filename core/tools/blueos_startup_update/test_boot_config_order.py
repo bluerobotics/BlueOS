@@ -1,3 +1,7 @@
+import re
+import subprocess
+import tempfile
+from pathlib import Path
 from typing import Dict, List
 
 import blueos_startup_update
@@ -7,6 +11,7 @@ from test_blueos_startup_update import (
     BOOKWORM,
     NAVIGATOR_BOARDS,
     NAVIGATOR_INSTALL_SCRIPTS,
+    REPOSITORY_PATH,
     Distribution,
     apply_boot_config_patches,
     install_script_configuration,
@@ -27,7 +32,23 @@ def apply_install_script_section(script_name: str, config_txt: str) -> str:
     for string in insertions:
         line_number += 1
         lines.insert(line_number, string)
-    return "\n".join(lines) + "\n"
+    config = "\n".join(lines) + "\n"
+    if "close_overlay_scope()" in (REPOSITORY_PATH / script_name).read_text(encoding="utf-8"):
+        config = close_overlay_scope(script_name, section_name, config)
+    return config
+
+
+def close_overlay_scope(script_name: str, section_name: str, config_txt: str) -> str:
+    """Run the close_overlay_scope function of an install script, in bash, on a config.txt."""
+    content = (REPOSITORY_PATH / script_name).read_text(encoding="utf-8")
+    function = re.search(r"^close_overlay_scope\(\) \{\n.*?^\}\n", content, re.DOTALL | re.MULTILINE)
+    assert function, f"{script_name} does not close the overlay scope of its section"
+    with tempfile.TemporaryDirectory() as directory:
+        config_file = Path(directory) / "config.txt"
+        config_file.write_text(config_txt, encoding="utf-8")
+        script = f'CONFIG_FILE="$1"\n{function.group(0)}\nclose_overlay_scope "$2"'
+        subprocess.run(["bash", "-c", script, "bash", config_file, section_name], check=True)
+        return config_file.read_text(encoding="utf-8")
 
 
 def assert_dtparam_lines_precede_overlays(section_lines: List[str]) -> None:
@@ -319,3 +340,52 @@ def test_board_section_rewrite_keeps_a_protected_line_and_a_plain_one(
     section_lines = section_configuration(files[distribution.config_file], section_name)
     assert section_lines.count(protected) == 1
     assert section_lines.count(user_line) == 1
+
+
+@pytest.mark.parametrize("distribution, cpu_type", NAVIGATOR_BOARDS)
+def test_board_section_closes_the_scope_of_an_overlay_the_user_keeps(
+    distribution: Distribution, cpu_type: CpuType
+) -> None:
+    section_name = install_script_section(NAVIGATOR_INSTALL_SCRIPTS[cpu_type])
+    files = stock_files(distribution)
+    files[distribution.config_file] += f"\n[{section_name}]\ndtoverlay=my-hat\n[all]\ndtparam=audio=on\n"
+
+    apply_boot_config_patches(cpu_type, distribution, files)
+    patched = dict(files)
+
+    section_lines = section_configuration(files[distribution.config_file], section_name)
+    assert "dtoverlay=my-hat" in section_lines
+    assert not blueos_startup_update.boot_config_overlay_is_open(
+        section_lines
+    ), "the dtparam lines written below the section would go to dtoverlay=my-hat"
+    applied = apply_boot_config_patches(cpu_type, distribution, files)
+    assert not any(applied.values()) and files == patched, "closing the overlay did not converge"
+
+
+@pytest.mark.parametrize("distribution, cpu_type", NAVIGATOR_BOARDS)
+def test_board_section_puts_a_protected_line_in_the_slot_of_the_board_line(
+    distribution: Distribution, cpu_type: CpuType
+) -> None:
+    section_name = install_script_section(NAVIGATOR_INSTALL_SCRIPTS[cpu_type])
+    protected_spi = "dtparam=spi=off #custom"
+    files = stock_files(distribution)
+    files[distribution.config_file] += f"\n[{section_name}]\ndtoverlay=my-hat\n{protected_spi}\n"
+
+    apply_boot_config_patches(cpu_type, distribution, files)
+
+    section_lines = section_configuration(files[distribution.config_file], section_name)
+    assert section_lines.index(protected_spi) < section_lines.index("dtoverlay=my-hat")
+    assert not blueos_startup_update.boot_config_overlay_is_open(section_lines[: section_lines.index(protected_spi)])
+
+
+def test_install_script_closes_the_scope_of_an_overlay_already_in_the_section() -> None:
+    script_name = NAVIGATOR_INSTALL_SCRIPTS[CpuType.PI5]
+    config = "arm_64bit=1\n[pi5]\ndtparam=spi=on\ndtoverlay=nospi10\n\n[all]\ndtparam=audio=on\n"
+
+    closed = close_overlay_scope(script_name, "pi5", config)
+
+    assert closed == config.replace("dtoverlay=nospi10\n", "dtoverlay=nospi10\ndtoverlay=\n")
+    assert close_overlay_scope(script_name, "pi5", closed) == closed
+    assert close_overlay_scope(script_name, "pi5", config.replace("dtoverlay=nospi10\n", "")) == config.replace(
+        "dtoverlay=nospi10\n", ""
+    )

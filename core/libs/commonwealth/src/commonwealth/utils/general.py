@@ -22,8 +22,10 @@ class CpuType(str, Enum):
 
 
 class HostOs(str, Enum):
+    Trixie = "Debian(Raspberry Pi OS?) 13 (Trixie)"
     Bookworm = "Debian(Raspberry Pi OS?) 12 (Bookworm)"
     Bullseye = "Debian(Raspberry Pi OS?) 11 (Bullseye)"
+    NixOS = "NixOS"
     Other = "Other"
 
 
@@ -51,10 +53,14 @@ def get_host_os() -> HostOs:
         os_release = load_file("/etc/os-release")
     except HostFileError:
         return HostOs.Other
+    if "trixie" in os_release.lower():
+        return HostOs.Trixie
     if "bookworm" in os_release.lower():
         return HostOs.Bookworm
     if "bullseye" in os_release.lower():
         return HostOs.Bullseye
+    if "nixos" in os_release.lower():
+        return HostOs.NixOS
     return HostOs.Other
 
 
