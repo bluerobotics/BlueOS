@@ -4,7 +4,7 @@ import pathlib
 import subprocess
 import time
 from contextlib import asynccontextmanager
-from typing import Any, AsyncIterator, List, Optional, Set
+from typing import Any, AsyncIterator, List, Optional, Set, Tuple
 from uuid import uuid4
 
 import psutil
@@ -21,6 +21,7 @@ from exceptions import (
 from firmware.FirmwareManagement import FirmwareManager
 from flight_controller_detector.Detector import Detector as BoardDetector
 from flight_controller_detector.linux.linux_boards import LinuxFlightController
+from flight_controller_detector.serial_by_id import SerialById
 from loguru import logger
 from mavlink_proxy.Endpoint import Endpoint, EndpointType
 from mavlink_proxy.exceptions import EndpointAlreadyExists
@@ -46,6 +47,9 @@ class AutoPilotManager(metaclass=Singleton):
         self._settings_manager: PydanticManager[SettingsV1] = PydanticManager(SERVICE_NAME, SettingsV1)
         self._settings_manager.settings.create_app_folders()
         self._current_board: Optional[FlightController] = None
+        self._serial: Optional[SerialById] = None
+        self._serial_absence_reported = False
+        self._serial_paths: Set[str] = set()
         self.should_be_running = False
         self._lifecycle_lock = asyncio.Lock()
         self.mavlink_manager = MavlinkManager()
@@ -162,6 +166,10 @@ class AutoPilotManager(metaclass=Singleton):
         self.vehicle_manager = VehicleManager()
         self._heartbeat_fail_count = 0  # Consecutive heartbeat failures
         self._max_heartbeat_failures = 10  # Threshold for restarting Ardupilot after consecutive heartbeat failures
+        # A new start looks the board up again, and nothing else clears these while the router is not meant to run
+        self._serial = None
+        self._serial_paths = set()
+        self._serial_absence_reported = False
 
         self.should_be_running = False
         self.remove_old_logs()
@@ -199,7 +207,7 @@ class AutoPilotManager(metaclass=Singleton):
         # Serial or others that are not processes based
         return self.should_be_running
 
-    async def auto_restart_ardupilot(self) -> None:
+    async def auto_restart_ardupilot(self) -> None:  # pylint: disable=too-many-branches
         """Auto-restart Ardupilot when it's not running but was supposed to."""
         while True:
             needs_restart = self.should_be_running and not self.is_running() and not self._lifecycle_lock.locked()
@@ -244,11 +252,13 @@ class AutoPilotManager(metaclass=Singleton):
                     )
 
                 if self._heartbeat_fail_count >= self._max_heartbeat_failures and not self._lifecycle_lock.locked():
-                    logger.warning("Consecutive heartbeat failures threshold reached — restarting Ardupilot.")
-                    try:
-                        await self.restart_ardupilot()
-                    except Exception as error:
-                        logger.warning(f"Failed to restart Ardupilot after heartbeat failures: {error}")
+                    # A board that is gone cannot answer, the router watchdog follows it when it comes back
+                    if not self._serial_absence_reported:
+                        logger.warning("Consecutive heartbeat failures threshold reached — restarting Ardupilot.")
+                        try:
+                            await self.restart_ardupilot()
+                        except Exception as error:
+                            logger.warning(f"Failed to restart Ardupilot after heartbeat failures: {error}")
                     self._heartbeat_fail_count = 0
 
             await asyncio.sleep(5.0)
@@ -269,10 +279,84 @@ class AutoPilotManager(metaclass=Singleton):
         async with self._lifecycle_lock:
             # setup() replaces the manager on every start, so always act on the current one
             mavlink_manager = self.mavlink_manager
-            if not mavlink_manager.should_be_running or await mavlink_manager.is_running():
+            if not mavlink_manager.should_be_running:
                 return
-            logger.warning("Mavlink router stopped. Trying to restart it.")
-            await mavlink_manager.restart()
+            # Looking for the board is blocking I/O
+            left, moved_board = await asyncio.to_thread(self._locate_serial_board)
+            if left:
+                await self._follow_serial_board_locked(moved_board)
+                return
+            self._serial_absence_reported = False
+            if not await mavlink_manager.is_running():
+                logger.warning("Mavlink router stopped. Trying to restart it.")
+                await mavlink_manager.restart()
+
+    def _locate_serial_board(self) -> Tuple[bool, Optional[FlightController]]:
+        # A serial board that reboots or reconnects behind our back re-enumerates on a new device path while the
+        # router keeps a handle to the old one
+        board = self._current_board
+        master_endpoint = self.mavlink_manager.master_endpoint
+        # A manual serial master endpoint can point the router at another node than the one of the board
+        if (
+            board is None
+            or board.type != PlatformType.Serial
+            or master_endpoint is None
+            or master_endpoint.connection_type != EndpointType.Serial
+            # Another serial master is not ours to follow
+            or master_endpoint.place not in self._serial_paths
+        ):
+            return False, None
+        place = os.path.realpath(master_endpoint.place)
+        serial = self._serial
+        if serial is not None and serial.link:
+            current = serial.current_path()
+            if current == place:
+                return False, None
+            return True, board.model_copy(update={"path": current}) if current else None
+        if os.path.exists(place):
+            return False, None
+        # Without a by-id link, only a single candidate is known to be the same board
+        candidates = [
+            detected
+            for detected in BoardDetector.detect_serial_flight_controllers()
+            if detected.platform == board.platform
+            and detected.path
+            and FlightControllerFlags.is_bootloader not in detected.flags
+        ]
+        if len(candidates) > 1 and not self._serial_absence_reported:
+            logger.warning(
+                f"Several {board.platform.name} boards and no unique USB serial number, cannot tell which one is "
+                "ours, waiting. Use Stop then Start to choose."
+            )
+        return True, candidates[0] if len(candidates) == 1 else None
+
+    async def _follow_serial_board_locked(self, moved_board: Optional[FlightController]) -> bool:
+        mavlink_manager = self.mavlink_manager
+        if moved_board is None:
+            if not self._serial_absence_reported:
+                self._serial_absence_reported = True
+                logger.warning("The serial board left its device path. Waiting for it to come back.")
+            # Never keep a router on a path that is gone or that another board took over
+            if await mavlink_manager.is_running():
+                await mavlink_manager.tool.exit()
+            return False
+        logger.warning(f"Serial board moved to {moved_board.path}. Restarting Mavlink router on it.")
+        # The restart points the master endpoint there even if the router fails to start
+        await self._set_serial_board(moved_board, following=True)
+        # A failed start leaves a new manager that only has the saved endpoints, restarting keeps what it has
+        self._add_default_endpoints()
+        await mavlink_manager.restart(self._serial_master_endpoint(moved_board))
+        return True
+
+    async def _set_serial_board(self, board: FlightController, following: bool = False) -> None:
+        if not board.path:
+            raise ValueError(f"Could not find device path for board {board.name}.")
+        self._current_board = board
+        # The device paths this board had since it was started, to tell it from another board of the same platform
+        self._serial_paths = (self._serial_paths if following else set()) | {board.path}
+        # Looked up again every time the board is started, never saved
+        self._serial = await asyncio.to_thread(SerialById, board.path)
+        self._serial_absence_reported = False
 
     @property
     def settings(self) -> SettingsV1:
@@ -406,25 +490,28 @@ class AutoPilotManager(metaclass=Singleton):
 
         await self.start_mavlink_manager(master_endpoint)
 
-    async def start_serial(self, board: FlightController) -> None:
+    @staticmethod
+    def _is_px4(board: FlightController) -> bool:
+        return "px4" in board.name.lower()
+
+    @staticmethod
+    def _serial_master_endpoint(board: FlightController) -> Endpoint:
         if not board.path:
             raise ValueError(f"Could not find device path for board {board.name}.")
-        self._current_board = board
-        baudrate = 115200
-        is_px4 = "px4" in board.name.lower()
-        if is_px4:
-            baudrate = 57600
-        await self.start_mavlink_manager(
-            Endpoint(
-                name="Master",
-                owner=SERVICE_NAME,
-                connection_type=EndpointType.Serial,
-                place=board.path,
-                argument=baudrate,
-                protected=True,
-            )
+        return Endpoint(
+            name="Master",
+            owner=SERVICE_NAME,
+            connection_type=EndpointType.Serial,
+            place=board.path,
+            argument=57600 if AutoPilotManager._is_px4(board) else 115200,
+            protected=True,
         )
-        if is_px4:
+
+    async def start_serial(self, board: FlightController) -> None:
+        master_endpoint = self._serial_master_endpoint(board)
+        await self._set_serial_board(board)
+        await self.start_mavlink_manager(master_endpoint)
+        if "px4" in board.name.lower():
             # PX4 needs at least one initial heartbeat to start sending data
             await self.vehicle_manager.burst_heartbeat()
 
@@ -539,7 +626,7 @@ class AutoPilotManager(metaclass=Singleton):
 
         await self.start_mavlink_manager(master_endpoint)
 
-    async def start_mavlink_manager(self, device: Endpoint) -> None:
+    def _add_default_endpoints(self) -> None:
         for endpoint in self.autopilot_default_endpoints:
             try:
                 self.mavlink_manager.add_endpoint(endpoint)
@@ -547,6 +634,9 @@ class AutoPilotManager(metaclass=Singleton):
                 pass
             except Exception as error:
                 logger.warning(str(error))
+
+    async def start_mavlink_manager(self, device: Endpoint) -> None:
+        self._add_default_endpoints()
         await self.mavlink_manager.start(device)
 
     @staticmethod

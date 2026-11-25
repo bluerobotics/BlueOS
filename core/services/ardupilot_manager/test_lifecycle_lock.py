@@ -1,13 +1,16 @@
 import asyncio
 from pathlib import Path
-from typing import Any, Awaitable, Callable, Iterator, cast
+from typing import Any, Awaitable, Callable, Iterator, Optional, cast
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 from autopilot_manager import AutoPilotManager
+from flight_controller_detector.Detector import Detector
+from flight_controller_detector.serial_by_id import SerialById
+from loguru import logger
 from mavlink_proxy.Endpoint import Endpoint, EndpointType
 from mavlink_proxy.Manager import Manager
-from typedefs import FlightController, Platform, PlatformType
+from typedefs import FlightController, FlightControllerFlags, Platform, PlatformType
 
 pytestmark = [pytest.mark.asyncio, pytest.mark.timeout(5)]
 
@@ -41,6 +44,10 @@ def fixture_manager(lifecycle: Lifecycle) -> Iterator[AutoPilotManager]:
     manager = AutoPilotManager.__new__(AutoPilotManager)
     manager._lifecycle_lock = lifecycle.lock
     manager._current_board = None
+    manager._serial = None
+    manager._serial_absence_reported = False
+    manager._serial_paths = set()
+    manager.autopilot_default_endpoints = []
     manager._settings_manager = MagicMock()
     manager.firmware_manager = AsyncMock()
     manager.mavlink_manager = MagicMock(
@@ -91,18 +98,32 @@ async def test_failed_install_starts_autopilot_again(manager: AutoPilotManager, 
     assert not manager._lifecycle_lock.locked()
 
 
-class FakeRouterManager:
+class FakeRouterManager:  # pylint: disable=too-many-instance-attributes
     def __init__(self, lifecycle: Lifecycle, should_be_running: bool = True) -> None:
         self.lifecycle = lifecycle
         self.should_be_running = should_be_running
         self.running = False
         self.restarts = 0
+        self.master_endpoint: Optional[Endpoint] = None
+        self.endpoints: list[Endpoint] = []
+
+    def add_endpoint(self, endpoint: Endpoint) -> None:
+        self.endpoints.append(endpoint)
+
+    @property
+    def tool(self) -> MagicMock:
+        return MagicMock(exit=self.exit)
+
+    async def exit(self) -> None:
+        self.running = False
 
     async def is_running(self) -> bool:
         return self.running
 
-    async def restart(self) -> None:
+    async def restart(self, master_endpoint: Optional[Endpoint] = None) -> None:
         await self.lifecycle.step("restart_router")
+        if master_endpoint:
+            self.master_endpoint = master_endpoint
         self.restarts += 1
         self.running = True
         self.should_be_running = True
@@ -219,3 +240,371 @@ async def test_endpoint_change_does_not_start_stopped_router(manager: AutoPilotM
 
     assert router.restarts == 0
     assert not router.should_be_running
+
+
+class SerialBoards:
+    """Device nodes and by-id links of a fake /dev, so the tests exercise the real filesystem lookups."""
+
+    def __init__(self, root: Path) -> None:
+        self.root = root
+        (root / "by-id").mkdir()
+
+    def node(self, name: str) -> str:
+        path = self.root / name
+        path.touch()
+        return str(path)
+
+    def link(self, node: str, name: str = "usb-ArduPilot_Pixhawk1_123-if00") -> str:
+        link = self.root / "by-id" / name
+        link.unlink(missing_ok=True)
+        link.symlink_to(node)
+        return str(link)
+
+    def remove(self, node: str, link: Optional[str] = None) -> None:
+        Path(node).unlink()
+        if link:
+            Path(link).unlink()
+
+
+@pytest.fixture(name="dev")
+def fixture_dev(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> SerialBoards:
+    monkeypatch.setattr(SerialById, "BY_ID_DIR", tmp_path / "by-id")
+    return SerialBoards(tmp_path)
+
+
+def pixhawk_at(
+    path: str, name: str = "Pixhawk1", flags: Optional[list[FlightControllerFlags]] = None
+) -> FlightController:
+    return FlightController(name=name, platform=Platform.Pixhawk1, path=path, flags=flags or [])
+
+
+def serial_board_on(
+    manager: AutoPilotManager, lifecycle: Lifecycle, board: FlightController, link: Optional[str] = None
+) -> FakeRouterManager:
+    router = FakeRouterManager(lifecycle)
+    router.running = True
+    router.master_endpoint = AutoPilotManager._serial_master_endpoint(board)
+    manager.mavlink_manager = cast(Manager, router)
+    manager._current_board = board
+    manager._serial_paths = {board.path or ""}
+    manager._serial = SerialById(board.path or "")
+    assert link is None or manager._serial.link == link
+    return router
+
+
+def detected_serial_boards(*boards: FlightController) -> Any:
+    return patch.object(Detector, "detect_serial_flight_controllers", MagicMock(return_value=list(boards)))
+
+
+@pytest.mark.parametrize("old_node_stays", [False, True])
+async def test_router_watchdog_follows_serial_board_to_its_new_path(
+    manager: AutoPilotManager, lifecycle: Lifecycle, dev: SerialBoards, old_node_stays: bool
+) -> None:
+    old = dev.node("ttyACM0")
+    link = dev.link(old)
+    router = serial_board_on(manager, lifecycle, pixhawk_at(old), link)
+    new = dev.node("ttyACM1")
+    dev.link(new)
+    if not old_node_stays:
+        Path(old).unlink()
+
+    await manager._restart_router_if_dead()
+
+    assert router.restarts == 1
+    assert router.master_endpoint is not None and router.master_endpoint.place == new
+    assert manager.current_board == pixhawk_at(new)
+    assert manager._serial is not None and manager._serial.link == link
+
+
+async def test_router_watchdog_gives_the_default_endpoints_to_a_new_manager_it_restarts(
+    manager: AutoPilotManager, lifecycle: Lifecycle, dev: SerialBoards
+) -> None:
+    old = dev.node("ttyACM0")
+    router = serial_board_on(manager, lifecycle, pixhawk_at(old), dev.link(old))
+    manager.autopilot_default_endpoints = [MASTER]
+    Path(old).unlink()
+    dev.link(dev.node("ttyACM1"))
+
+    await manager._restart_router_if_dead()
+
+    assert router.restarts == 1
+    assert router.endpoints == [MASTER]
+
+
+async def test_router_watchdog_leaves_present_serial_board_alone(
+    manager: AutoPilotManager, lifecycle: Lifecycle, dev: SerialBoards
+) -> None:
+    node = dev.node("ttyACM0")
+    router = serial_board_on(manager, lifecycle, pixhawk_at(node), dev.link(node))
+
+    with detected_serial_boards() as detect:
+        await manager._restart_router_if_dead()
+
+    detect.assert_not_called()
+    assert router.restarts == 0
+
+
+async def test_without_a_link_a_single_candidate_is_the_board(
+    manager: AutoPilotManager, lifecycle: Lifecycle, dev: SerialBoards
+) -> None:
+    old = str(dev.root / "ttyACM0")
+    router = serial_board_on(manager, lifecycle, pixhawk_at(old))
+    bootloader = pixhawk_at("/dev/ttyACM1", "Pixhawk1-BL", [FlightControllerFlags.is_bootloader])
+    other_platform = FlightController(name="Pixhawk4", platform=Platform.Pixhawk4, path="/dev/ttyACM2")
+    moved = pixhawk_at(str(dev.root / "ttyACM3"))
+
+    with detected_serial_boards(bootloader, other_platform, moved):
+        await manager._restart_router_if_dead()
+
+    assert router.restarts == 1
+    assert manager.current_board == moved
+
+
+@pytest.mark.parametrize("candidates", [0, 2])
+async def test_without_a_link_it_does_not_guess(
+    manager: AutoPilotManager, lifecycle: Lifecycle, dev: SerialBoards, candidates: int
+) -> None:
+    router = serial_board_on(manager, lifecycle, pixhawk_at(str(dev.root / "ttyACM0")))
+    router.running = True
+
+    with detected_serial_boards(*[pixhawk_at(str(dev.root / f"ttyACM{i + 1}")) for i in range(candidates)]):
+        await manager._restart_router_if_dead()
+
+    assert not router.running
+    assert router.restarts == 0
+
+
+async def test_without_a_link_several_candidates_are_reported_once(
+    manager: AutoPilotManager, lifecycle: Lifecycle, dev: SerialBoards
+) -> None:
+    serial_board_on(manager, lifecycle, pixhawk_at(str(dev.root / "ttyACM0")))
+    messages: list[str] = []
+    sink = logger.add(lambda message: messages.append(str(message)), level="WARNING")
+    try:
+        with detected_serial_boards(pixhawk_at("/dev/ttyACM1"), pixhawk_at("/dev/ttyACM2")):
+            await manager._restart_router_if_dead()
+            await manager._restart_router_if_dead()
+    finally:
+        logger.remove(sink)
+
+    assert len([message for message in messages if "Several Pixhawk1 boards" in message]) == 1
+
+
+async def test_without_a_link_a_present_board_is_not_searched_for(
+    manager: AutoPilotManager, lifecycle: Lifecycle, dev: SerialBoards
+) -> None:
+    router = serial_board_on(manager, lifecycle, pixhawk_at(dev.node("ttyACM0")))
+
+    with detected_serial_boards() as detect:
+        await manager._restart_router_if_dead()
+
+    detect.assert_not_called()
+    assert router.restarts == 0
+
+
+async def test_router_watchdog_waits_for_the_serial_board_without_touching_its_old_path(
+    manager: AutoPilotManager, lifecycle: Lifecycle, dev: SerialBoards
+) -> None:
+    old = dev.node("ttyACM0")
+    link = dev.link(old)
+    router = serial_board_on(manager, lifecycle, pixhawk_at(old), link)
+    dev.remove(old, link)
+
+    # The router died too: it must not be restarted on a path that is gone
+    router.running = False
+    await manager._restart_router_if_dead()
+    await manager._restart_router_if_dead()
+    assert router.restarts == 0 and manager.current_board == pixhawk_at(old)
+
+    new = dev.node("ttyACM1")
+    dev.link(new)
+    await manager._restart_router_if_dead()
+    assert router.restarts == 1
+    assert router.master_endpoint is not None and router.master_endpoint.place == new
+
+
+async def test_router_watchdog_reports_each_absence_of_the_serial_board(
+    manager: AutoPilotManager, lifecycle: Lifecycle, dev: SerialBoards
+) -> None:
+    node = dev.node("ttyACM0")
+    link = dev.link(node)
+    serial_board_on(manager, lifecycle, pixhawk_at(node), link)
+    Path(link).unlink()
+    await manager._restart_router_if_dead()
+    assert manager._serial_absence_reported
+
+    dev.link(node)
+    await manager._restart_router_if_dead()
+    assert not manager._serial_absence_reported
+
+
+async def test_router_watchdog_keeps_the_board_current_when_the_router_fails_to_start(
+    manager: AutoPilotManager, lifecycle: Lifecycle, dev: SerialBoards
+) -> None:
+    old = dev.node("ttyACM0")
+    router = serial_board_on(manager, lifecycle, pixhawk_at(old), dev.link(old))
+    Path(old).unlink()
+    new = dev.node("ttyACM1")
+    dev.link(new)
+    router.restart = AsyncMock(side_effect=RuntimeError("router failed to start"))  # type: ignore[method-assign]
+
+    with pytest.raises(RuntimeError):
+        await manager._restart_router_if_dead()
+
+    assert manager.current_board == pixhawk_at(new)
+
+
+async def test_router_watchdog_reports_a_second_absence_after_a_start(
+    manager: AutoPilotManager, lifecycle: Lifecycle, dev: SerialBoards
+) -> None:
+    node = dev.node("ttyACM0")
+    link = dev.link(node)
+    serial_board_on(manager, lifecycle, pixhawk_at(node), link)
+    manager._serial_absence_reported = True
+
+    manager.start_mavlink_manager = AsyncMock()  # type: ignore[method-assign]
+    manager.vehicle_manager = AsyncMock()
+    await manager.start_serial(pixhawk_at(node))
+
+    assert not manager._serial_absence_reported
+
+
+async def test_router_watchdog_stops_a_router_whose_path_went_to_another_board(
+    manager: AutoPilotManager, lifecycle: Lifecycle, dev: SerialBoards
+) -> None:
+    old = dev.node("ttyACM0")
+    link = dev.link(old)
+    router = serial_board_on(manager, lifecycle, pixhawk_at(old), link)
+    Path(link).unlink()  # our board is gone, ttyACM0 now belongs to another one
+
+    await manager._restart_router_if_dead()
+
+    assert not router.running and router.restarts == 0
+    assert router.should_be_running, "the intent to run must be kept"
+
+
+async def test_dangling_by_id_link_at_the_master_place_reads_as_left(
+    manager: AutoPilotManager, lifecycle: Lifecycle, dev: SerialBoards
+) -> None:
+    node = dev.node("ttyACM0")
+    router = serial_board_on(manager, lifecycle, pixhawk_at(node), dev.link(node))
+    Path(node).unlink()  # udev has not removed the link yet
+
+    await manager._restart_router_if_dead()
+
+    assert not router.running and router.restarts == 0
+    assert manager._serial_absence_reported
+
+
+@pytest.mark.parametrize("absent, restarts", [(True, 0), (False, 1)])
+async def test_heartbeat_watchdog_does_not_restart_while_the_serial_board_is_absent(
+    manager: AutoPilotManager, absent: bool, restarts: int
+) -> None:
+    manager._serial_absence_reported = absent
+    manager.should_be_running = True
+    manager._start_fail_count = 0
+    manager._heartbeat_fail_count = 9
+    manager._max_heartbeat_failures = 10
+    manager.vehicle_manager = AsyncMock()
+    manager.vehicle_manager.is_heart_beating.return_value = False
+    restart = AsyncMock()
+    manager.restart_ardupilot = restart  # type: ignore[method-assign]
+
+    with (
+        patch.object(manager, "is_running", return_value=True),
+        patch("autopilot_manager.asyncio.sleep", AsyncMock(side_effect=StopAsyncIteration)),
+        pytest.raises(StopAsyncIteration),
+    ):
+        await manager.auto_restart_ardupilot()
+
+    assert restart.await_count == restarts
+
+
+async def test_setup_forgets_the_absence_of_the_serial_board(
+    manager: AutoPilotManager, lifecycle: Lifecycle, dev: SerialBoards
+) -> None:
+    node = dev.node("ttyACM0")
+    serial_board_on(manager, lifecycle, pixhawk_at(node), dev.link(node))
+    manager._serial_absence_reported = True
+    manager.mavlink_manager.stop = AsyncMock()  # type: ignore[method-assign]
+
+    with (
+        patch("autopilot_manager.MavlinkManager"),
+        patch("autopilot_manager.FirmwareManager"),
+        patch("autopilot_manager.VehicleManager"),
+        patch.multiple(
+            manager,
+            load_preferred_router=MagicMock(return_value="MAVLink-Server"),
+            load_tlog_mode=MagicMock(),
+            load_sitl_frame=MagicMock(),
+            _load_endpoints=MagicMock(),
+            remove_old_logs=MagicMock(),
+        ),
+    ):
+        await manager.setup()
+
+    assert not manager._serial_absence_reported
+    assert manager._serial is None
+
+
+async def test_router_watchdog_does_not_move_stopped_serial_board(
+    manager: AutoPilotManager, lifecycle: Lifecycle, dev: SerialBoards
+) -> None:
+    node = dev.node("ttyACM0")
+    router = serial_board_on(manager, lifecycle, pixhawk_at(node), dev.link(node))
+    router.should_be_running = router.running = False
+    dev.link(dev.node("ttyACM1"))
+
+    await manager._restart_router_if_dead()
+
+    assert router.restarts == 0 and not router.running
+
+
+async def test_router_watchdog_does_not_override_manual_master_endpoint(
+    manager: AutoPilotManager, lifecycle: Lifecycle, dev: SerialBoards
+) -> None:
+    node = dev.node("ttyACM0")
+    router = serial_board_on(manager, lifecycle, pixhawk_at(node), dev.link(node))
+    router.master_endpoint = MASTER
+    router.running = False
+    dev.link(dev.node("ttyACM1"))
+
+    await manager._restart_router_if_dead()
+
+    assert router.master_endpoint == MASTER
+    assert manager.current_board == pixhawk_at(node)
+
+
+async def test_router_watchdog_leaves_a_serial_master_on_another_node_alone(
+    manager: AutoPilotManager, lifecycle: Lifecycle, dev: SerialBoards
+) -> None:
+    node, other = dev.node("ttyACM0"), dev.node("ttyACM1")
+    router = serial_board_on(manager, lifecycle, pixhawk_at(node), dev.link(node))
+    router.master_endpoint = AutoPilotManager._serial_master_endpoint(pixhawk_at(other))
+    router.running = False
+
+    await manager._restart_router_if_dead()
+
+    assert router.master_endpoint.place == other
+    assert manager.current_board == pixhawk_at(node)
+
+
+async def test_start_serial_looks_up_the_by_id_link_each_time(
+    manager: AutoPilotManager, lifecycle: Lifecycle, dev: SerialBoards
+) -> None:
+    serial_board_on(manager, lifecycle, pixhawk_at("/dev/ttyACM9"))
+    manager.start_mavlink_manager = AsyncMock()  # type: ignore[method-assign]
+    manager.vehicle_manager = AsyncMock()
+    first, second = dev.node("ttyACM0"), dev.node("ttyACM1")
+    link = dev.link(first)
+
+    await manager.start_serial(pixhawk_at(first))
+    assert manager._serial is not None and manager._serial.link == link
+    Path(link).unlink()
+    await manager.start_serial(pixhawk_at(second))
+    assert manager._serial is not None and not manager._serial.link
+
+
+def test_serial_master_endpoint_needs_a_path() -> None:
+    with pytest.raises(ValueError):
+        AutoPilotManager._serial_master_endpoint(FlightController(name="Pixhawk1", platform=Platform.Pixhawk1))
