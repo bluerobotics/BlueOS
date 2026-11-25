@@ -6,13 +6,20 @@ import json
 import logging
 import os
 import re
+import shlex
 import subprocess
 import time
 from pathlib import Path
-from typing import List, Optional, Tuple
+from typing import Callable, List, Optional, Tuple
 
 import appdirs
-from commonwealth.utils.commands import load_file, locate_file, run_command, save_file
+from commonwealth.utils.commands import (
+    HostFileError,
+    load_file,
+    locate_file,
+    run_command,
+    save_file,
+)
 from commonwealth.utils.general import CpuType, HostOs, get_cpu_type, get_host_os
 from commonwealth.utils.logs import InterceptHandler, init_logger
 from loguru import logger
@@ -682,8 +689,14 @@ def ensure_ipv6_disabled() -> bool:
         ),
     ]
 
-    sysctl_config_path = "/etc/sysctl.conf"
-    sysctl_config_file = load_file(sysctl_config_path)
+    # Trixie's systemd-sysctl no longer reads /etc/sysctl.conf, only /etc/sysctl.d
+    sysctl_config_path = "/etc/sysctl.d/99-blueos.conf" if get_host_os() == HostOs.Trixie else "/etc/sysctl.conf"
+    try:
+        sysctl_config_file = load_file(sysctl_config_path)
+    except HostFileError:
+        if get_host_os() != HostOs.Trixie:
+            raise
+        sysctl_config_file = ""
 
     # Make sure every required entry is in the file and uncommented
     needs_update = False
@@ -743,20 +756,8 @@ def fix_wpa_service() -> bool:
     return True
 
 
-def configure_network_manager() -> bool:
-    """
-    Ensures NetworkManager.conf has [main] section with dns=none set if dns is not already configured
-    """
-    logger.info("Configuring NetworkManager DNS settings...")
-    file_path = "/etc/NetworkManager/NetworkManager.conf"
-
-    config = configparser.ConfigParser()
-
-    # Try to read existing file
-    result = run_command(f"test -f {file_path} && cat {file_path}", check=False)
-    if result.returncode != 0:
-        # File doesn't exist, create with template
-        content = """[main]
+# deploy/pimod/provision_trixie.sh writes the same content into the image, a test keeps them equal
+NETWORK_MANAGER_CONF_TEMPLATE = """[main]
 plugins=ifupdown,keyfile
 dns=none
 
@@ -767,18 +768,51 @@ managed=false
 wifi.scan-rand-mac-address=no
 
 [keyfile]
-unmanaged-devices=interface:eth0;interface:usb0
+unmanaged-devices=interface-name:eth0;interface-name:usb0
 """
-        run_command(f"echo '{content}' | sudo tee {file_path}", check=False)
-        return True
 
-    config.read_string(result.stdout)
+
+def configure_network_manager() -> bool:
+    """
+    Ensures NetworkManager.conf has dns=none in [main] and the unmanaged-devices entry in [keyfile],
+    and migrates the invalid "interface:" device spec that earlier versions wrote to "interface-name:"
+    """
+    logger.info("Configuring NetworkManager DNS settings...")
+    file_path = "/etc/NetworkManager/NetworkManager.conf"
+
+    config = configparser.ConfigParser()
+
+    # Try to read existing file
+    result = run_command(f"test -f {file_path} && cat {file_path}", check=False)
+    if result.returncode != 0:
+        # File doesn't exist, create with template
+        tee = run_command(f"echo '{NETWORK_MANAGER_CONF_TEMPLATE}' | sudo tee {file_path}", check=False)
+        return tee.returncode == 0
+
+    # "interface:" is not a NetworkManager device spec, so earlier versions wrote an entry that was ignored.
+    # Only that line is rewritten, so the user's comments and layout are kept. NetworkManager keys are case-sensitive.
+    migrated_lines = []
+    section = ""
+    for line in result.stdout.splitlines(keepends=True):
+        header = re.match(r"\s*\[([^\]]+)\]", line)
+        if header:
+            section = header.group(1)
+        if section == "keyfile" and re.match(r"\s*unmanaged-devices\s*=", line):
+            line = re.sub(r"\binterface:", "interface-name:", line)
+        migrated_lines.append(line)
+    migrated = "".join(migrated_lines)
+    has_old_device_spec = migrated != result.stdout
+
+    config.read_string(migrated)
 
     # Check if we need to make changes
     if ("main" in config.sections() and "dns" in config["main"]) and (
         "keyfile" in config.sections() and "unmanaged-devices" in config["keyfile"]
     ):
-        return False
+        if not has_old_device_spec:
+            return False
+        write = f"printf %s {shlex.quote(migrated)} | sudo tee {file_path}"
+        return run_command(write, check=False).returncode == 0
 
     # Add our settings if needed
     if "main" not in config:
@@ -790,7 +824,7 @@ unmanaged-devices=interface:eth0;interface:usb0
     if "keyfile" not in config:
         config.add_section("keyfile")
     if "unmanaged-devices" not in config["keyfile"]:
-        config["keyfile"]["unmanaged-devices"] = "interface:eth0;interface:usb0"
+        config["keyfile"]["unmanaged-devices"] = "interface-name:eth0;interface-name:usb0"
 
     # Write back if changes were made
     content = ""
@@ -800,8 +834,7 @@ unmanaged-devices=interface:eth0;interface:usb0
             content += f"{key}={value}\n"
         content += "\n"
 
-    run_command(f"echo '{content}' | sudo tee {file_path}", check=False)
-    return True
+    return run_command(f"echo '{content}' | sudo tee {file_path}", check=False).returncode == 0
 
 
 def check_available_space(required_mb: int) -> bool:
@@ -914,6 +947,47 @@ def locate_boot_file(candidates: List[str]) -> Optional[str]:
     return located
 
 
+def select_patches(host_cpu: CpuType, host_os: HostOs) -> List[Tuple[str, Callable[[], bool]]]:
+    # TODO: parse tag as semver and check before applying patches
+    patches_to_apply = [
+        ("startup", update_startup),
+        ("userdata", ensure_user_data_structure_is_in_place),
+        ("nginx", ensure_nginx_permissions),
+        ("dns", create_dns_conf_host_link),
+        ("ssh", fix_ssh_ownership),
+        ("noIPV6", ensure_ipv6_disabled),
+        ("swap", update_swap_size),
+        ("cgroups", update_cgroups),
+        ("dhcpcd_wait", remove_dhcpcd_wait),
+    ]
+    # Trixie has no dphys-swapfile, the image configures zram instead
+    if host_os == HostOs.Trixie:
+        patches_to_apply = [(name, patch) for name, patch in patches_to_apply if name != "swap"]
+
+    if host_cpu == CpuType.PI3:
+        patches_to_apply.extend(
+            [
+                ("revert_update_dwc2", revert_update_dwc2),
+                ("clean_config_pi3", clean_config_pi3),
+            ]
+        )
+
+    if host_cpu in [CpuType.PI4, CpuType.PI5]:
+        patches_to_apply.extend(
+            [
+                ("navigator", update_navigator_overlays),
+                ("dwc2", update_dwc2),
+                ("i2c4", update_i2c4_symlink),
+            ]
+        )
+    if host_os == HostOs.Bookworm:
+        patches_to_apply.append(("wpa", fix_wpa_service))
+    # Trixie keeps wpa_supplicant as the NetworkManager-driven D-Bus service, so it has no wpa patch
+    if host_os in [HostOs.Bookworm, HostOs.Trixie]:
+        patches_to_apply.append(("networkmanager", configure_network_manager))
+    return patches_to_apply
+
+
 def main() -> int:
     start = time.time()
     # check if boot_loop_detector exists
@@ -942,37 +1016,7 @@ def main() -> int:
     host_cpu = get_cpu_type()
     logger.info(f"Host CPU: {host_cpu}")
 
-    # TODO: parse tag as semver and check before applying patches
-    patches_to_apply = [
-        ("startup", update_startup),
-        ("userdata", ensure_user_data_structure_is_in_place),
-        ("nginx", ensure_nginx_permissions),
-        ("dns", create_dns_conf_host_link),
-        ("ssh", fix_ssh_ownership),
-        ("noIPV6", ensure_ipv6_disabled),
-        ("swap", update_swap_size),
-        ("cgroups", update_cgroups),
-        ("dhcpcd_wait", remove_dhcpcd_wait),
-    ]
-
-    if host_cpu == CpuType.PI3:
-        patches_to_apply.extend(
-            [
-                ("revert_update_dwc2", revert_update_dwc2),
-                ("clean_config_pi3", clean_config_pi3),
-            ]
-        )
-
-    if host_cpu in [CpuType.PI4, CpuType.PI5]:
-        patches_to_apply.extend(
-            [
-                ("navigator", update_navigator_overlays),
-                ("dwc2", update_dwc2),
-                ("i2c4", update_i2c4_symlink),
-            ]
-        )
-    if host_os == HostOs.Bookworm:
-        patches_to_apply.extend([("wpa", fix_wpa_service), ("networkmanager", configure_network_manager)])
+    patches_to_apply = select_patches(host_cpu, host_os)
 
     logger.info("The following patches will be applied if needed:")
     for name, patch in patches_to_apply:

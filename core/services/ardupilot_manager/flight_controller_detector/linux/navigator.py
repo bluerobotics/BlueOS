@@ -1,10 +1,10 @@
 import platform
 from typing import Any, ClassVar, Dict, List, Optional, Tuple
 
-from commonwealth.utils.commands import HostFileError, load_file
-from commonwealth.utils.general import CpuType, get_cpu_type
+from commonwealth.utils.general import CpuType, HostOs, get_cpu_type, get_host_os
 from elftools.elf.elffile import ELFFile
 from flight_controller_detector.linux.linux_boards import LinuxFlightController
+from loguru import logger
 from typedefs import Platform, Serial
 
 
@@ -76,32 +76,27 @@ class NavigatorPi4(Navigator):
     }
 
     def get_serials(self) -> List[Serial]:
-        release = "Bullseye"
-        try:
-            os_release = load_file("/etc/os-release")
-        except HostFileError:
-            os_release = ""
-        if "bookworm" in os_release.lower():
-            release = "Bookworm"
-        elif "nixos" in os_release.lower():
-            release = "NixOS"
-
-        match release:
-            case "Bullseye":
-                return [
-                    Serial(port="C", endpoint="/dev/ttyS0"),
-                    Serial(port="B", endpoint="/dev/ttyAMA1"),
-                    Serial(port="E", endpoint="/dev/ttyAMA2"),
-                    Serial(port="F", endpoint="/dev/ttyAMA3"),
-                ]
-            case "Bookworm" | "NixOS":
+        host_os = get_host_os()
+        if host_os == HostOs.Other:
+            # An unreadable os-release is cached as Other, and must not keep the Bullseye ports until a restart
+            get_host_os.cache_clear()
+            host_os = get_host_os()
+        match host_os:
+            case HostOs.Bookworm | HostOs.Trixie | HostOs.NixOS:
                 return [
                     Serial(port="C", endpoint="/dev/ttyS0"),
                     Serial(port="B", endpoint="/dev/ttyAMA3"),
                     Serial(port="E", endpoint="/dev/ttyAMA4"),
                     Serial(port="F", endpoint="/dev/ttyAMA5"),
                 ]
-        raise RuntimeError("Unknown release, unable to map ports")
+            case _:
+                logger.warning(f"Host OS {host_os} unknown or unreadable, using the Bullseye serial ports")
+                return [
+                    Serial(port="C", endpoint="/dev/ttyS0"),
+                    Serial(port="B", endpoint="/dev/ttyAMA1"),
+                    Serial(port="E", endpoint="/dev/ttyAMA2"),
+                    Serial(port="F", endpoint="/dev/ttyAMA3"),
+                ]
 
     def detect(self) -> bool:
         if not get_cpu_type() == CpuType.PI4:

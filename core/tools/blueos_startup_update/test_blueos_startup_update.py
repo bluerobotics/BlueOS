@@ -1,10 +1,11 @@
 import os
 import re
+import shlex
 import subprocess
 import sys
 from pathlib import Path
 from types import ModuleType
-from typing import Callable, Dict, List, NamedTuple, Optional, Tuple
+from typing import Any, Callable, Dict, List, NamedTuple, Optional, Tuple
 from unittest.mock import patch
 
 import pytest
@@ -24,7 +25,7 @@ exec(  # pylint: disable=exec-used
     compile(MODULE_PATH.read_text(encoding="utf-8"), str(MODULE_PATH), "exec"), blueos_startup_update.__dict__
 )
 
-from commonwealth.utils.general import CpuType
+from commonwealth.utils.general import CpuType, HostOs
 
 
 class Distribution(NamedTuple):
@@ -845,3 +846,143 @@ def test_overlay_that_is_not_compiled_is_not_configured(distribution: Distributi
     skipped = [f"dtoverlay={name}" for name in blueos_startup_update.INSTALL_ONLY_OVERLAYS]
     expected = [line for line in with_overlays[distribution.config_file].splitlines() if line not in skipped]
     assert without_overlays[distribution.config_file].splitlines() == expected
+
+
+def configure_network_manager_on(existing: Optional[str], write_fails: bool = False) -> Tuple[bool, str]:
+    """Runs the patch against a fake NetworkManager.conf, returns whether it changed it and what it wrote"""
+    written: List[str] = []
+
+    def run_command(command: str, **_kwargs: Any) -> "subprocess.CompletedProcess[str]":
+        if command.startswith("test -f"):
+            stdout = existing or ""
+            return subprocess.CompletedProcess(command, 0 if existing is not None else 1, stdout, "")
+        written.append(command)
+        return subprocess.CompletedProcess(command, 1 if write_fails else 0, "", "")
+
+    with patch.object(blueos_startup_update, "run_command", run_command):
+        changed = blueos_startup_update.configure_network_manager()
+    return changed, written[0] if written else ""
+
+
+def test_network_manager_conf_uses_valid_device_specs() -> None:
+    changed, written = configure_network_manager_on(None)
+
+    assert changed
+    assert "unmanaged-devices=interface-name:eth0;interface-name:usb0" in written
+
+
+def test_network_manager_conf_with_the_old_device_specs_is_fixed() -> None:
+    changed, written = configure_network_manager_on(
+        "[main]\ndns=none\n\n[keyfile]\nunmanaged-devices=interface:eth0;interface:usb0\n"
+    )
+
+    assert changed
+    assert "unmanaged-devices=interface-name:eth0;interface-name:usb0" in written
+    assert "interface:" not in written
+
+
+def test_network_manager_conf_with_the_right_device_specs_is_left_alone() -> None:
+    changed, written = configure_network_manager_on(
+        "[main]\ndns=none\n\n[keyfile]\nunmanaged-devices=interface-name:eth0;interface-name:usb0\n"
+    )
+
+    assert not changed
+    assert not written
+
+
+@pytest.mark.parametrize("existing", [None, "[main]\ndns=none\n\n[keyfile]\nunmanaged-devices=interface:eth0\n"])
+def test_network_manager_conf_that_cannot_be_written_does_not_ask_for_a_restart(existing: Optional[str]) -> None:
+    changed, _ = configure_network_manager_on(existing, write_fails=True)
+
+    assert not changed
+
+
+def test_network_manager_conf_migration_only_changes_the_unmanaged_devices_line() -> None:
+    existing = (
+        "# managed by the user\n[main]\nPlugins=ifupdown,keyfile\nDNS=none\n\n"
+        "[keyfile]\n# do not touch\nunmanaged-devices = interface:eth0;interface:usb0;interface-name:wlan1\n\n"
+        "[logging]\nunmanaged-devices=interface:left-alone\n"
+    )
+    expected = existing.replace(
+        "devices = interface:eth0;interface:usb0;", "devices = interface-name:eth0;interface-name:usb0;"
+    )
+
+    changed, written = configure_network_manager_on(existing)
+
+    assert changed
+    assert written == f"printf %s {shlex.quote(expected)} | sudo tee /etc/NetworkManager/NetworkManager.conf"
+
+
+def test_network_manager_conf_keys_are_case_sensitive_for_the_migration() -> None:
+    changed, written = configure_network_manager_on("[main]\ndns=none\n\n[keyfile]\nUnmanaged-Devices=interface:eth0\n")
+
+    assert not changed
+    assert not written
+
+
+PATCHES_FOR_EVERY_HOST = [
+    "startup",
+    "userdata",
+    "nginx",
+    "dns",
+    "ssh",
+    "noIPV6",
+    "cgroups",
+    "dhcpcd_wait",
+]
+PATCHES_FOR_CPU = {
+    CpuType.PI3: ["revert_update_dwc2", "clean_config_pi3"],
+    CpuType.PI4: ["navigator", "dwc2", "i2c4"],
+    CpuType.PI5: ["navigator", "dwc2", "i2c4"],
+    CpuType.Other: [],
+}
+PATCHES_FOR_OS = {
+    HostOs.Bullseye: [],
+    HostOs.Bookworm: ["wpa", "networkmanager"],
+    HostOs.Trixie: ["networkmanager"],
+    HostOs.Other: [],
+}
+
+
+@pytest.mark.parametrize("host_os", PATCHES_FOR_OS)
+@pytest.mark.parametrize("host_cpu", PATCHES_FOR_CPU)
+def test_select_patches_by_host(host_cpu: CpuType, host_os: HostOs) -> None:
+    selected = [name for name, _ in blueos_startup_update.select_patches(host_cpu, host_os)]
+    common = list(PATCHES_FOR_EVERY_HOST)
+    if host_os != HostOs.Trixie:
+        common.insert(PATCHES_FOR_EVERY_HOST.index("noIPV6") + 1, "swap")
+    assert selected == common + PATCHES_FOR_CPU[host_cpu] + PATCHES_FOR_OS[host_os]
+
+
+def run_ipv6_patch(host_os: HostOs, files: Dict[str, str]) -> Tuple[bool, Dict[str, str]]:
+    def fake_load_file(path: str) -> str:
+        if path not in files:
+            raise blueos_startup_update.HostFileError(f"Failed to read {path}")
+        return files[path]
+
+    def fake_save_file(path: str, content: str, _backup_identifier: str) -> None:
+        files[path] = content
+
+    with patch.object(blueos_startup_update, "load_file", fake_load_file), patch.object(
+        blueos_startup_update, "save_file", fake_save_file
+    ), patch.object(blueos_startup_update, "get_host_os", lambda: host_os):
+        return blueos_startup_update.ensure_ipv6_disabled(), files
+
+
+def test_ipv6_is_disabled_through_sysctl_d_on_trixie() -> None:
+    needs_restart, files = run_ipv6_patch(HostOs.Trixie, {"/etc/sysctl.conf": ""})
+    assert needs_restart
+    assert files["/etc/sysctl.d/99-blueos.conf"].split() == [
+        "net.ipv6.conf.all.disable_ipv6=1",
+        "net.ipv6.conf.default.disable_ipv6=1",
+        "net.ipv6.conf.lo.disable_ipv6=1",
+    ]
+    assert files["/etc/sysctl.conf"] == ""
+    assert not run_ipv6_patch(HostOs.Trixie, files)[0], "the patch did not converge"
+
+
+def test_ipv6_sysctl_conf_stays_required_before_trixie() -> None:
+    with pytest.raises(blueos_startup_update.HostFileError):
+        run_ipv6_patch(HostOs.Bookworm, {})
+    needs_restart, files = run_ipv6_patch(HostOs.Bookworm, {"/etc/sysctl.conf": ""})
+    assert needs_restart and "/etc/sysctl.d/99-blueos.conf" not in files
