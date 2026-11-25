@@ -1,10 +1,13 @@
+# pylint: disable=too-many-lines
+import configparser
 import os
 import re
+import shlex
 import subprocess
 import sys
 from pathlib import Path
 from types import ModuleType
-from typing import Callable, Dict, List, NamedTuple, Optional, Set, Tuple
+from typing import Any, Callable, Dict, List, NamedTuple, Optional, Set, Tuple, Type
 from unittest.mock import patch
 
 import pytest
@@ -910,3 +913,195 @@ def test_overlay_that_is_not_compiled_is_not_configured(distribution: Distributi
     skipped = [f"dtoverlay={name}" for name in blueos_startup_update.INSTALL_ONLY_OVERLAYS]
     expected = [line for line in with_overlays[distribution.config_file].splitlines() if line not in skipped]
     assert without_overlays[distribution.config_file].splitlines() == expected
+
+
+NM_CONF = "/etc/NetworkManager/NetworkManager.conf"
+NM_BACKUP = f"{NM_CONF}.before_networkmanager_fix.bak"
+
+
+def configure_network_manager_on(
+    existing: Optional[str], write_fails: bool = False, backup_fails: bool = False
+) -> Tuple[bool, List[str]]:
+    commands: List[str] = []
+
+    def run_command(command: str, **_kwargs: Any) -> "subprocess.CompletedProcess[str]":
+        commands.append(command)
+        if command.startswith("test -f"):
+            return subprocess.CompletedProcess(command, 0 if existing is not None else 1, existing or "", "")
+        failed = (write_fails and "sudo tee" in command) or (backup_fails and command.startswith("sudo cp"))
+        return subprocess.CompletedProcess(command, 1 if failed else 0, "", "boom" if failed else "")
+
+    with patch.object(blueos_startup_update, "run_command", run_command):
+        changed = blueos_startup_update.configure_network_manager()
+    assert len([command for command in commands if "sudo tee" in command]) <= 1
+    return changed, commands
+
+
+def written_content(commands: List[str]) -> str:
+    writes = [command for command in commands if "sudo tee" in command]
+    if not writes:
+        return ""
+    words = shlex.split(writes[0])
+    assert words[:2] == ["printf", "%s"]
+    assert words[3:] == ["|", "sudo", "tee", NM_CONF]
+    return words[2]
+
+
+def backups(commands: List[str]) -> List[str]:
+    return [command for command in commands if command.startswith("sudo cp")]
+
+
+def test_network_manager_conf_uses_valid_device_specs() -> None:
+    changed, commands = configure_network_manager_on(None)
+
+    assert changed
+    assert "unmanaged-devices=interface-name:eth0;interface-name:usb0" in written_content(commands)
+    assert not backups(commands)
+
+
+def test_network_manager_conf_with_the_old_device_specs_is_fixed_after_a_backup() -> None:
+    changed, commands = configure_network_manager_on(
+        "[main]\ndns=none\n\n[keyfile]\nunmanaged-devices=interface:eth0;interface:usb0\n"
+    )
+    written = written_content(commands)
+
+    assert changed
+    assert "unmanaged-devices=interface-name:eth0;interface-name:usb0" in written
+    assert "interface:" not in written
+    assert backups(commands) == [f"sudo cp {NM_CONF} {NM_BACKUP}"]
+    assert commands.index(backups(commands)[0]) < commands.index(next(c for c in commands if "sudo tee" in c))
+
+
+def warnings_while_configuring_network_manager(
+    existing: Optional[str], write_fails: bool = False, raises: Optional[Type[Exception]] = None
+) -> List[str]:
+    messages: List[str] = []
+    sink_id = blueos_startup_update.logger.add(
+        lambda message: messages.append(str(message)), filter=lambda record: record["level"].name == "WARNING"
+    )
+    try:
+        if raises:
+            with pytest.raises(raises):
+                configure_network_manager_on(existing)
+        else:
+            configure_network_manager_on(existing, write_fails=write_fails)
+    finally:
+        blueos_startup_update.logger.remove(sink_id)
+    return messages
+
+
+@pytest.mark.parametrize(
+    "existing",
+    [
+        "[main]\ndns=none\n[keyfile]\nunmanaged-devices=interface:eth0",
+        "[keyfile]\nunmanaged-devices=interface:eth0\n",
+    ],
+    ids=["early_return_branch", "configparser_fallback_branch"],
+)
+def test_network_manager_conf_migration_warns_once_about_the_restart_and_the_backup(existing: str) -> None:
+    messages = warnings_while_configuring_network_manager(existing)
+
+    assert len(messages) == 1
+    assert "Migrated" in messages[0]
+    assert "restart" in messages[0]
+    assert NM_BACKUP in messages[0]
+
+
+def test_network_manager_conf_migration_does_not_warn_when_the_write_fails() -> None:
+    existing = "[main]\ndns=none\n[keyfile]\nunmanaged-devices=interface:eth0"
+
+    assert not warnings_while_configuring_network_manager(existing, write_fails=True)
+    assert not warnings_while_configuring_network_manager(
+        "[keyfile]\nunmanaged-devices=interface:eth0", write_fails=True
+    )
+
+
+def test_network_manager_conf_migration_does_not_warn_when_the_conf_cannot_be_parsed() -> None:
+    existing = "[main]\ndns=none\ndns=none\n[keyfile]\nunmanaged-devices=interface:eth0\n"
+
+    assert not warnings_while_configuring_network_manager(existing, raises=configparser.DuplicateOptionError)
+
+
+@pytest.mark.parametrize("existing", [None, "[main]\ndns=none\n[keyfile]\nunmanaged-devices=interface-name:eth0"])
+def test_network_manager_conf_without_an_old_device_spec_does_not_warn(existing: Optional[str]) -> None:
+    assert not warnings_while_configuring_network_manager(existing)
+
+
+def test_network_manager_conf_with_the_right_device_specs_is_left_alone() -> None:
+    changed, commands = configure_network_manager_on(
+        "[main]\ndns=none\n\n[keyfile]\nunmanaged-devices=interface-name:eth0;interface-name:usb0\n"
+    )
+
+    assert not changed
+    assert len(commands) == 1 and commands[0].startswith("test -f")
+
+
+@pytest.mark.parametrize("existing", [None, "[main]\ndns=none\n\n[keyfile]\nunmanaged-devices=interface:eth0\n"])
+def test_network_manager_conf_that_cannot_be_written_does_not_ask_for_a_restart(existing: Optional[str]) -> None:
+    changed, _ = configure_network_manager_on(existing, write_fails=True)
+
+    assert not changed
+
+
+def test_network_manager_conf_is_still_written_when_the_backup_fails() -> None:
+    changed, commands = configure_network_manager_on(
+        "[main]\ndns=none\n\n[keyfile]\nunmanaged-devices=interface:eth0\n", backup_fails=True
+    )
+
+    assert changed
+    assert backups(commands)
+    assert "interface-name:eth0" in written_content(commands)
+
+
+def test_network_manager_conf_migration_only_changes_the_unmanaged_devices_line() -> None:
+    existing = (
+        "# managed by the user\n[main]\nPlugins=ifupdown,keyfile\nDNS=none\n\n"
+        "[keyfile]\n# do not touch\nunmanaged-devices = interface:eth0;interface:usb0;interface-name:wlan1\n"
+    )
+    expected = existing.replace(
+        "devices = interface:eth0;interface:usb0;", "devices = interface-name:eth0;interface-name:usb0;"
+    )
+
+    changed, commands = configure_network_manager_on(existing)
+
+    assert changed
+    assert written_content(commands) == expected
+
+
+def test_network_manager_conf_migration_keeps_a_missing_trailing_newline() -> None:
+    changed, commands = configure_network_manager_on("[main]\ndns=none\n[keyfile]\nunmanaged-devices=interface:eth0")
+
+    assert changed
+    assert written_content(commands) == "[main]\ndns=none\n[keyfile]\nunmanaged-devices=interface-name:eth0"
+
+
+def test_network_manager_conf_with_old_device_specs_and_no_dns_gets_both_fixes() -> None:
+    changed, commands = configure_network_manager_on("[keyfile]\nunmanaged-devices=interface:eth0\n")
+    written = written_content(commands)
+
+    assert changed
+    assert "interface-name:eth0" in written
+    assert "interface:" not in written
+    assert "dns=none" in written
+    assert backups(commands)
+
+
+def test_network_manager_conf_with_a_single_quote_is_passed_through_verbatim() -> None:
+    changed, commands = configure_network_manager_on("[device]\nwifi.note=it's here\n")
+
+    assert changed
+    assert written_content(commands) == (
+        "[device]\nwifi.note=it's here\n\n"
+        "[main]\ndns=none\n\n"
+        "[keyfile]\nunmanaged-devices=interface-name:eth0;interface-name:usb0\n\n"
+    )
+
+
+# NetworkManager keys are case-sensitive, so a miscased key is ignored by NM and left alone here (existing behavior).
+def test_network_manager_conf_keys_are_case_sensitive_for_the_migration() -> None:
+    changed, commands = configure_network_manager_on(
+        "[main]\ndns=none\n\n[keyfile]\nUnmanaged-Devices=interface:eth0\n"
+    )
+
+    assert not changed
+    assert len(commands) == 1
