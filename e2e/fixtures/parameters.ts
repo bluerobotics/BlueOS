@@ -23,3 +23,27 @@ export function parameterRow(page: Page, name: string): Locator {
 export function parameterValue(page: Page, name: string): Locator {
   return parameterRow(page, name).getByTestId('parameter-value')
 }
+
+// Only goes to the parameters page when it is somewhere else
+async function openParameters(page: Page): Promise<void> {
+  if (!page.url().includes('/vehicle/parameters')) {
+    await page.goto('/vehicle/parameters')
+  }
+  await waitParameters(page)
+}
+
+export async function readParameters(page: Page, names: string[]): Promise<Record<string, number>> {
+  await openParameters(page)
+  const values: Record<string, number> = {}
+  for (const name of names) {
+    await searchParameter(page, name)
+    const value = parameterValue(page, name)
+    await expect(value, `${name} should be listed`).toBeVisible()
+    values[name] = parseFloat(await value.innerText())
+  }
+  return values
+}
+
+export async function readParameter(page: Page, name: string): Promise<number> {
+  return (await readParameters(page, [name]))[name]
+}
