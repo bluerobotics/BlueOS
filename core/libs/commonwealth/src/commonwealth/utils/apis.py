@@ -75,7 +75,7 @@ def use_local_docs_assets(app: FastAPI, static_directory: str = "/usr/blueos/sta
 
     if not all((static_path / name).is_file() for name in files):
         return
-    app.mount("/static-docs", StaticFiles(directory=static_directory), name="static-docs")
+    app.mount("/static-docs", RevalidatedStaticFiles(directory=static_directory), name="static-docs")
 
     # To keep the linting happy, since fastapi.applications does not export these functions.
     docs_html = Callable[..., HTMLResponse]
