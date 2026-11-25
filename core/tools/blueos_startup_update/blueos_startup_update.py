@@ -6,6 +6,7 @@ import json
 import logging
 import os
 import re
+import shlex
 import subprocess
 import time
 from pathlib import Path
@@ -745,7 +746,8 @@ def fix_wpa_service() -> bool:
 
 def configure_network_manager() -> bool:
     """
-    Ensures NetworkManager.conf has [main] section with dns=none set if dns is not already configured
+    Ensures NetworkManager.conf has dns=none in [main] and the unmanaged-devices entry in [keyfile],
+    and migrates the invalid "interface:" device spec that earlier versions wrote to "interface-name:"
     """
     logger.info("Configuring NetworkManager DNS settings...")
     file_path = "/etc/NetworkManager/NetworkManager.conf"
@@ -767,18 +769,34 @@ managed=false
 wifi.scan-rand-mac-address=no
 
 [keyfile]
-unmanaged-devices=interface:eth0;interface:usb0
+unmanaged-devices=interface-name:eth0;interface-name:usb0
 """
-        run_command(f"echo '{content}' | sudo tee {file_path}", check=False)
-        return True
+        return run_command(f"echo '{content}' | sudo tee {file_path}", check=False).returncode == 0
 
-    config.read_string(result.stdout)
+    # "interface:" is not a NetworkManager device spec, so earlier versions wrote an entry that was ignored.
+    # Only that line is rewritten, so the user's comments and layout are kept. NetworkManager keys are case-sensitive.
+    migrated_lines = []
+    section = ""
+    for line in result.stdout.splitlines(keepends=True):
+        header = re.match(r"\s*\[([^\]]+)\]", line)
+        if header:
+            section = header.group(1)
+        if section == "keyfile" and re.match(r"\s*unmanaged-devices\s*=", line):
+            line = re.sub(r"\binterface:", "interface-name:", line)
+        migrated_lines.append(line)
+    migrated = "".join(migrated_lines)
+    has_old_device_spec = migrated != result.stdout
+
+    config.read_string(migrated)
 
     # Check if we need to make changes
     if ("main" in config.sections() and "dns" in config["main"]) and (
         "keyfile" in config.sections() and "unmanaged-devices" in config["keyfile"]
     ):
-        return False
+        if not has_old_device_spec:
+            return False
+        write = f"printf %s {shlex.quote(migrated)} | sudo tee {file_path}"
+        return run_command(write, check=False).returncode == 0
 
     # Add our settings if needed
     if "main" not in config:
@@ -790,7 +808,7 @@ unmanaged-devices=interface:eth0;interface:usb0
     if "keyfile" not in config:
         config.add_section("keyfile")
     if "unmanaged-devices" not in config["keyfile"]:
-        config["keyfile"]["unmanaged-devices"] = "interface:eth0;interface:usb0"
+        config["keyfile"]["unmanaged-devices"] = "interface-name:eth0;interface-name:usb0"
 
     # Write back if changes were made
     content = ""
@@ -800,8 +818,7 @@ unmanaged-devices=interface:eth0;interface:usb0
             content += f"{key}={value}\n"
         content += "\n"
 
-    run_command(f"echo '{content}' | sudo tee {file_path}", check=False)
-    return True
+    return run_command(f"echo '{content}' | sudo tee {file_path}", check=False).returncode == 0
 
 
 def check_available_space(required_mb: int) -> bool:
