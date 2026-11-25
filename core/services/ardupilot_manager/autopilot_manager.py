@@ -1021,6 +1021,10 @@ class AutoPilotManager(metaclass=Singleton):
                 await self._kill_ardupilot_locked()
                 yield
                 failed = False
+            except Exception as error:
+                # The start below can fail too and its error would replace this one
+                logger.error(f"Firmware operation failed: {error}")
+                raise
             finally:
                 # A failed flash leaves the board in its bootloader and an early failure has nothing to wait for
                 if not failed:

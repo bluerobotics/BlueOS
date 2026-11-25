@@ -1212,3 +1212,19 @@ async def test_failed_wait_for_the_serial_board_does_not_skip_the_start(
         await manager.install_firmware_from_file(Path("firmware"), SITL)
 
     assert lifecycle.calls == ["kill", "start"]
+
+
+async def test_failed_install_logs_the_upload_error_before_the_start_can_replace_it(manager: AutoPilotManager) -> None:
+    messages: list[str] = []
+    sink = logger.add(lambda message: messages.append(str(message)), level="ERROR")
+    cast(AsyncMock, manager.firmware_manager.install_firmware_from_file).side_effect = RuntimeError(
+        "uploader died at 27%"
+    )
+    try:
+        with patch.object(manager, "_start_ardupilot_locked", AsyncMock(side_effect=RuntimeError("No physical board"))):
+            with pytest.raises(RuntimeError, match="No physical board"):
+                await manager.install_firmware_from_file(Path("firmware"), SITL)
+    finally:
+        logger.remove(sink)
+
+    assert any("uploader died at 27%" in message for message in messages)
