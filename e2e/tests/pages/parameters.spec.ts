@@ -3,7 +3,7 @@
 import { Locator, Page } from '@playwright/test'
 
 import {
-  LOAD_TIMEOUT, parameterRow, parameterValue, searchParameter, waitParameters,
+  LOAD_TIMEOUT, parameterRow, parameterValue, readParameter, searchParameter, waitParameters,
 } from '@/fixtures/parameters'
 import { openSelect } from '@/fixtures/ui'
 import { expect, test } from '@/fixtures/vehicle'
@@ -18,12 +18,6 @@ function restoreLater(search: string, name: string, value: number): void {
     await searchParameter(page, search)
     await writeValue(page, name, value)
   }
-}
-
-async function readValue(page: Page, name: string): Promise<number> {
-  const value = parameterValue(page, name)
-  await expect(value, `${name} should be listed`).toBeVisible()
-  return parseFloat(await value.innerText())
 }
 
 async function openParameter(page: Page, name: string): Promise<void> {
@@ -94,8 +88,7 @@ test.describe.serial('Parameters', () => {
       await (await download).saveAs(file)
     })
 
-    await searchParameter(page, search)
-    const original = await readValue(page, name)
+    const original = await readParameter(page, name)
     const changed = original + 5
 
     await test.step(`change ${name} from ${original} to ${changed} Hz`, async () => {
