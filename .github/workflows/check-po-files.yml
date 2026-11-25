@@ -1,0 +1,39 @@
+name: Check PO Files
+
+on:
+  pull_request:
+    types: [opened, reopened, synchronize, edited]
+
+concurrency:
+  group: check-po-files-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  check-po-files:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Check .po files come from Crowdin
+        if: >-
+          ${{ !(
+            (startsWith(github.event.pull_request.title, 'i18n') || startsWith(github.event.pull_request.title, '[1.4] i18n')) &&
+            startsWith(github.event.pull_request.head.ref, 'crowdin/') &&
+            github.event.pull_request.head.repo.full_name == github.repository
+          ) }}
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          set -euo pipefail
+
+          po_files="$(git diff --no-renames --name-only "${BASE_SHA}...${HEAD_SHA}" -- '*.po')"
+          if [ -n "${po_files}" ]; then
+            echo "::error::Only i18n pull requests from a crowdin/ branch of this repository can change .po files: ${po_files//$'\n'/ }"
+            exit 1
+          fi
