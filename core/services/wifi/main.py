@@ -9,6 +9,7 @@ from typing import Any, List, Optional
 from commonwealth.utils.apis import (
     GenericErrorHandlingRoute,
     PrettyJSONResponse,
+    RevalidatedStaticFiles,
     StackedHTTPException,
     use_local_docs_assets,
 )
@@ -16,7 +17,6 @@ from commonwealth.utils.logs import InterceptHandler, init_logger
 from commonwealth.utils.sentry_config import init_sentry_async
 from exceptions import BusyError
 from fastapi import FastAPI, HTTPException, status
-from fastapi.staticfiles import StaticFiles
 from fastapi_versioning import VersionedFastAPI, version
 from loguru import logger
 from tabulate import tabulate  # type: ignore
@@ -166,7 +166,7 @@ def get_hotspot_credentials() -> Any:
 
 app = VersionedFastAPI(app, version="1.0.0", prefix_format="/v{major}.{minor}", enable_latest=True)
 use_local_docs_assets(app)
-app.mount("/", StaticFiles(directory=str(FRONTEND_FOLDER), html=True))
+app.mount("/", RevalidatedStaticFiles(directory=str(FRONTEND_FOLDER), html=True))
 
 
 async def main() -> None:
