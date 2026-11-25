@@ -56,7 +56,7 @@ export default {
     },
   },
   mounted() {
-    this.selected_devices = this.devices.map((_device) => true)
+    this.selected_devices = this.devices.slice(0, 3).map(() => true)
   },
   methods: {
     getCompassColor(index) {
