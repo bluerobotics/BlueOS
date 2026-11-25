@@ -217,11 +217,11 @@ export default {
       this.status_text = undefined
     },
     calibrationFinished() {
+      this.cleanup()
       this.status_type = 'success'
       this.status_text = 'Calibration finished'
       this.state = states.DONE
       autopilot_data.setRebootRequired(true)
-      this.cleanup()
     },
     calibrationFailed(reason: string) {
       this.status_text = `Calibration failed: ${reason}`
