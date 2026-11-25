@@ -3,7 +3,7 @@
 // How to run: BLUEOS_URL=http://<ip> bun --cwd e2e e2e autopilot-firmware.spec.ts
 import {
   BACKEND_TIMEOUT, changeBoard, currentVehicle, currentVersion, expectVehicle, INSTALL_TIMEOUT, installFirmware,
-  openPanel, OriginalBoard, restoreBoard, saveBoard, selectStableFirmware, selectVehicle, Vehicle, waitSerialsLoaded,
+  openPanel, OriginalBoard, restoreBoard, saveBoard, selectStableFirmware, Vehicle, waitSerialsLoaded,
 } from '@/fixtures/autopilot'
 import { openSelect } from '@/fixtures/ui'
 import { expect, preparePage, test } from '@/fixtures/vehicle'
@@ -11,7 +11,7 @@ import { expect, preparePage, test } from '@/fixtures/vehicle'
 let original: OriginalBoard | undefined
 
 test.describe.serial('Autopilot Firmware', () => {
-  test.setTimeout(300_000)
+  test.setTimeout(INSTALL_TIMEOUT + BACKEND_TIMEOUT * 4)
 
   // The board is changed here so that running only some scenarios still starts on SITL
   test.beforeAll(async ({ browser }, testInfo) => {
@@ -37,7 +37,7 @@ test.describe.serial('Autopilot Firmware', () => {
 
   // A failed scenario skips the ones after it, afterAll still runs
   test.afterAll(async ({ browser }, testInfo) => {
-    testInfo.setTimeout(INSTALL_TIMEOUT + BACKEND_TIMEOUT * 2)
+    testInfo.setTimeout(INSTALL_TIMEOUT + BACKEND_TIMEOUT * 5)
     const page = await browser.newPage({ baseURL: testInfo.project.use.baseURL })
     await preparePage(page)
     await page.goto('/vehicle/autopilot')
@@ -68,7 +68,7 @@ test.describe.serial('Autopilot Firmware', () => {
       await expect(option, `the ${vehicle} vehicle should be listed`).toBeVisible()
     }
     await vehicles.getByRole('option', { name: 'Sub', exact: true }).click()
-    await selectStableFirmware(page, running)
+    await selectStableFirmware(page, 'ArduSub', running)
     // Nothing is installed here
     await expect(page.getByTestId('install-firmware-button'), 'Install firmware should be available').toBeEnabled()
   })
@@ -105,8 +105,7 @@ test.describe.serial('Autopilot Firmware', () => {
     const target: Vehicle = await currentVehicle(page) === 'ArduSub' ? 'ArduRover' : 'ArduSub'
     const running = await currentVersion(page)
 
-    await selectVehicle(page, target)
-    const version = await selectStableFirmware(page, running)
+    const version = await selectStableFirmware(page, target, running)
     await installFirmware(page)
 
     await expectVehicle(page, target)
