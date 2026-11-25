@@ -220,6 +220,7 @@ import { Dictionary } from '@/types/common'
 import decode, { deviceId } from '@/utils/deviceid_decoder'
 
 import CompassLearn from './CompassLearn.vue'
+import { compassPrioritySlot } from './compassPriority'
 import FullCompassCalibrator from './FullCompassCalibrator.vue'
 import LargeVehicleCompassCalibrator from './LargeVehicleCompassCalibrator.vue'
 
@@ -413,17 +414,11 @@ export default Vue.extend({
     // Firmwares older than 4.1 and single-compass builds have no COMPASS_PRIOn_ID, so COMPASS_USEn follows DEV_ID.
     compass_use_param(): Dictionary<Parameter | undefined> {
       const results = {} as Dictionary<Parameter | undefined>
-      const prio_params = [1, 2, 3].map((i) => autopilot_data.parameter(`COMPASS_PRIO${i}_ID`))
-      const has_priority = prio_params.some((param) => param !== undefined)
       for (const compass of this.compasses) {
-        let slot: number | undefined = compass.deviceIdNumber
-        if (has_priority) {
-          const index = prio_params.findIndex((param) => param?.value === compass.paramValue)
-          slot = index === -1 ? undefined : index + 1
-        }
+        const slot = compassPrioritySlot(compass)
         results[compass.param] = slot === undefined
           ? undefined
-          : autopilot_data.parameter(slot === 1 ? 'COMPASS_USE' : `COMPASS_USE${slot}`)
+          : autopilot_data.parameter(slot === 0 ? 'COMPASS_USE' : `COMPASS_USE${slot + 1}`)
       }
       return results
     },
