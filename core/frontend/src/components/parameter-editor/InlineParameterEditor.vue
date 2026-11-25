@@ -27,6 +27,7 @@
           v-else-if="!custom_input && Object.entries(param?.options ?? []).length > 10"
           v-model.number="internal_new_value"
           data-testid="parameter-options-select"
+          :menu-props="{ contentClass: 'parameter-options-select-menu' }"
           variant="solo"
           :loading="waiting_for_param_update"
           :items="as_select_items"
@@ -42,6 +43,7 @@
           v-else-if="!custom_input && param?.options"
           v-model.number="internal_new_value"
           data-testid="parameter-options-select"
+          :menu-props="{ contentClass: 'parameter-options-select-menu' }"
           dense
           :disabled="disabled"
           :items="as_select_items"
