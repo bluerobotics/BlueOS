@@ -10,7 +10,7 @@ msgstr ""
 "X-Crowdin-File-ID: 24\n"
 "Project-Id-Version: blueos\n"
 "Language-Team: Norwegian\n"
-"PO-Revision-Date: 2026-11-20 01:41\n"
+"PO-Revision-Date: 2026-11-25 11:28\n"
 
 #: src/components/notifications/NotificationGroupCard.vue
 #, javascript-format
@@ -585,6 +585,15 @@ msgstr "Kalibrering"
 #: src/components/vehiclesetup/configuration/accelerometer/QuickAccelerometerCalibration.vue
 msgid "Calibration Successful"
 msgstr "Kalibreringen var vellykket"
+
+#: src/components/vehiclesetup/configuration/accelerometer/QuickAccelerometerCalibration.vue
+#, javascript-format
+msgid "Calibration failed: ${ 0 }"
+msgstr ""
+
+#: src/components/vehiclesetup/configuration/accelerometer/QuickAccelerometerCalibration.vue
+msgid "Calibration failed: no answer from the vehicle"
+msgstr ""
 
 #: src/components/vehiclesetup/overview/GyroCalib.vue
 msgid "Calibration temperature (°C)"
@@ -1212,7 +1221,7 @@ msgstr "Sti til kjørbar fil"
 msgid "Extension installed successfully."
 msgstr "Utvidelsen ble installert."
 
-#: src/App.vue
+#: src/menus.ts
 msgid "Extensions"
 msgstr "Utvidelser"
 
@@ -1788,7 +1797,7 @@ msgstr "Major Tom er ikke installert"
 msgid "Make sure you have a valid region/position specified, then click start and drive the vehicle around in manual mode until you see the message <b>\"CompassLearn: finished\"</b>."
 msgstr "Sørg for at du har angitt en gyldig region/posisjon, klikk deretter på start og kjør fartøyet rundt i manuell modus til du ser meldingen <b>\"CompassLearn: finished\"</b>."
 
-#: src/App.vue
+#: src/menus.ts
 msgid "Manage BlueOS extensions"
 msgstr "Administrer BlueOS-utvidelser"
 
@@ -3737,6 +3746,14 @@ msgstr "allerede har et token"
 msgid "an automatically assigned port"
 msgstr "en automatisk tildelt port"
 
+#: src/components/vehiclesetup/configuration/compass/FullCompassCalibrator.vue
+msgid "bad orientation"
+msgstr ""
+
+#: src/components/vehiclesetup/configuration/compass/FullCompassCalibrator.vue
+msgid "bad radius"
+msgstr ""
+
 #: src/components/ethernet/InterfaceCard.vue
 msgid "dynamic IP"
 msgstr "dynamisk IP"
@@ -3744,6 +3761,10 @@ msgstr "dynamisk IP"
 #: src/components/vehiclesetup/MotorDetection.vue
 msgid "external movement"
 msgstr "ekstern bevegelse"
+
+#: src/components/vehiclesetup/configuration/compass/FullCompassCalibrator.vue
+msgid "failed"
+msgstr ""
 
 #: src/components/video-manager/VideoThumbnail.vue
 msgid "fetching..."
