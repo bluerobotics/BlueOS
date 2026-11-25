@@ -1016,16 +1016,56 @@ class AutoPilotManager(metaclass=Singleton):
     @asynccontextmanager
     async def _autopilot_paused(self) -> AsyncIterator[None]:
         async with self._lifecycle_lock:
+            failed = True
             try:
                 await self._kill_ardupilot_locked()
                 yield
+                failed = False
             finally:
+                # A failed flash leaves the board in its bootloader and an early failure has nothing to wait for
+                if not failed:
+                    try:
+                        await self._wait_for_serial_board()
+                    except Exception as error:
+                        logger.warning(f"Could not wait for the serial board: {error}")
                 await self._start_ardupilot_locked()
+
+    async def _wait_for_serial_board(self) -> None:
+        board = self._current_board
+        if board is None or board.type != PlatformType.Serial:
+            return
+        # A flashed board can take a while to be back
+        deadline = time.monotonic() + self.SERIAL_RETURN_TIMEOUT
+        while time.monotonic() < deadline and not self._has_serial_board(await self.available_boards(), board.platform):
+            await asyncio.sleep(self.SERIAL_POLL_INTERVAL)
+
+    @staticmethod
+    def _has_serial_board(boards: List[FlightController], platform: Platform) -> bool:
+        # SITL and Manual boards are always listed, so look for the serial board itself
+        return any(board.type == PlatformType.Serial and board.platform == platform for board in boards)
+
+    def _live_board(self, board: FlightController) -> FlightController:
+        """The board with the path it has now, if it was resolved before the board re-enumerated."""
+        current, serial = self._current_board, self._serial
+        if (
+            not board.path
+            or board.type != PlatformType.Serial
+            or current is None
+            or current.type != PlatformType.Serial
+        ):
+            return board
+        if serial is None or board.path not in self._serial_paths or os.path.exists(board.path):
+            return board
+        path = serial.current_path()
+        if path is None:
+            return board
+        return board.model_copy(update={"path": path})
 
     async def install_firmware_from_file(
         self, firmware_path: pathlib.Path, board: FlightController, default_parameters: Optional[Parameters] = None
     ) -> None:
         async with self._autopilot_paused():
+            board = await asyncio.to_thread(self._live_board, board)
             await self.firmware_manager.install_firmware_from_file(firmware_path, board, default_parameters)
 
     async def install_firmware_from_url(
@@ -1036,10 +1076,12 @@ class AutoPilotManager(metaclass=Singleton):
         default_parameters: Optional[Parameters] = None,
     ) -> None:
         async with self._autopilot_paused():
+            board = await asyncio.to_thread(self._live_board, board)
             await self.firmware_manager.install_firmware_from_url(url, board, make_default, default_parameters)
 
     async def restore_default_firmware(self, board: FlightController) -> None:
         async with self._autopilot_paused():
+            board = await asyncio.to_thread(self._live_board, board)
             await self.firmware_manager.restore_default_firmware(board)
 
     async def set_manual_board_master_endpoint(self, endpoint: Endpoint) -> bool:

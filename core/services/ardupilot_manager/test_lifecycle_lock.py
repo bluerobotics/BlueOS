@@ -1069,3 +1069,146 @@ async def test_router_watchdog_waits_for_a_firmware_install_holding_the_lock(
     await manager._restart_router_if_dead()
     assert router.restarts == 1
     assert router.master_endpoint is not None and router.master_endpoint.place == str(dev.root / "ttyACM1")
+
+
+async def test_firmware_install_uses_the_current_path_of_the_board(
+    manager: AutoPilotManager, lifecycle: Lifecycle, dev: SerialBoards
+) -> None:
+    old = dev.node("ttyACM0")
+    link = dev.link(old)
+    serial_board_on(manager, lifecycle, pixhawk_at(old), link)
+    Path(old).unlink()
+    new = dev.node("ttyACM1")
+    dev.link(new)
+
+    await manager.install_firmware_from_file(Path("firmware"), pixhawk_at(old))
+
+    assert cast(AsyncMock, manager.firmware_manager.install_firmware_from_file).await_args_list[-1].args[1].path == new
+
+
+async def test_firmware_install_keeps_the_board_it_was_asked_for(
+    manager: AutoPilotManager, lifecycle: Lifecycle, dev: SerialBoards
+) -> None:
+    ours, other = dev.node("ttyACM0"), dev.node("ttyACM1")
+    serial_board_on(manager, lifecycle, pixhawk_at(ours), dev.link(ours))
+
+    await manager.install_firmware_from_file(Path("firmware"), pixhawk_at(other))
+
+    assert (
+        cast(AsyncMock, manager.firmware_manager.install_firmware_from_file).await_args_list[-1].args[1].path == other
+    )
+
+
+async def test_firmware_install_waits_for_the_serial_board_to_leave_its_bootloader(
+    manager: AutoPilotManager, lifecycle: Lifecycle, dev: SerialBoards
+) -> None:
+    node = dev.node("ttyACM0")
+    serial_board_on(manager, lifecycle, pixhawk_at(node), dev.link(node))
+    always_listed = [SITL, FlightController(name="Manual", platform=Platform.Manual)]
+    available = AsyncMock(side_effect=[always_listed, always_listed, [*always_listed, pixhawk_at(node)]])
+
+    with patch.object(AutoPilotManager, "available_boards", available):
+        await manager.install_firmware_from_file(Path("firmware"), pixhawk_at(node))
+
+    assert available.await_count == 3
+    assert lifecycle.calls == ["kill", "start"]
+
+
+async def test_another_board_of_the_same_platform_that_is_gone_keeps_its_path(
+    manager: AutoPilotManager, lifecycle: Lifecycle, dev: SerialBoards
+) -> None:
+    ours = dev.node("ttyACM0")
+    serial_board_on(manager, lifecycle, pixhawk_at(ours), dev.link(ours))
+    other = str(dev.root / "ttyACM1")
+
+    assert manager._live_board(pixhawk_at(other)) == pixhawk_at(other)
+
+
+async def test_firmware_install_uses_the_current_path_of_a_board_the_watchdog_followed(
+    manager: AutoPilotManager, lifecycle: Lifecycle, dev: SerialBoards
+) -> None:
+    old = dev.node("ttyACM0")
+    serial_board_on(manager, lifecycle, pixhawk_at(old), dev.link(old))
+    Path(old).unlink()
+    new = dev.node("ttyACM1")
+    dev.link(new)
+    await manager._restart_router_if_dead()
+
+    assert manager._live_board(pixhawk_at(old)) == pixhawk_at(new)
+
+
+async def test_firmware_install_keeps_the_path_when_the_running_board_is_not_serial(
+    manager: AutoPilotManager, lifecycle: Lifecycle, dev: SerialBoards
+) -> None:
+    old = dev.node("ttyACM0")
+    serial_board_on(manager, lifecycle, pixhawk_at(old), dev.link(old))
+    Path(old).unlink()
+    dev.link(dev.node("ttyACM1"))
+    manager._current_board = SITL  # the serial state of an earlier start is stale
+
+    assert manager._live_board(pixhawk_at(old)) == pixhawk_at(old)
+
+
+async def test_a_board_that_is_not_ours_keeps_its_path(
+    manager: AutoPilotManager, lifecycle: Lifecycle, dev: SerialBoards
+) -> None:
+    ours, other = dev.node("ttyACM0"), dev.node("ttyACM1")
+    link = dev.link(ours)
+    serial_board_on(manager, lifecycle, pixhawk_at(ours), link)
+    gone = str(dev.root / "ttyACM2")
+    other_platform = FlightController(name="Pixhawk4", platform=Platform.Pixhawk4, path=gone)
+
+    assert manager._live_board(pixhawk_at(other)) == pixhawk_at(other)
+    assert manager._live_board(other_platform) == other_platform
+    Path(link).unlink()
+    assert manager._live_board(pixhawk_at(gone)) == pixhawk_at(gone)
+    manager._current_board = None
+    assert manager._live_board(pixhawk_at(gone)) == pixhawk_at(gone)
+
+
+def test_has_serial_board_ignores_the_boards_that_are_always_listed() -> None:
+    always_listed = [SITL, FlightController(name="Manual", platform=Platform.Manual)]
+
+    assert not AutoPilotManager._has_serial_board(always_listed, Platform.Pixhawk1)
+    assert not AutoPilotManager._has_serial_board(
+        [*always_listed, FlightController(name="Pixhawk4", platform=Platform.Pixhawk4)], Platform.Pixhawk1
+    )
+    assert AutoPilotManager._has_serial_board([*always_listed, pixhawk_at("/dev/ttyACM0")], Platform.Pixhawk1)
+
+
+async def test_wait_for_serial_board_gives_up_when_the_board_never_shows_up(
+    manager: AutoPilotManager, lifecycle: Lifecycle, dev: SerialBoards
+) -> None:
+    serial_board_on(manager, lifecycle, pixhawk_at(dev.node("ttyACM0")))
+    available = AsyncMock(return_value=[SITL])
+
+    with patch.object(AutoPilotManager, "available_boards", available):
+        await manager._wait_for_serial_board()
+
+    assert available.await_count > 1
+
+
+async def test_failed_install_does_not_wait_for_the_serial_board(
+    manager: AutoPilotManager, lifecycle: Lifecycle, dev: SerialBoards
+) -> None:
+    serial_board_on(manager, lifecycle, pixhawk_at(dev.node("ttyACM0")))
+    cast(AsyncMock, manager.firmware_manager.install_firmware_from_file).side_effect = RuntimeError("uploader died")
+    available = AsyncMock(return_value=[SITL])
+
+    with patch.object(AutoPilotManager, "available_boards", available):
+        with pytest.raises(RuntimeError, match="uploader died"):
+            await manager.install_firmware_from_file(Path("firmware"), SITL)
+
+    available.assert_not_awaited()
+    assert lifecycle.calls == ["kill", "start"]
+
+
+async def test_failed_wait_for_the_serial_board_does_not_skip_the_start(
+    manager: AutoPilotManager, lifecycle: Lifecycle, dev: SerialBoards
+) -> None:
+    serial_board_on(manager, lifecycle, pixhawk_at(dev.node("ttyACM0")))
+
+    with patch.object(AutoPilotManager, "available_boards", AsyncMock(side_effect=OSError("no ports"))):
+        await manager.install_firmware_from_file(Path("firmware"), SITL)
+
+    assert lifecycle.calls == ["kill", "start"]
