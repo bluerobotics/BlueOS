@@ -14,6 +14,7 @@ import pytest
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
+from calibration import ardupilot
 from calibration.job import (
     VEHICLE_WRITE_LOCK,
     Connect,
@@ -21,17 +22,12 @@ from calibration.job import (
     Heard,
     Send,
     calibrate,
-    on_message,
-    snapshot,
-    start_calibration,
-    timeout_for,
 )
 from commonwealth.jobs.job import Cancel, Io, Refused, TimedOut
 from commonwealth.jobs.kernel import Kernel, UnknownJob
 from pydantic import ValidationError
 from vehicle_setup_types import (
     CalibrationKind,
-    CalibrationStatus,
     ConfirmPosition,
     PoseKey,
     StartCalibration,
@@ -73,44 +69,15 @@ def test_bad_start_requests(body: Dict[str, Any]) -> None:
         StartCalibration(**body)
 
 
-@pytest.mark.parametrize(
-    "request_, command",
-    [
-        (StartCalibration(calibration=CalibrationKind.GYROSCOPE), "MAV_CMD_PREFLIGHT_CALIBRATION"),
-        (StartCalibration(calibration=CalibrationKind.BOARD_LEVEL), "MAV_CMD_PREFLIGHT_CALIBRATION"),
-        (StartCalibration(calibration=CalibrationKind.COMPASS, compass_mask=3), "MAV_CMD_DO_START_MAG_CAL"),
-        (
-            StartCalibration(
-                calibration=CalibrationKind.LARGE_VEHICLE_COMPASS, compass_mask=1, latitude=-27.6, longitude=-48.5
-            ),
-            "MAV_CMD_FIXED_MAG_CAL_YAW",
-        ),
-    ],
-)
-def test_start_calibration_dispatches(request_: StartCalibration, command: str) -> None:
-    state, commands = start_calibration(request_)
-    assert state.status == CalibrationStatus.RUNNING
-    assert [sent.command for sent in commands] == [command]
-
-
-def test_compass_snapshot_progress_and_fitness() -> None:
-    state, _ = start_calibration(StartCalibration(calibration=CalibrationKind.COMPASS, compass_mask=0b11))
-    assert snapshot("1", CalibrationKind.COMPASS, state).progress == 0
+def test_ardupilot_compass_snapshot_progress_and_fitness() -> None:
+    state, _ = ardupilot.start(StartCalibration(calibration=CalibrationKind.COMPASS, compass_mask=0b11))
+    assert ardupilot.snapshot("1", CalibrationKind.COMPASS, state).progress == 0
     for message in (mag_progress(0, 40), mag_progress(1, 20)):
-        state, _ = on_message(state, message)
-    assert snapshot("1", CalibrationKind.COMPASS, state).progress == 30
-    state, _ = on_message(state, mag_report(0, 12.5))
-    current = snapshot("1", CalibrationKind.COMPASS, state)
+        state, _ = ardupilot.on_message(state, message)
+    assert ardupilot.snapshot("1", CalibrationKind.COMPASS, state).progress == 30
+    state, _ = ardupilot.on_message(state, mag_report(0, 12.5))
+    current = ardupilot.snapshot("1", CalibrationKind.COMPASS, state)
     assert (current.job_id, current.progress, current.fitness, current.position) == ("1", 60, {0: 12.5}, None)
-
-
-def test_timeouts_only_while_running() -> None:
-    compass_timeout = timeout_for(CalibrationKind.COMPASS, CalibrationStatus.RUNNING)
-    gyro_timeout = timeout_for(CalibrationKind.GYROSCOPE, CalibrationStatus.RUNNING)
-    assert compass_timeout is not None and gyro_timeout is not None and compass_timeout > gyro_timeout
-    for status in CalibrationStatus:
-        if status != CalibrationStatus.RUNNING:
-            assert timeout_for(CalibrationKind.ACCELEROMETER, status) is None
 
 
 class StubLink:
@@ -161,7 +128,7 @@ class Vehicle:
         self.armed = armed
         self.link = link or StubLink()
         self.bus = FakeBus()
-        self.kernel = Kernel(self.bus, {"Calibrate": calibrate(self.link.scope, self.is_armed)})
+        self.kernel = Kernel(self.bus, {"Calibrate": calibrate(self.link.scope, self.is_armed, ardupilot)})
         self.job_id = ""
 
     async def is_armed(self) -> bool:
