@@ -257,7 +257,7 @@ export default {
               break
           }
         }
-      })
+      }).setFrequency(0)
       for await (const value of calibrator.calibrate(PreflightCalibration.ACCELEROMETER)) {
         console.log(value)
       }
