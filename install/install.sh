@@ -2,6 +2,8 @@
 
 # Set desired version to be installed
 VERSION="${VERSION:-master}"
+# The checkout ref and the registry tag differ when the branch name is not a valid tag.
+IMAGE_VERSION="${IMAGE_VERSION:-$VERSION}"
 GITHUB_REPOSITORY=${GITHUB_REPOSITORY:-bluerobotics/BlueOS}
 DOCKER_USER=${DOCKER_USER:-$(echo $GITHUB_REPOSITORY | cut -d'/' -f1 | tr '[:upper:]' '[:lower:]')}
 REMOTE="${REMOTE:-https://raw.githubusercontent.com/${GITHUB_REPOSITORY}}"
@@ -252,8 +254,8 @@ else
 fi
 
 echo "Downloading bootstrap"
-BLUEOS_BOOTSTRAP="$DOCKER_USER/blueos-bootstrap:$VERSION" # Use current version
-BLUEOS_CORE="$DOCKER_USER/blueos-core:$VERSION" # We don't have a stable tag yet
+BLUEOS_BOOTSTRAP="$DOCKER_USER/blueos-bootstrap:$IMAGE_VERSION" # Use current version
+BLUEOS_CORE="$DOCKER_USER/blueos-core:$IMAGE_VERSION" # We don't have a stable tag yet
 BLUEOS_FACTORY="bluerobotics/blueos-core:factory" # used for "factory reset"
 
 if [ -n "$LOCAL_IMAGES_DIR" ]
@@ -280,8 +282,86 @@ then
         done
     done
 else
-    docker pull $BLUEOS_BOOTSTRAP
-    docker pull $BLUEOS_CORE
+    pull_args=()
+    if [ -n "${DOCKER_PLATFORM:-}" ]; then
+        pull_args=(--platform "$DOCKER_PLATFORM")
+    fi
+    # CI raises this when the tag may still be appearing after imagetools create.
+    # A refused login or a rate limit will not clear by retrying, so those stop.
+    attempts="${PULL_ATTEMPTS:-3}"
+    try=1
+    registry_config=""
+    rm_registry_login() {
+        rm -f /tmp/blueos-docker-pull.log
+        if [[ -n "$registry_config" ]]; then
+            rm -rf "$registry_config"
+        fi
+    }
+    trap rm_registry_login EXIT
+    # --ci-run enables set -x above. Keep it off until the password has been consumed,
+    # or the trace prints DOCKER_PASSWORD, including in the test that checks it.
+    tracing=0
+    case $- in
+        *x*) tracing=1; set +x ;;
+    esac
+    login_status=0
+    if [[ -n "${DOCKER_PASSWORD:-}" && -n "${DOCKER_USERNAME:-}" ]]; then
+        registry_config=$(mktemp -d)
+        export DOCKER_CONFIG="$registry_config"
+        printf '%s' "$DOCKER_PASSWORD" | docker login --username "$DOCKER_USERNAME" --password-stdin || login_status=$?
+    fi
+    if [[ "$tracing" -eq 1 ]]; then
+        set -x
+    fi
+    if [[ "$login_status" -ne 0 ]]; then
+        echo "Docker Hub login failed." >&2
+        exit 1
+    fi
+    pull_image() {
+        local image="$1"
+        local status
+        local log="/tmp/blueos-docker-pull.log"
+        if [[ "$try" -eq 1 ]]; then
+            docker pull "${pull_args[@]}" "$image" 2>&1 | tee "$log"
+            status=${PIPESTATUS[0]}
+        else
+            echo "Pulling ${image} again (${try}/${attempts})" >&2
+            docker pull "${pull_args[@]}" "$image" >"$log" 2>&1
+            status=$?
+        fi
+        if [[ "$status" -eq 0 ]]; then
+            return 0
+        fi
+        if grep -Eqi 'toomanyrequests' "$log"; then
+            echo "Docker Hub rate-limited ${image}." >&2
+            exit 1
+        fi
+        if grep -Eqi 'unauthorized|authentication required' "$log"; then
+            echo "Docker Hub refused ${image}." >&2
+            echo "The repository that publishes it needs DOCKER_USERNAME and DOCKER_PASSWORD." >&2
+            exit 1
+        fi
+        if [[ "$try" -eq 1 ]]; then
+            echo "Waiting for ${image}. The branch push publishes it when the fork has registry credentials." >&2
+        fi
+        return 1
+    }
+    bootstrap_pulled=0
+    while true; do
+        if [ "$bootstrap_pulled" -eq 0 ] && pull_image "$BLUEOS_BOOTSTRAP"; then
+            bootstrap_pulled=1
+        fi
+        if [ "$bootstrap_pulled" -eq 1 ] && pull_image "$BLUEOS_CORE"; then
+            break
+        fi
+        if [ "$try" -ge "$attempts" ]; then
+            echo "Failed to pull $BLUEOS_BOOTSTRAP and $BLUEOS_CORE" >&2
+            exit 1
+        fi
+        try=$((try + 1))
+        sleep 30
+    done
+    unset DOCKER_CONFIG
 fi
 
 # Set up default extensions
