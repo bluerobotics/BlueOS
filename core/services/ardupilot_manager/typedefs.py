@@ -145,6 +145,14 @@ LEGACY_PLATFORMS = {
 }
 
 
+def platform_from_legacy(value: str) -> Platform:
+    if value.startswith("SITL_"):
+        return Platform(name=value, platform_type=PlatformType.SITL)
+    if value in LEGACY_PLATFORMS:
+        return LEGACY_PLATFORMS[value]
+    raise ValueError(f"Unknown platform: {value}")
+
+
 class FlightController(BaseModel):
     """Flight-controller board."""
 
@@ -160,11 +168,7 @@ class FlightController(BaseModel):
     def accept_legacy_platform(cls: Any, value: Any) -> Any:
         if not isinstance(value, str):
             return value
-        if value.startswith("SITL_"):
-            return Platform(name=value, platform_type=PlatformType.SITL)
-        if value in LEGACY_PLATFORMS:
-            return LEGACY_PLATFORMS[value]
-        raise ValueError(f"Unknown platform: {value}")
+        return platform_from_legacy(value)
 
     @property
     def type(self) -> PlatformType:
@@ -178,11 +182,22 @@ class FlightControllerV1(BaseModel):
     """Flight-controller board."""
 
     name: str  # Whatever we get on the usb description
-    manufacturer: Optional[str]  # Whatever we get on the usb description
+    manufacturer: Optional[str] = None  # Whatever we get on the usb description
     platform: str  # The platform of the board according to the ardupilot's manifest.
-    ardupilot_board_id: Optional[int]
-    path: Optional[str]
+    ardupilot_board_id: Optional[int] = None
+    path: Optional[str] = None
     flags: List[FlightControllerFlags] = []
+
+    @classmethod
+    def from_flight_controller(cls, board: FlightController) -> "FlightControllerV1":
+        return cls(
+            name=board.name,
+            manufacturer=board.manufacturer,
+            platform=board.platform.name,
+            ardupilot_board_id=board.ardupilot_board_id,
+            path=board.path,
+            flags=board.flags,
+        )
 
 
 class AvailableBoards(BaseModel):
