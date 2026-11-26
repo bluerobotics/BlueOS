@@ -50,10 +50,13 @@ def board_matches_preferred(preferred: FlightController, detected: FlightControl
         and preferred.ardupilot_board_id != detected.ardupilot_board_id
     ):
         return False
-    # Serial boards saved before board ids existed may only be known by their USB product name
-    is_legacy_generic = preferred.platform.name == "GenericSerial" and preferred.ardupilot_board_id is None
-    if preferred.type == PlatformType.Serial and is_legacy_generic:
-        return preferred.name == detected.name
+    # Serial boards saved before board ids existed may only be known by their USB product name, and their saved
+    # platform may not be the manifest one (e.g. "CubeOrange" for a "CubeOrange+")
+    if preferred.type == PlatformType.Serial and preferred.ardupilot_board_id is None:
+        if preferred.name == detected.name:
+            return True
+        if preferred.platform.name == "GenericSerial":
+            return False
     return preferred.platform.name.lower() == detected.platform.name.lower()
 
 

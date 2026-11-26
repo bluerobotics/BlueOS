@@ -73,6 +73,30 @@ def test_board_matching_rules() -> None:
     assert board_matches_preferred(generic, PIXHAWK1)
     assert not board_matches_preferred(generic, PIXHAWK1.model_copy(update={"name": "MatekH743"}))
 
+    legacy = legacy_board(name="PX4 FMU v2.x", platform="Pixhawk1")
+    assert board_matches_preferred(legacy, PIXHAWK1.model_copy(update={"name": "Pixhawk1"}))
+    assert not board_matches_preferred(legacy, NAVIGATOR.model_copy(update={"name": "PX4 FMU v2.x"}))
+
+
+def test_legacy_cube_orange_plus_matches_after_upgrade() -> None:
+    # Older versions matched "CubeOrange" as a substring of the USB product, so they saved this for a CubeOrange+
+    preferred = legacy_board(name="CubeOrange+", platform="CubeOrange")
+    detected = FlightController(
+        name="CubeOrange+",
+        manufacturer="CubePilot",
+        platform=Platform(name="CubeOrangePlus", platform_type=PlatformType.Serial),
+        ardupilot_board_id=1063,
+        path="/dev/ttyACM0",
+    )
+    assert board_matches_preferred(preferred, detected)
+    other_cube = detected.model_copy(update={"name": "Other", "path": "/dev/ttyACM1"})
+    assert manager_with(preferred).get_board_to_be_used([NAVIGATOR, other_cube, detected]) == detected
+    assert not board_matches_preferred(preferred, detected.model_copy(update={"name": "CubeOrangePlus"}))
+    # Boards saved with a board id are matched by board id and platform only
+    saved = detected.model_copy(update={"name": "Other"})
+    assert board_matches_preferred(saved, detected)
+    assert not board_matches_preferred(saved, detected.model_copy(update={"ardupilot_board_id": 140}))
+
 
 async def test_change_board_accepts_board_matching_detected_one() -> None:
     manager = manager_with()

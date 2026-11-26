@@ -29,10 +29,17 @@ PX4_PRODUCT_PLATFORMS = {
     "FMU v6C.x": "Pixhawk6C",
 }
 
+# ArduPilot hwdefs whose USB product (USB_STRING_PRODUCT) is not their board name, which is the manifest platform
+PRODUCT_PLATFORMS = {
+    "CubeOrange+": "CubeOrangePlus",
+    "CubeRed": "CubeRedPrimary",
+}
+
 # Linux boards use the CUAV CAN Babel as a SLCAN adapter
 DENIED_PRODUCTS = ["CAN Babel"]
 
-BOOTLOADER_SUFFIX = re.compile(r"[- ]BL$")
+# "-BL", " BL" and signed bootloaders' "-Secure-BL-v10"
+BOOTLOADER_SUFFIX = re.compile(r"[- ](Secure-)?BL(-v\d+)?$")
 
 
 def is_usb_port(port: SysFS) -> bool:
@@ -60,4 +67,5 @@ def serial_platform_name(product: Optional[str]) -> str:
     for identifier, platform in PX4_PRODUCT_PLATFORMS.items():
         if identifier in product:
             return platform
-    return BOOTLOADER_SUFFIX.sub("", product.strip()) or GENERIC_SERIAL_PLATFORM
+    name = BOOTLOADER_SUFFIX.sub("", product.strip())
+    return PRODUCT_PLATFORMS.get(name, name) or GENERIC_SERIAL_PLATFORM
