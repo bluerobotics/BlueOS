@@ -25,3 +25,7 @@ export const test = base.extend({
 })
 
 export { expect }
+
+// The board connected to the vehicle, Navigator by default, or none, like on the SIL VM
+const board = process.env.E2E_BOARD ?? 'Navigator'
+export const expectedBoard = board === 'none' ? undefined : board
