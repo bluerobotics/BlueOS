@@ -42,7 +42,7 @@ def temporary_cache(timeout_seconds: float = 10) -> Callable[[F], F]:
             async def async_wrapper(*args: Any) -> Any:
                 # No await between lookup and insert or between release and removal, so this is atomic on one
                 # event loop.
-                async_lock, users = async_locks.get(args, (asyncio.Lock(), 0))
+                async_lock, users = async_locks[args] if args in async_locks else (asyncio.Lock(), 0)
                 async_locks[args] = (async_lock, users + 1)
                 try:
                     async with async_lock:
