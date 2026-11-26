@@ -22,6 +22,47 @@ from loguru import logger
 from packaging.version import Version
 from typedefs import Firmware, FirmwareFormat, FlightController, PlatformType, Vehicle
 
+# Builds sharing a board id with the main platform but meant for specific setups
+PLATFORM_VARIANT_SUFFIXES = ("-bdshot", "-odid", "-1m", "-heli", "-simonhardware", "-periph", "-oem")
+# Simulated sensors on real hardware and AP_Periph nodes are never firmwares for a flight controller
+EXCLUDED_PLATFORM_MARKERS = ("simonhardware", "periph")
+
+
+def is_platform_variant(platform: str) -> bool:
+    return any(suffix in platform.lower() for suffix in PLATFORM_VARIANT_SUFFIXES)
+
+
+def is_excluded_platform(platform: str) -> bool:
+    return any(marker in platform.lower() for marker in EXCLUDED_PLATFORM_MARKERS)
+
+
+def order_platforms(platforms: List[str], board_platform: str) -> List[str]:
+    """Order platforms with the preferred one for the board first.
+
+    The preferred platform is the one named like the board's platform, otherwise the shortest (then alphabetical)
+    platform that is not a variant. The remaining platforms follow in alphabetical order. Comparisons ignore case.
+    """
+    unique_platforms = list(dict.fromkeys(platforms))
+    exact_matches = [platform for platform in unique_platforms if platform.lower() == board_platform.lower()]
+    main_platforms = sorted(
+        (platform for platform in unique_platforms if not is_platform_variant(platform)),
+        key=lambda platform: (len(platform), platform.lower(), platform),
+    )
+    candidates = exact_matches or main_platforms
+    preferred = candidates[0] if candidates else None
+    remaining = sorted(
+        (platform for platform in unique_platforms if platform != preferred),
+        key=lambda platform: (platform.lower(), platform),
+    )
+    return [preferred, *remaining] if preferred else remaining
+
+
+def order_by_preferred_platform(firmwares: List[Firmware], board: FlightController) -> List[Firmware]:
+    """Drop excluded platforms and sort by platform preference, keeping the manifest order within a platform."""
+    firmwares = [firmware for firmware in firmwares if not is_excluded_platform(firmware.platform)]
+    platform_order = order_platforms([firmware.platform for firmware in firmwares], board.platform.name)
+    return sorted(firmwares, key=lambda firmware: platform_order.index(firmware.platform))
+
 
 class FirmwareDownloader:
     _manifest_remote = "https://firmware.ardupilot.org/manifest.json.gz"
@@ -144,8 +185,6 @@ class FirmwareDownloader:
         # Make sure that the item matches all args value
         for item in self._manifest["firmware"]:
             for key, value in args.items():
-                if key == "platform" and "board_id" in args:
-                    continue
                 real_key = key.replace("_", "-").lower() if key != "board_id" else "board_id"
                 if real_key not in item or str(item[real_key]).lower() != str(value).lower():
                     break
@@ -163,15 +202,15 @@ class FirmwareDownloader:
         ]
 
     @cached(ttl=3600, namespace="firmware_versions")
-    async def get_available_versions(
-        self, vehicle: Vehicle, board: FlightController, _firmware_name: Optional[str] = "Ardupilot"
-    ) -> List[Firmware]:
+    async def get_available_versions(self, vehicle: Vehicle, board: FlightController) -> List[Firmware]:
         """Get available firmware versions for the specific plataform and vehicle
+
+        Boards with an ArduPilot board id get the firmwares of every platform built for that id, with the preferred
+        platform for the board first (see `order_platforms`).
 
         Args:
             vehicle (Vehicle): Desired vehicle.
             board (FlightController): Desired Flight Controller.
-            firmware (Optional[str]): Desired firmware ("Ardupilot" or "PX4").
 
         Returns:
             List[Firmware]: List of available versions that match the specific desired configuration.
@@ -182,12 +221,12 @@ class FirmwareDownloader:
         # file format (elf/apj)
         file_format = FirmwareDownloader._supported_firmware_formats[board.platform.platform_type].value
         if board.ardupilot_board_id is not None:
-            return await self._find_version_item(
+            firmwares = await self._find_version_item(
                 vehicletype=vehicle.value,
-                platform=board.platform.name,
                 format=file_format,
                 board_id=board.ardupilot_board_id,
             )
+            return order_by_preferred_platform(firmwares, board)
         return await self._find_version_item(
             vehicletype=vehicle.value,
             platform=board.platform.name,
@@ -235,14 +274,17 @@ class FirmwareDownloader:
                 version = f"STABLE-{newest_version}"
             else:
                 version = "BETA"
-        logger.debug(board)
         if board.ardupilot_board_id is not None:
-            items = await self._find_version_item(
-                vehicletype=vehicle.value,
-                mav_firmware_version_type=version,
-                format=firmware_format,
-                board_id=board.ardupilot_board_id,
+            items = order_by_preferred_platform(
+                await self._find_version_item(
+                    vehicletype=vehicle.value,
+                    mav_firmware_version_type=version,
+                    format=firmware_format,
+                    board_id=board.ardupilot_board_id,
+                ),
+                board,
             )
+            items = [item for item in items if item.platform == items[0].platform]
         else:
             items = await self._find_version_item(
                 vehicletype=vehicle.value,

@@ -79,7 +79,11 @@ class TLogMode(str, Enum):
 
 
 class Firmware(BaseModel):
-    """Simplified representation of a firmware, as available on Ardupilot's manifest."""
+    """Simplified representation of a firmware, as available on Ardupilot's manifest.
+
+    Lists of firmwares for a board come with the backend's preferred platform for that board first: the first item's
+    `platform` is the one used when installing without choosing a specific firmware.
+    """
 
     board_id: Optional[int]
     platform: str
@@ -101,6 +105,12 @@ class Vehicle(str, Enum):
 
 
 class PlatformType(str, Enum):
+    """Kind of platform, which defines how the autopilot is installed and started.
+
+    Serialized with capitalized values ("Serial", "Linux", "SITL", "Unknown", "Manual"). This is part of the API
+    contract of the routes returning the `FlightController` model, older versions used lowercase names.
+    """
+
     Serial = "Serial"
     Linux = "Linux"
     SITL = "SITL"
@@ -109,8 +119,12 @@ class PlatformType(str, Enum):
 
 
 class Platform(BaseModel):
-    """Valid Ardupilot platform types.
-    The Names are a 1:1 representation of the platforms available on the ArduPilot manifest."""
+    """Platform a board runs ArduPilot on.
+
+    `name` is the ArduPilot manifest platform name (e.g. "CubeOrange", "Navigator", "SITL_x86_64_linux_gnu").
+    For serial boards it is derived from the USB product string, so it can be a name the manifest doesn't have
+    (e.g. "GenericSerial"); their firmwares are matched by board id instead.
+    """
 
     name: str
     platform_type: PlatformType

@@ -79,10 +79,8 @@ class FirmwareManager:
 
         raise UnsupportedPlatform("Install check is not implemented for this platform.")
 
-    async def get_available_firmwares(
-        self, vehicle: Vehicle, board: FlightController, firmware_name: Optional[str] = "Ardupilot"
-    ) -> List[Firmware]:
-        firmwares: List[Firmware] = await self.firmware_download.get_available_versions(vehicle, board, firmware_name)
+    async def get_available_firmwares(self, vehicle: Vehicle, board: FlightController) -> List[Firmware]:
+        firmwares: List[Firmware] = await self.firmware_download.get_available_versions(vehicle, board)
         if not firmwares:
             raise NoVersionAvailable(f"Failed to find any version for vehicle {vehicle}.")
         return firmwares

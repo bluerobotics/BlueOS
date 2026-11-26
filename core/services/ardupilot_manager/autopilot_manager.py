@@ -872,10 +872,8 @@ class AutoPilotManager(metaclass=Singleton):
         if self.mavlink_manager.should_be_running:
             await self.mavlink_manager.restart()
 
-    async def get_available_firmwares(
-        self, vehicle: Vehicle, board: FlightController, firmware_name: Optional[str] = "Ardupilot"
-    ) -> List[Firmware]:
-        return await self.firmware_manager.get_available_firmwares(vehicle, board, firmware_name)
+    async def get_available_firmwares(self, vehicle: Vehicle, board: FlightController) -> List[Firmware]:
+        return await self.firmware_manager.get_available_firmwares(vehicle, board)
 
     @asynccontextmanager
     async def _autopilot_paused(self) -> AsyncIterator[None]:

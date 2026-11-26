@@ -33,4 +33,9 @@ async def root_v2() -> HTMLResponse:
 )
 @index_to_http_exception
 def get_board() -> Any:
+    """Return the running board.
+
+    `platform.name` is the ArduPilot manifest platform name and `platform.platform_type` is serialized with
+    capitalized values ("Serial", "Linux", "SITL", "Unknown", "Manual").
+    """
     return autopilot.current_board

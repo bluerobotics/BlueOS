@@ -1,11 +1,105 @@
 import asyncio
 import os
 import platform
+from typing import Any, Dict, List
 
 import aiohttp
 import pytest
 from firmware.FirmwareDownload import FirmwareDownloader
 from typedefs import FlightController, Platform, PlatformType, Vehicle
+
+
+def manifest_item(board_id: int, platform_name: str, version: str = "STABLE-4.5.0") -> Dict[str, Any]:
+    return {
+        "board_id": board_id,
+        "platform": platform_name,
+        "vehicletype": "Sub",
+        "format": "apj",
+        "mav-firmware-version-type": version,
+        "url": f"https://firmware.invalid/{platform_name}/{version}/ardusub.apj",
+    }
+
+
+FAKE_MANIFEST = {
+    "format-version": "1.0.0",
+    "firmware": [
+        manifest_item(140, "CubeOrange-SimOnHardWare"),
+        manifest_item(140, "CubeOrange-bdshot"),
+        manifest_item(140, "CubeOrange-ODID"),
+        manifest_item(140, "CubeOrange"),
+        manifest_item(140, "CubeOrange", "BETA"),
+        manifest_item(140, "CubeOrange-periph"),
+        manifest_item(9, "fmuv3"),
+        manifest_item(9, "Pixhawk1-1M"),
+        manifest_item(9, "fmuv2"),
+        manifest_item(9, "Pixhawk1"),
+    ],
+}
+
+
+def serial_board(platform_name: str, board_id: int) -> FlightController:
+    return FlightController(
+        name=platform_name,
+        platform=Platform(name=platform_name, platform_type=PlatformType.Serial),
+        ardupilot_board_id=board_id,
+    )
+
+
+def fake_downloader() -> FirmwareDownloader:
+    downloader = FirmwareDownloader()
+    downloader._manifest = FAKE_MANIFEST
+    return downloader
+
+
+async def available_platforms(board: FlightController) -> List[str]:
+    return [firmware.platform for firmware in await fake_downloader().get_available_versions(Vehicle.Sub, board)]
+
+
+def test_available_versions_prefer_board_platform() -> None:
+    assert asyncio.run(available_platforms(serial_board("CubeOrange", 140))) == [
+        "CubeOrange",
+        "CubeOrange",
+        "CubeOrange-bdshot",
+        "CubeOrange-ODID",
+    ]
+    assert asyncio.run(available_platforms(serial_board("CubeOrange-bdshot", 140)))[:2] == [
+        "CubeOrange-bdshot",
+        "CubeOrange",
+    ]
+    assert asyncio.run(available_platforms(serial_board("Pixhawk1", 9))) == [
+        "Pixhawk1",
+        "fmuv2",
+        "fmuv3",
+        "Pixhawk1-1M",
+    ]
+
+
+def test_available_versions_without_matching_platform_prefer_shortest_main_platform() -> None:
+    assert asyncio.run(available_platforms(serial_board("GenericSerial", 140)))[0] == "CubeOrange"
+    assert asyncio.run(available_platforms(serial_board("GenericSerial", 9))) == [
+        "fmuv2",
+        "fmuv3",
+        "Pixhawk1",
+        "Pixhawk1-1M",
+    ]
+
+
+def test_available_versions_keep_manifest_order_within_platform() -> None:
+    versions = asyncio.run(fake_downloader().get_available_versions(Vehicle.Sub, serial_board("CubeOrange", 140)))
+    assert [firmware.name for firmware in versions[:2]] == ["STABLE-4.5.0", "BETA"]
+
+
+def test_download_url_uses_preferred_platform() -> None:
+    async def url(board: FlightController) -> str:
+        download_url: str = await fake_downloader().get_download_url(Vehicle.Sub, board)
+        return download_url
+
+    assert asyncio.run(url(serial_board("CubeOrange", 140))).startswith("https://firmware.invalid/CubeOrange/")
+    assert asyncio.run(url(serial_board("CubeOrange-bdshot", 140))).startswith(
+        "https://firmware.invalid/CubeOrange-bdshot/"
+    )
+    assert asyncio.run(url(serial_board("Pixhawk1", 9))).startswith("https://firmware.invalid/Pixhawk1/")
+
 
 Pixhawk1 = FlightController(
     name="Pixhawk1",
@@ -71,6 +165,8 @@ def test_firmware_download() -> None:
             Vehicle.Sub, Pixhawk1, "STABLE-4.0.1"
         ), "Failed to download a valid firmware file."
 
+        # Board id 9 is shared by Pixhawk1, fmuv2, fmuv3 and variants, the board's own platform must be picked
+        assert "/Pixhawk1/" in await firmware_download.get_download_url(Vehicle.Sub, Pixhawk1)
         assert await firmware_download.download(Vehicle.Sub, Pixhawk1), "Failed to download latest valid firmware file."
 
         assert await firmware_download.download(Vehicle.Sub, Pixhawk4), "Failed to download latest valid firmware file."
