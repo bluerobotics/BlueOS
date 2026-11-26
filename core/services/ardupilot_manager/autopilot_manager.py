@@ -21,6 +21,7 @@ from exceptions import (
 from firmware.FirmwareManagement import FirmwareManager
 from flight_controller_detector.Detector import Detector as BoardDetector
 from flight_controller_detector.linux.linux_boards import LinuxFlightController
+from flight_controller_detector.serial_identification import GENERIC_SERIAL_PLATFORM
 from loguru import logger
 from mavlink_proxy.Endpoint import Endpoint, EndpointType
 from mavlink_proxy.exceptions import EndpointAlreadyExists
@@ -51,13 +52,32 @@ def board_matches_preferred(preferred: FlightController, detected: FlightControl
     ):
         return False
     # Serial boards saved before board ids existed may only be known by their USB product name, and their saved
-    # platform may not be the manifest one (e.g. "CubeOrange" for a "CubeOrange+")
-    if preferred.type == PlatformType.Serial and preferred.ardupilot_board_id is None:
+    # platform may not be the manifest one (e.g. "CubeOrange" for a "CubeOrange+"). The v1 API reports serial boards
+    # it has no legacy platform for as "GenericSerial", with their board id.
+    if preferred.type == PlatformType.Serial and (
+        preferred.ardupilot_board_id is None or preferred.platform.name == GENERIC_SERIAL_PLATFORM
+    ):
         if preferred.name == detected.name:
             return True
-        if preferred.platform.name == "GenericSerial":
+        if preferred.platform.name == GENERIC_SERIAL_PLATFORM:
             return False
     return preferred.platform.name.lower() == detected.platform.name.lower()
+
+
+def is_same_hardware(board: FlightController, other: FlightController) -> bool:
+    """Check if two serial boards are the same hardware, flashing another build renames a board and its platform
+    (e.g. "MatekH743" -> "MatekH743-bdshot")."""
+    if (
+        board.type != PlatformType.Serial
+        or other.type != PlatformType.Serial
+        or board.ardupilot_board_id is None
+        or board.ardupilot_board_id != other.ardupilot_board_id
+    ):
+        return False
+    if board.path is not None and board.path == other.path:
+        return True
+    serial_number = BoardDetector.usb_serial_number(board.path)
+    return serial_number is not None and serial_number == BoardDetector.usb_serial_number(other.path)
 
 
 class AutoPilotManager(metaclass=Singleton):
@@ -611,6 +631,10 @@ class AutoPilotManager(metaclass=Singleton):
             for board in boards:
                 if board_matches_preferred(preferred_board, board):
                     return board
+            for board in boards:
+                if is_same_hardware(preferred_board, board):
+                    logger.info(f"Flight-controller {preferred_board.name} is now running {board.name}.")
+                    return board
             logger.debug(f"Flight-controller {preferred_board.name} not connected.")
         except NoPreferredBoardSet as error:
             logger.warning(error)
@@ -752,7 +776,7 @@ class AutoPilotManager(metaclass=Singleton):
             self.should_be_running = True
 
     async def _detect_serial_board(self, board: FlightController) -> Optional[FlightController]:
-        BoardDetector.invalidate_caches()
+        BoardDetector.invalidate_detection()
         return next(
             (
                 detected
@@ -914,10 +938,16 @@ class AutoPilotManager(metaclass=Singleton):
         default_parameters: Optional[Parameters] = None,
         output_callback: Optional[Callable[[str, str], Awaitable[None]]] = None,
     ) -> None:
+        # A serial board is only known by the platform of the flashed build once it is detected again with it
+        save_default_after_restart = make_default and board.type == PlatformType.Serial
         async with self._autopilot_paused():
-            await self.firmware_manager.install_firmware_from_url(
-                url, board, make_default, default_parameters, output_callback
+            firmware = await self.firmware_manager.install_firmware_from_url(
+                url, board, make_default and not save_default_after_restart, default_parameters, output_callback
             )
+        if save_default_after_restart:
+            current = self.current_board
+            flashed = current if current is not None and is_same_hardware(board, current) else board
+            self.firmware_manager.save_default_firmware(firmware, flashed.platform)
 
     async def restore_default_firmware(
         self, board: FlightController, output_callback: Optional[Callable[[str, str], Awaitable[None]]] = None

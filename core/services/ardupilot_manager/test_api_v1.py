@@ -5,6 +5,7 @@ from types import SimpleNamespace
 from typing import Any, List, Optional
 from unittest.mock import AsyncMock, MagicMock
 
+import flight_controller_detector.Detector as detector_module
 import httpx
 import pytest
 from autopilot_manager import AutoPilotManager
@@ -12,6 +13,7 @@ from commonwealth.utils.Singleton import Singleton
 from exceptions import InvalidFirmwareFile
 from fastapi import FastAPI
 from firmware.install_job import FirmwareInstallJobManager, OutputCallback
+from flight_controller_detector.Detector import Detector
 from pydantic import TypeAdapter
 from typedefs import FlightController, FlightControllerFlags, Platform, PlatformType
 
@@ -185,6 +187,120 @@ async def test_v2_available_boards(monkeypatch: pytest.MonkeyPatch, fake_autopil
 
 def stream_lines(response: httpx.Response) -> List[List[str]]:
     return [[entry["stream"], entry["data"]] for entry in map(json.loads, response.text.splitlines())]
+
+
+def stub_manager() -> AutoPilotManager:
+    manager = AutoPilotManager.__new__(AutoPilotManager)
+    manager._lifecycle_lock = asyncio.Lock()
+    manager._current_board = None
+    manager.should_be_running = False
+    manager._settings_manager = MagicMock(settings=SimpleNamespace(preferred_board=None))
+    return manager
+
+
+@pytest.mark.usefixtures("fake_autopilot")
+async def test_v1_board_round_trip_for_boards_without_legacy_platform(
+    client: httpx.AsyncClient, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    matek = (await client.get("/available_boards")).json()[1]
+    assert matek["platform"] == "GenericSerial"
+
+    manager = stub_manager()
+    monkeypatch.setattr(manager, "available_boards", AsyncMock(return_value=[MATEK]))
+    monkeypatch.setattr(manager, "_kill_ardupilot_locked", AsyncMock())
+    monkeypatch.setattr(manager, "_start_ardupilot_locked", AsyncMock())
+    monkeypatch.setattr(index, "autopilot", manager)
+
+    response = await client.post("/board", json=matek)
+    assert response.status_code == 200, response.text
+    assert manager.settings.preferred_board == FlightController.model_validate(matek)
+
+
+def usb_port(device: str, product: str) -> SimpleNamespace:
+    return SimpleNamespace(
+        device=device,
+        name=device.rsplit("/", 1)[-1],
+        vid=0x1209,
+        pid=0x5740,
+        product=product,
+        manufacturer="ArduPilot",
+        serial_number="0123456789",
+        usb_device_path="/sys/devices/usb1/1-1",
+        location="1-1:1.0",
+    )
+
+
+@pytest.mark.parametrize("new_path", ["/dev/ttyACM1", "/dev/ttyACM2"])
+async def test_flashing_another_build_of_the_running_board(
+    client: httpx.AsyncClient, monkeypatch: pytest.MonkeyPatch, tmp_path: Path, new_path: str
+) -> None:
+    ports = [usb_port("/dev/ttyACM1", "MatekH743")]
+    firmware = tmp_path / "firmware.apj"
+
+    async def get_board_id(_device: str) -> int:
+        return 1013
+
+    async def flash(*_args: Any) -> Path:
+        ports[:] = [usb_port(new_path, "MatekH743-bdshot")]
+        return firmware
+
+    async def kill() -> None:
+        manager.should_be_running = False
+
+    Detector.invalidate_caches()
+    monkeypatch.setattr(Detector, "_port_identities", {})
+    monkeypatch.setattr(Detector, "_last_serial_boards", [])
+    monkeypatch.setattr(Detector, "_probing_lock", asyncio.Lock())
+    monkeypatch.setattr(detector_module, "comports", lambda: ports)
+    monkeypatch.setattr(detector_module, "get_board_id", get_board_id)
+    monkeypatch.setattr(detector_module, "is_running_as_root", lambda: False)
+    manager = stub_manager()
+    manager.firmware_manager = MagicMock(install_firmware_from_url=AsyncMock(side_effect=flash))
+    monkeypatch.setattr(manager, "setup", AsyncMock())
+    monkeypatch.setattr(manager, "start_mavlink_manager", AsyncMock())
+    monkeypatch.setattr(manager, "_kill_ardupilot_locked", kill)
+    monkeypatch.setattr(index, "autopilot", manager)
+    monkeypatch.setattr(index, "install_jobs", FirmwareInstallJobManager())
+
+    await manager.change_board(MATEK)
+    assert manager.current_board is not None and manager.current_board.name == "MatekH743"
+
+    response = await client.post("/install_firmware_from_url", params={"url": "https://fw", "make_default": True})
+    assert response.status_code == 200
+    lines = stream_lines(response)
+    assert lines[-1] == ["control", "done"], lines
+    assert not [line for line in lines if line[0] == "stderr"]
+
+    bdshot = manager.current_board
+    assert bdshot is not None
+    assert (bdshot.name, bdshot.platform.name, bdshot.path) == ("MatekH743-bdshot", "MatekH743-bdshot", new_path)
+    assert manager.settings.preferred_board == bdshot
+    manager.firmware_manager.save_default_firmware.assert_called_once_with(firmware, bdshot.platform)
+    Detector.invalidate_caches()
+
+
+async def test_switching_to_a_renamed_board_after_flashing(
+    client: httpx.AsyncClient, fake_autopilot: SimpleNamespace
+) -> None:
+    bdshot = MATEK.model_copy(
+        update={
+            "name": "MatekH743-bdshot",
+            "platform": Platform(name="MatekH743-bdshot", platform_type=PlatformType.Serial),
+        }
+    )
+    fake_autopilot.current_board = FlightController(name="SITL", platform=Platform.SITL())
+    fake_autopilot.available_boards = AsyncMock(return_value=[MATEK])
+
+    async def flash(*_args: Any, **_kwargs: Any) -> None:
+        fake_autopilot.available_boards.return_value = [bdshot]
+
+    fake_autopilot.install_firmware_from_url.side_effect = flash
+
+    response = await client.post("/install_firmware_from_url", params={"url": "https://fw", "board_name": "MatekH743"})
+    assert response.status_code == 200
+    lines = stream_lines(response)
+    assert lines[-1] == ["control", "done"], lines
+    fake_autopilot.change_board.assert_awaited_once_with(bdshot)
 
 
 async def test_install_from_url_unknown_board(client: httpx.AsyncClient, fake_autopilot: SimpleNamespace) -> None:

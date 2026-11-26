@@ -15,7 +15,11 @@ from typing import (
     Tuple,
 )
 
-from autopilot_manager import AutoPilotManager
+from autopilot_manager import (
+    AutoPilotManager,
+    board_matches_preferred,
+    is_same_hardware,
+)
 from commonwealth.mavlink_comm.exceptions import (
     FetchUpdatedMessageFail,
     MavlinkMessageReceiveFail,
@@ -247,16 +251,25 @@ async def install_firmware_from_url(
         board = await install_target_board(board_name)
 
         async def switch_board(output_callback: OutputCallback) -> None:
+            current = autopilot.current_board
+            if not auto_switch_board or current is None or FlightControllerFlags.is_bootloader in board.flags:
+                return
+            # The flashed build can rename the board it runs on (e.g. "MatekH743" -> "MatekH743-bdshot"), the
+            # restart already picked it up under its new name
+            if is_same_hardware(board, current):
+                autopilot.set_preferred_board(current)
+                return
             # In some cases user might install a firmware that implies in a board change but this is not reflected,
             # so if the board is different from the current one, we change it.
-            if (
-                auto_switch_board
-                and autopilot.current_board
-                and autopilot.current_board.name != board.name
-                and FlightControllerFlags.is_bootloader not in board.flags
-            ):
-                await autopilot.change_board(board)
-                await output_callback("stdout", f"Switched to board {board.name}")
+            if current.name != board.name:
+                # Switch to the board as detected after the flash, which may have been renamed by the new build
+                detected_boards = await autopilot.available_boards()
+                target = next(
+                    (detected for detected in detected_boards if board_matches_preferred(board, detected)),
+                    next((detected for detected in detected_boards if is_same_hardware(board, detected)), board),
+                )
+                await autopilot.change_board(target)
+                await output_callback("stdout", f"Switched to board {target.name}")
 
         job = install_jobs.start(
             partial(autopilot.install_firmware_from_url, url, board, make_default, parameters),

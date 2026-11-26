@@ -146,7 +146,8 @@ class FirmwareManager:
         makeDefault: bool = False,
         default_parameters: Optional[Parameters] = None,
         output_callback: Optional[Callable[[str, str], Awaitable[None]]] = None,
-    ) -> None:
+    ) -> pathlib.Path:
+        """Download and install a firmware, returning the downloaded file."""
         if output_callback:
             await output_callback("stdout", f"Downloading firmware from {url}...")
         temporary_file = await self.firmware_download._download(url.strip())
@@ -158,8 +159,12 @@ class FirmwareManager:
             else:
                 self.save_params_to_default_linux_path(board.platform, default_parameters)
         if makeDefault:
-            shutil.copy(temporary_file, self.default_user_firmware_path(board.platform))
+            self.save_default_firmware(temporary_file, board.platform)
         await self.install_firmware_from_file(temporary_file, board, default_parameters, output_callback)
+        return temporary_file
+
+    def save_default_firmware(self, firmware_path: pathlib.Path, platform: Platform) -> None:
+        shutil.copy(firmware_path, self.default_user_firmware_path(platform))
 
     async def install_firmware_from_params(self, vehicle: Vehicle, board: FlightController, version: str = "") -> None:
         url = await self.firmware_download.get_download_url(vehicle, board, version)

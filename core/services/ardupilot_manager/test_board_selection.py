@@ -7,7 +7,11 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import flight_controller_detector.Detector as detector_module
 import psutil
 import pytest
-from autopilot_manager import AutoPilotManager, board_matches_preferred
+from autopilot_manager import (
+    AutoPilotManager,
+    board_matches_preferred,
+    is_same_hardware,
+)
 from flight_controller_detector.Detector import Detector
 from typedefs import FlightController, Platform, PlatformType
 
@@ -98,6 +102,61 @@ def test_legacy_cube_orange_plus_matches_after_upgrade() -> None:
     assert not board_matches_preferred(saved, detected.model_copy(update={"ardupilot_board_id": 140}))
 
 
+def test_generic_serial_board_with_board_id_matches_by_name() -> None:
+    # What v1 reports for serial boards without a legacy platform
+    generic = legacy_board(name="MatekH743", platform="GenericSerial", ardupilot_board_id=1013)
+    matek = FlightController(
+        name="MatekH743",
+        platform=Platform(name="MatekH743", platform_type=PlatformType.Serial),
+        ardupilot_board_id=1013,
+        path="/dev/ttyACM0",
+    )
+    assert board_matches_preferred(generic, matek)
+    assert not board_matches_preferred(generic, matek.model_copy(update={"name": "MatekH743-bdshot"}))
+    assert not board_matches_preferred(generic, matek.model_copy(update={"ardupilot_board_id": 140}))
+
+
+MATEK = FlightController(
+    name="MatekH743",
+    platform=Platform(name="MatekH743", platform_type=PlatformType.Serial),
+    ardupilot_board_id=1013,
+    path="/dev/ttyACM0",
+)
+MATEK_BDSHOT = MATEK.model_copy(
+    update={
+        "name": "MatekH743-bdshot",
+        "platform": Platform(name="MatekH743-bdshot", platform_type=PlatformType.Serial),
+    }
+)
+
+
+def test_same_hardware(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(
+        Detector,
+        "_port_identities",
+        {
+            "/dev/ttyACM0": (0x1209, 0x5740, "S1", "/sys/devices/usb1/1-1", "MatekH743", "ArduPilot"),
+            "/dev/ttyACM1": (0x1209, 0x5740, "S1", "/sys/devices/usb1/1-1", "MatekH743-bdshot", "ArduPilot"),
+            "/dev/ttyACM2": (0x1209, 0x5740, "S2", "/sys/devices/usb1/1-2", "MatekH743", "ArduPilot"),
+        },
+    )
+    assert is_same_hardware(MATEK, MATEK_BDSHOT)
+    assert is_same_hardware(MATEK, MATEK_BDSHOT.model_copy(update={"path": "/dev/ttyACM1"}))
+    assert not is_same_hardware(MATEK, MATEK_BDSHOT.model_copy(update={"path": "/dev/ttyACM2"}))
+    assert not is_same_hardware(MATEK, MATEK_BDSHOT.model_copy(update={"path": "/dev/ttyACM3"}))
+    assert not is_same_hardware(MATEK, MATEK_BDSHOT.model_copy(update={"ardupilot_board_id": 140}))
+    assert not is_same_hardware(MATEK.model_copy(update={"ardupilot_board_id": None}), MATEK)
+    assert not is_same_hardware(NAVIGATOR, NAVIGATOR)
+
+
+async def test_reflashed_preferred_board_is_used_under_its_new_name() -> None:
+    other_matek = MATEK.model_copy(update={"name": "Another", "path": "/dev/ttyACM5"})
+    manager = manager_with(MATEK)
+    assert manager.get_board_to_be_used([NAVIGATOR, MATEK_BDSHOT]) == MATEK_BDSHOT
+    # A board that still matches the preferred one by board id and platform comes first
+    assert manager.get_board_to_be_used([NAVIGATOR, MATEK_BDSHOT, other_matek]) == other_matek
+
+
 async def test_change_board_accepts_board_matching_detected_one() -> None:
     manager = manager_with()
     manager.set_preferred_board = MagicMock()  # type: ignore[method-assign]
@@ -150,6 +209,39 @@ async def test_detect_serial_board_follows_the_port(monkeypatch: pytest.MonkeyPa
     assert reconnected is not None
     assert reconnected.path == "/dev/ttyACM2"
     assert probed == ["/dev/ttyACM2"]
+    Detector.invalidate_caches()
+
+
+async def test_detect_serial_board_skips_ports_without_board(monkeypatch: pytest.MonkeyPatch) -> None:
+    arduino = fake_port("/dev/ttyACM0")
+    vars(arduino).update(
+        vid=0x2341,
+        product="Arduino Uno",
+        manufacturer="Arduino (www.arduino.cc)",
+        serial_number="A",
+        usb_device_path="/sys/devices/usb1/1-2",
+    )
+    ports = [arduino, fake_port("/dev/ttyACM1")]
+    probed: List[str] = []
+
+    async def get_board_id(device: str) -> Optional[int]:
+        probed.append(device)
+        return None
+
+    Detector.invalidate_caches()
+    monkeypatch.setattr(Detector, "_port_identities", {})
+    monkeypatch.setattr(detector_module, "comports", lambda: ports)
+    monkeypatch.setattr(detector_module, "get_board_id", get_board_id)
+    monkeypatch.setattr(detector_module, "is_running_as_root", lambda: False)
+    manager = manager_with()
+    manager._current_board = PIXHAWK1
+
+    assert await manager._detect_serial_board(PIXHAWK1) == PIXHAWK1
+    for key in Detector._first_seen:
+        Detector._first_seen[key] -= detector_module.NEW_PORT_SECONDS + 1
+    for _ in range(3):
+        assert await manager._detect_serial_board(PIXHAWK1) == PIXHAWK1
+    assert probed == ["/dev/ttyACM0"] * 2, "the restart polls must not reopen a port known to have no board"
     Detector.invalidate_caches()
 
 

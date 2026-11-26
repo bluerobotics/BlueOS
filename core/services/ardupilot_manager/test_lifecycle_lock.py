@@ -92,6 +92,15 @@ async def test_failed_install_starts_autopilot_again(manager: AutoPilotManager, 
     assert not manager._lifecycle_lock.locked()
 
 
+async def test_make_default_of_non_serial_board_is_saved_before_flashing(manager: AutoPilotManager) -> None:
+    firmware_manager = cast(AsyncMock, manager.firmware_manager)
+    await manager.install_firmware_from_url("https://example.invalid/fw", SITL, make_default=True)
+    firmware_manager.install_firmware_from_url.assert_awaited_once_with(
+        "https://example.invalid/fw", SITL, True, None, None
+    )
+    firmware_manager.save_default_firmware.assert_not_called()
+
+
 @pytest.mark.parametrize("install_error", [None, RuntimeError("upload failed")])
 async def test_install_pauses_serial_probing_until_flashed(
     manager: AutoPilotManager, install_error: Exception | None
