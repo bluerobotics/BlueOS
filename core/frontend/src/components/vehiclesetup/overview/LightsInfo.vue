@@ -37,7 +37,7 @@ export default Vue.extend({
   name: 'LightsInfo',
   computed: {
     boardType() {
-      return autopilot.current_board?.name
+      return autopilot.current_board?.platform.name
     },
     lights() {
       const servo_params = autopilot_data.parameterRegex('SERVO.*_FUNCTION')

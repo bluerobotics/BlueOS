@@ -4,7 +4,7 @@ export interface Firmware {
     name: string
     url: URL
     platform: string
-    board_id?: number
+    board_id?: number | null
 }
 
 export enum Vehicle {
@@ -24,11 +24,12 @@ export enum FirmwareVehicleType {
 }
 
 export interface Platform {
+  // ArduPilot manifest platform name, e.g. "Pixhawk1" or "CubeOrange"
   name: string
   platform_type: PlatformType
-  board_id?: number
 }
 
+// Serialized by the backend with capitalized values
 export enum PlatformType {
   Serial = 'Serial',
   Linux = 'Linux',
