@@ -2,7 +2,7 @@ import asyncio
 import time
 from functools import wraps
 from threading import Lock
-from typing import Any, Callable, Dict, TypeVar
+from typing import Any, Callable, Dict, Tuple, TypeVar
 
 F = TypeVar("F", bound=Callable[..., Any])
 
@@ -15,6 +15,8 @@ def temporary_cache(timeout_seconds: float = 10) -> Callable[[F], F]:
     The wrapped function exposes an `invalidate()` attribute that drops every cached entry,
     forcing the next call to re-execute the function.
 
+    Exceptions raised by async functions are propagated and not cached, the next call executes it again.
+
     Args:
         timeout_seconds (float, optional): Timeout to be used for cache invalidation. Defaults to 10.
 
@@ -26,7 +28,8 @@ def temporary_cache(timeout_seconds: float = 10) -> Callable[[F], F]:
     # Retained for the process lifetime. Safe here because args are a small set (enums/ports).
     arg_locks: Dict[Any, Lock] = {}
     arg_locks_guard = Lock()
-    async_locks: Dict[Any, asyncio.Lock] = {}
+    # Args -> (lock, number of calls using it). Dropped once unused, the args of async functions may be many
+    async_locks: Dict[Any, Tuple[asyncio.Lock, int]] = {}
 
     def invalidate() -> None:
         cache.clear()
@@ -37,27 +40,32 @@ def temporary_cache(timeout_seconds: float = 10) -> Callable[[F], F]:
 
             @wraps(function)
             async def async_wrapper(*args: Any) -> Any:
-                # No await between lookup and insert, so this is atomic on one event loop.
-                async_lock = async_locks.get(args)
-                if async_lock is None:
-                    async_lock = asyncio.Lock()
-                    async_locks[args] = async_lock
+                # No await between lookup and insert or between release and removal, so this is atomic on one
+                # event loop.
+                async_lock, users = async_locks.get(args, (asyncio.Lock(), 0))
+                async_locks[args] = (async_lock, users + 1)
+                try:
+                    async with async_lock:
+                        current_time = time.time()
+                        cache_is_valid = (
+                            args in last_sample_time and current_time - last_sample_time[args] < timeout_seconds
+                        )
 
-                async with async_lock:
-                    current_time = time.time()
-                    cache_is_valid = (
-                        args in last_sample_time and current_time - last_sample_time[args] < timeout_seconds
-                    )
+                        # The cache is still valid and we can return the value if exists
+                        if cache_is_valid and args in cache:
+                            return cache[args]
 
-                    # The cache is still valid and we can return the value if exists
-                    if cache_is_valid and args in cache:
-                        return cache[args]
-
-                    # The cache is invalid or argument does not exist in cache, update it!
-                    last_sample_time[args] = current_time
-                    function_return = await function(*args)
-                    cache[args] = function_return
-                    return function_return
+                        # The cache is invalid or argument does not exist in cache, update it!
+                        function_return = await function(*args)
+                        last_sample_time[args] = current_time
+                        cache[args] = function_return
+                        return function_return
+                finally:
+                    _, users = async_locks[args]
+                    if users == 1:
+                        del async_locks[args]
+                    else:
+                        async_locks[args] = (async_lock, users - 1)
 
             async_wrapper.invalidate = invalidate  # type: ignore[attr-defined]
             return async_wrapper  # type: ignore

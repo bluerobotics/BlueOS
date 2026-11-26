@@ -2,6 +2,7 @@ import asyncio
 import time
 from concurrent.futures import ThreadPoolExecutor, wait
 from datetime import datetime
+from typing import Any, List
 
 import pytest
 
@@ -145,3 +146,44 @@ async def test_async_cache_no_coroutine_reuse_error() -> None:
         if "cannot reuse already awaited coroutine" in str(e):
             pytest.fail("Cache is storing coroutine instead of result!")
         raise
+
+
+class RefreshError(Exception):
+    pass
+
+
+@pytest.mark.asyncio
+async def test_async_failed_refresh_is_not_cached() -> None:
+    results: List[Any] = [1, RefreshError(), 2]
+
+    @decorators.temporary_cache(timeout_seconds=CACHE_TIME)
+    async def refresh(_key: str) -> Any:
+        result = results.pop(0)
+        if isinstance(result, Exception):
+            raise result
+        return result
+
+    assert await refresh("key") == 1
+    await asyncio.sleep(CACHE_WAIT_TIME)
+    with pytest.raises(RefreshError):
+        await refresh("key")
+    assert await refresh("key") == 2
+
+
+@pytest.mark.asyncio
+async def test_async_cache_coalesces_in_flight_and_drops_unused_locks() -> None:
+    calls = []
+
+    @decorators.temporary_cache(timeout_seconds=1.0)
+    async def slow(_entry: str) -> int:
+        calls.append(1)
+        await asyncio.sleep(0.1)
+        return len(calls)
+
+    assert await asyncio.gather(*(slow("same") for _ in range(4))) == [1, 1, 1, 1]
+    assert len(calls) == 1
+
+    for entry in range(10):
+        await slow(f"entry {entry}")
+    free_variables = dict(zip(slow.__code__.co_freevars, slow.__closure__ or ()))
+    assert not free_variables["async_locks"].cell_contents
