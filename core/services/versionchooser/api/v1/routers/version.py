@@ -75,8 +75,11 @@ async def get_available_versions(
 
 @version_router_v1.post("/load", summary="Load a docker tar file")
 async def load(file: UploadFile = File(...), version_chooser: VersionChooser = Depends(get_docker_client)) -> Any:
-    data = await file.read()
-    return await version_chooser.load(data)
+    async def read_chunks() -> AsyncGenerator[bytes, None]:
+        while chunk := await file.read(1024 * 1024):
+            yield chunk
+
+    return await version_chooser.load(read_chunks())
 
 
 @version_router_v1.post("/restart", summary="Restart the currently running docker container")
