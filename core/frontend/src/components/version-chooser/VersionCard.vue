@@ -16,20 +16,24 @@
         <div>
           <p
             class="text-body-1 ma-0"
+            data-testid="version-card-tag"
             v-text="image.tag"
           />
           <p
             v-if="settings.is_pirate_mode"
             class="text-caption text--secondary ma-0"
+            data-testid="version-card-details"
             v-text="`${image.sha ? shortSha(image.sha) : 'N/A'} - ${asTimeAgo(image.last_modified)}`"
           />
           <p
             v-else
             class="text-caption text--secondary ma-0"
+            data-testid="version-card-details"
             v-text="`${asTimeAgo(image.last_modified)}`"
           />
           <p
             class="text-caption text--secondary ma-0"
+            data-testid="version-card-repository"
             v-text="image.repository"
           />
         </div>
@@ -40,6 +44,7 @@
           v-if="showDocsLink"
           v-tooltip="t`Documentation for this version`"
           icon
+          data-testid="version-card-docs"
           :href="docsUrl"
           target="_blank"
           rel="noopener noreferrer"
@@ -51,6 +56,7 @@
           key="show-notes"
           class="mx-2 my-1"
           text
+          data-testid="version-card-show-notes"
           @click="notesExpanded = true"
         >
           <v-icon left>
@@ -64,6 +70,7 @@
           dense
           text
           type="success"
+          data-testid="version-card-up-to-date"
         >
           {{ t`Up to date` }}
         </v-alert>
@@ -73,18 +80,21 @@
           dense
           text
           type="success"
+          data-testid="version-card-running"
         >
           {{ t`Running` }}
         </v-alert>
         <div v-if="working">
           <spinning-logo
             size="30px"
+            data-testid="version-card-working"
           />
         </div>
         <v-btn
           v-if="newStableAvailable"
           color="primary"
           class="mx-2 my-1"
+          data-testid="version-card-upgrade-stable"
           @click="$emit('pull-and-apply', `${image.repository}:${newStableAvailable}`)"
           v-text="`Upgrade to ${newStableAvailable}`"
         />
@@ -94,6 +104,7 @@
           class="mx-2 my-1 scroll-container"
           width="195"
           :disabled="working"
+          data-testid="version-card-update"
           @click="$emit('pull-and-apply', `${image.repository}:${image.tag}`)"
         >
           <div class="scroll-text">
@@ -106,6 +117,7 @@
           class="mx-2 my-1"
           :disabled="working"
           dark
+          data-testid="version-card-update-bootstrap"
           @click="bootstrapDialog = true"
         >
           {{ t`Update Bootstrap` }}
@@ -117,6 +129,7 @@
           :confirm-label="t`Yes, update bootstrap`"
           :cancel-label="t`Abort`"
           confirm-color="primary"
+          test-id="version-card-bootstrap-warning"
           @confirm="updateBootstrap"
         />
         <v-btn
@@ -124,6 +137,7 @@
           color="primary"
           class="mx-2 my-1"
           :disabled="working"
+          data-testid="version-card-upgrade-beta"
           @click="$emit('pull-and-apply', `${image.repository}:${newBetaAvailable}`)"
           v-text="`Upgrade to ${newBetaAvailable}`"
         />
@@ -132,6 +146,7 @@
           color="error"
           class="mx-2 my-1"
           :disabled="working"
+          data-testid="version-card-delete"
           @click="$emit('delete', `${image.repository}:${image.tag}`)"
           v-text="t`Delete`"
         />
@@ -140,6 +155,7 @@
           color="primary"
           class="mx-2 my-1"
           :disabled="working"
+          data-testid="version-card-apply"
           @click="$emit('apply', `${image.repository}:${image.tag}`)"
           v-text="t`Apply`"
         />
@@ -148,6 +164,7 @@
           color="primary"
           class="mx-2 my-1"
           :disabled="working"
+          data-testid="version-card-download-and-apply"
           @click="$emit('pull-and-apply', `${image.repository}:${image.tag}`)"
           v-text="t`Download and Apply`"
         />
@@ -156,6 +173,7 @@
           key="hide-notes"
           v-tooltip="t`Hide release notes`"
           icon
+          data-testid="version-card-hide-notes"
           @click="notesExpanded = false"
         >
           <v-icon>mdi-chevron-up</v-icon>
