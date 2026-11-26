@@ -3359,12 +3359,6 @@ msgid ""
 "container's resolv configuration."
 msgstr ""
 
-#: src/components/vehiclesetup/configuration/compass/ArdupilotMavlinkCompassSetup.vue
-msgid ""
-"This Compass is not in use, drag it higher (by the dots) to be able to use "
-"it."
-msgstr ""
-
 #: src/components/wifi/DisconnectionDialog.vue
 msgid ""
 "This IP address is currently being used to access BlueOS. Deleting it could "
@@ -3374,6 +3368,12 @@ msgstr ""
 
 #: src/components/vehiclesetup/viewers/GenericViewer.vue
 msgid "This browser does not support the required WebGL features."
+msgstr ""
+
+#: src/components/vehiclesetup/configuration/compass/ArdupilotMavlinkCompassSetup.vue
+msgid ""
+"This compass is not in the priority list, so it has no COMPASS_USE slot. "
+"Drag it higher (by the dots) to assign it a priority."
 msgstr ""
 
 #: src/components/kraken/cards/InstalledExtensionCard.vue
