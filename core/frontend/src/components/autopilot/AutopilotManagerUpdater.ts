@@ -100,7 +100,7 @@ export async function fetchAvailableBoards(): Promise<void> {
   try {
     const response: AxiosResponse = await back_axios({
       method: 'get',
-      url: `${autopilot.API_URL}/available_boards`,
+      url: `${autopilot.API_URL_V2}/available_boards`,
       timeout: 30000,
     })
     autopilot.setAvailableBoards(response.data)
@@ -208,7 +208,8 @@ export async function installFirmwareFromUrl(
   const response: AxiosResponse<string> = await back_axios({
     method: 'post',
     url: `${autopilot.API_URL}/install_firmware_from_url`,
-    timeout: 120000,
+    // Flashing a serial board alone can take up to 180 s, then the autopilot is restarted
+    timeout: 300000,
     // The response is NDJSON, which must not go through axios' JSON parsing
     responseType: 'text',
     params: {
@@ -221,8 +222,8 @@ export async function installFirmwareFromUrl(
     },
   })
     .catch((error) => {
-      const message = `Failed to fetch available firmwares for vehicle (${url}): ${error.message}`
-      notifier.pushError('AUTOPILOT_FIRMWARE_AVAILABLES_FAIL', message)
+      const message = `Failed to install firmware from ${url}: ${error.message}`
+      notifier.pushError('AUTOPILOT_FIRMWARE_INSTALL_FAIL', message)
       throw new Error(error)
     })
   const logs = parseFirmwareInstallLines(response.data.split('\n'))

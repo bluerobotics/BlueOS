@@ -338,6 +338,7 @@ import {
 } from '@/types/autopilot'
 import { autopilot_service } from '@/types/frontend_services'
 import back_axios from '@/utils/api'
+import { sleep } from '@/utils/helper_functions'
 
 const notifier = new Notifier(autopilot_service)
 
@@ -699,29 +700,65 @@ export default Vue.extend({
 
       autopilot.setInstallingFirmware(true)
       try {
-        const response = await fetch(url, requestOptions)
-        if (!response.ok) {
-          throw new Error(await this.installHttpErrorMessage(response))
+        let response: Response
+        try {
+          response = await fetch(url, requestOptions)
+        } catch (error) {
+          // fetch rejects with a TypeError on network failures, like Chrome's net::ERR_UPLOAD_FILE_CHANGED
+          if (!(error instanceof TypeError)) {
+            this.failInstall(error.message)
+          } else if (this.upload_type === UploadType.File) {
+            this.failInstall(t`Upload fail. If the file was changed, clean the form and re-select it.`)
+          } else {
+            this.failInstall(t`Could not communicate with the autopilot manager.`)
+          }
+          return
         }
-        this.finishInstall(await readFirmwareInstallStream(response, this.appendInstallLogs))
-      } catch (error) {
-        // fetch rejects with a TypeError on network failures, like Chrome's net::ERR_UPLOAD_FILE_CHANGED
-        if (!(error instanceof TypeError)) {
-          this.failInstall(error.message)
-        } else if (this.upload_type === UploadType.File) {
-          this.failInstall(t`Upload fail. If the file was changed, clean the form and re-select it.`)
-        } else {
-          this.failInstall(t`Could not communicate with the autopilot manager.`)
+        if (!response.ok) {
+          this.failInstall(await this.installHttpErrorMessage(response))
+          return
+        }
+        try {
+          this.finishInstall(await readFirmwareInstallStream(response, this.appendInstallLogs))
+        } catch (error) {
+          // The install keeps running on the backend when the connection drops, follow it again
+          await this.followInstallAfterDisconnect()
         }
       } finally {
         autopilot.setInstallingFirmware(false)
       }
+    },
+    async followInstallAfterDisconnect(): Promise<void> {
+      for (let attempt = 0; attempt < 5; attempt += 1) {
+        await sleep(2000)
+        const response = await fetch(`${autopilot.API_URL}/install_firmware_progress`).catch(() => null)
+        // 404 means no installation is running anymore, and finished installs are not replayed
+        if (response?.status === 404) {
+          this.failInstall(
+            t`Lost connection to the autopilot manager, check the firmware version after the autopilot restarts.`,
+          )
+          return
+        }
+        if (response?.ok) {
+          // The progress stream replays the whole install log
+          this.install_logs = []
+          const logs = await readFirmwareInstallStream(response, this.appendInstallLogs).catch(() => null)
+          if (logs !== null) {
+            this.finishInstall(logs)
+            return
+          }
+        } else {
+          response?.body?.cancel().catch(() => undefined)
+        }
+      }
+      this.failInstall(t`Could not communicate with the autopilot manager.`)
     },
     // Re-attaches to an installation started before this page was (re)loaded
     async attachToRunningInstall(): Promise<void> {
       const response = await fetch(`${autopilot.API_URL}/install_firmware_progress`).catch(() => null)
       // 404 means no installation is running
       if (!response?.ok || this.install_status === InstallStatus.Installing) {
+        response?.body?.cancel().catch(() => undefined)
         return
       }
       this.install_status = InstallStatus.Installing
