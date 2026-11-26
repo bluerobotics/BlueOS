@@ -103,7 +103,7 @@ export default Vue.extend({
         return {
           name: gyrId ? decode(gyrId.name, gyrId.value).deviceName ?? '?' : '?',
           param: gyrId,
-          value: [this.gyro_read1, this.gyro_read2, this.gyro_read3][index],
+          value: [this.gyro_read1, this.gyro_read2, this.gyro_read3][index - 1],
           offsets: vec3.fromValues(...offsets),
           calibration_temperature: autopilot_data.parameter(`INS_GYR${index}_CALTEMP`)?.value ?? 0,
         }
