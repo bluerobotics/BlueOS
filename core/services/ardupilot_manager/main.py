@@ -17,26 +17,27 @@ init_logger(SERVICE_NAME)
 
 logger.info("Starting AutoPilot Manager.")
 
-# Drop CAP_SYS_ADMIN capability for the entire service as it's not needed
-# Serial port access, process management, and file operations don't require it
+# CAP_SYS_ADMIN lets root open serial ports locked with TIOCEXCL. Dropping it makes the in-process serial probing
+# skip ports held by the MAVLink router or the firmware uploader instead of stealing their data.
+# This only applies to this Python process and the threads it creates afterwards: root children exec'd later
+# (router, uploader, ArduPilot) regain it from the bounding set.
 try:
     import prctl
 
     prctl.cap_effective.drop(prctl.CAP_SYS_ADMIN)
     prctl.cap_permitted.drop(prctl.CAP_SYS_ADMIN)
-    logger.info("Dropped CAP_SYS_ADMIN capability for security")
+    logger.info("Dropped CAP_SYS_ADMIN from the AutoPilot Manager process")
 except ImportError:
-    logger.warning("prctl module not available - cannot drop capabilities")
+    logger.warning("prctl module not available, serial probing may interfere with ports in use")
 except Exception as e:
-    logger.warning(f"Failed to drop CAP_SYS_ADMIN capability: {e}")
+    logger.warning(f"Failed to drop CAP_SYS_ADMIN, serial probing may interfere with ports in use: {e}")
 
 autopilot = AutoPilotManager()
 
 from api import application
 
 if not is_running_as_root():
-    logger.error("AutoPilot manager needs to run with root privilege.")
-    logger.error("expect issues")
+    raise RuntimeError("AutoPilot manager needs to run with root privilege.")
 
 
 async def main() -> None:
