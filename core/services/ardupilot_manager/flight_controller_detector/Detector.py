@@ -19,24 +19,37 @@ from serial.tools.list_ports_linux import SysFS, comports
 from typedefs import FlightController, FlightControllerFlags, Platform, PlatformType
 
 BOOTLOADER_CACHE_SECONDS = 60
+# Short enough to pick up a board that was still booting on its first probe
+NO_BOARD_CACHE_SECONDS = 15
 
-# (vid, pid, serial number, USB device path)
-UsbIdentity = Tuple[Optional[int], Optional[int], Optional[str], Optional[str]]
+# (vid, pid, serial number, USB device path, product, manufacturer). The product tells apart builds sharing the same
+# hardware, like Pixhawk1 and fmuv3
+UsbIdentity = Tuple[Optional[int], Optional[int], Optional[str], Optional[str], Optional[str], Optional[str]]
+
+
+class ProbingPaused(Exception):
+    """Probing was paused while a probe pass was running."""
 
 
 class Detector:
     # (device, USB serial number) -> (time of the probe, board id)
     _bootloader_cache: Dict[Tuple[str, Optional[str]], Tuple[float, int]] = {}
+    # (device, USB identity) -> time of the probe that found no board there
+    _no_board_cache: Dict[Tuple[str, UsbIdentity], float] = {}
     # Device path -> identity of the USB device last probed there. Kept by invalidate_caches(), since the running
     # board's port can't be probed again while the router holds it
     _port_identities: Dict[str, UsbIdentity] = {}
     _probing_pauses = 0
+    _probing_lock = asyncio.Lock()
     _last_serial_boards: List[FlightController] = []
 
     @classmethod
     @contextmanager
     def pause_probing(cls) -> Iterator[None]:
-        """Keep serial detection from opening any port, e.g. while the firmware uploader talks to the board."""
+        """Keep serial detection from opening any port, e.g. while the firmware uploader talks to the board.
+
+        A probe pass already running stops before its next port, use wait_for_idle() to wait for its current one.
+        """
         cls._probing_pauses += 1
         try:
             yield
@@ -46,6 +59,12 @@ class Detector:
     @classmethod
     def is_probing_paused(cls) -> bool:
         return cls._probing_pauses > 0
+
+    @classmethod
+    async def wait_for_idle(cls) -> None:
+        """Wait for the probe pass in flight, if any, to release the ports."""
+        async with cls._probing_lock:
+            pass
 
     @classmethod
     async def detect_linux_board(cls) -> Optional[FlightController]:
@@ -110,7 +129,7 @@ class Detector:
 
     @staticmethod
     def _usb_identity(port: SysFS) -> UsbIdentity:
-        return (port.vid, port.pid, port.serial_number, port.usb_device_path)
+        return (port.vid, port.pid, port.serial_number, port.usb_device_path, port.product, port.manufacturer)
 
     @staticmethod
     def _is_same_device(port: SysFS) -> bool:
@@ -129,6 +148,12 @@ class Detector:
             if known_board is not None:
                 return known_board
 
+        # Opening a port may reset the device (e.g. Arduinos) and an unresponsive bootloader takes seconds to give up
+        no_board_key = (port.device, Detector._usb_identity(port))
+        probed_at = Detector._no_board_cache.get(no_board_key)
+        if probed_at is not None and time.monotonic() - probed_at < NO_BOARD_CACHE_SECONDS:
+            return None
+
         board_id = None
         if is_bootloader:
             board_id = await Detector.ask_bootloader_for_board_id(port)
@@ -138,8 +163,10 @@ class Detector:
         if board_id is None:
             board_id = await get_board_id(port.device)
         if board_id is None:
+            Detector._no_board_cache[no_board_key] = time.monotonic()
             return None
 
+        Detector._no_board_cache.pop(no_board_key, None)
         Detector._port_identities[port.device] = Detector._usb_identity(port)
         return FlightController(
             name=port.product or port.name,
@@ -165,10 +192,14 @@ class Detector:
         Returns:
             List[FlightController]: List with connected serial flight controller.
         """
-        if cls.is_probing_paused():
+        try:
+            if cls.is_probing_paused():
+                raise ProbingPaused()
+            async with cls._probing_lock:
+                boards = await cls._probe_serial_flight_controllers(known_boards)
+        except ProbingPaused:
             logger.debug("Serial probing is paused, reusing the last detected serial boards.")
             return list(cls._last_serial_boards)
-        boards = await cls._probe_serial_flight_controllers(known_boards)
         cls._last_serial_boards = boards
         return list(boards)
 
@@ -181,9 +212,15 @@ class Detector:
                 # usb_device_path property will be the same for two serial connections using the same USB port
                 usb_devices.setdefault(port.usb_device_path, []).append(port)
 
+        present = {(port.device, Detector._usb_identity(port)) for ports in usb_devices.values() for port in ports}
+        for key in set(Detector._no_board_cache) - present:
+            del Detector._no_board_cache[key]
+
         boards = []
         for ports in sorted(usb_devices.values(), key=lambda ports: min(port.name for port in ports)):
             for port in sorted(ports, key=lambda port: (Detector._usb_interface_number(port), port.name)):
+                if Detector.is_probing_paused():
+                    raise ProbingPaused()
                 board = await Detector._detect_serial_port(port, known_boards)
                 if board is not None:
                     boards.append(board)
@@ -196,6 +233,7 @@ class Detector:
     def invalidate_caches(cls) -> None:
         cls._probe_serial_flight_controllers.invalidate()  # type: ignore[attr-defined]
         cls._bootloader_cache.clear()
+        cls._no_board_cache.clear()
 
     @staticmethod
     def detect_sitl() -> FlightController:

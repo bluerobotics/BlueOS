@@ -35,6 +35,10 @@ class PX4BootLoaderDeviceInfo(IntEnum):
 BL_REV_MIN = 2  # Minimum supported bootloader protocol
 BL_REV_MAX = 5  # Maximum supported bootloader protocol
 
+# Only used to probe ports, a device that is not a bootloader must not hold the detection for long
+SYNC_ATTEMPTS = 3
+COMMAND_TIMEOUT_SECONDS = 0.5
+
 
 @dataclass
 class PX4BootLoaderBoardInfo:
@@ -99,7 +103,7 @@ class PX4BootLoader:
         if bytes_written != len(data):
             raise serial.SerialException("Invalid number of bytes written to serial port")
 
-    def _send_serial_command(self, command: PX4BootLoaderCommand, timeout: float = 1.0) -> None:
+    def _send_serial_command(self, command: PX4BootLoaderCommand, timeout: float = COMMAND_TIMEOUT_SECONDS) -> None:
         buffer = bytearray([command, PX4BootLoaderProtocol.EOC])
 
         self._safe_serial_write(buffer)
@@ -112,7 +116,7 @@ class PX4BootLoader:
         self.port.read_all()
 
         # Getting in sync some times requires multiple attempts
-        for _ in range(10):
+        for _ in range(SYNC_ATTEMPTS):
             try:
                 self._send_serial_command(PX4BootLoaderCommand.GET_SYNC)
                 return
@@ -125,7 +129,7 @@ class PX4BootLoader:
         buffer = bytearray([PX4BootLoaderCommand.GET_DEVICE, param, PX4BootLoaderProtocol.EOC])
 
         self._safe_serial_write(buffer)
-        val = self._safe_read(4, 1.0)
-        self._read_command_response(1.0)
+        val = self._safe_read(4, COMMAND_TIMEOUT_SECONDS)
+        self._read_command_response(COMMAND_TIMEOUT_SECONDS)
 
         return int.from_bytes(val, byteorder="little")

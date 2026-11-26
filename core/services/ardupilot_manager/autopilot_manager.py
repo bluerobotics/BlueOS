@@ -885,6 +885,7 @@ class AutoPilotManager(metaclass=Singleton):
                 BoardDetector.invalidate_caches()
                 # Probing a port, bootloaders above all, while the uploader talks to the board can break the flash
                 with BoardDetector.pause_probing():
+                    await BoardDetector.wait_for_idle()
                     await self._kill_ardupilot_locked()
                     yield
             finally:

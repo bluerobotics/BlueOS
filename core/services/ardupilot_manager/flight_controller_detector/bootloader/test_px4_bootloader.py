@@ -64,6 +64,14 @@ class FakeBootloaderPort:
         pass
 
 
+class SilentPort(FakeBootloaderPort):
+    """A device that never answers."""
+
+    def write(self, data: bytes) -> int:
+        self.written.append(bytes(data))
+        return len(data)
+
+
 @pytest.fixture(autouse=True)
 def no_sleep(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(time, "sleep", lambda _seconds: None)
@@ -85,6 +93,21 @@ def test_unsupported_bootloader_version_raises() -> None:
 def test_sync_failure_raises() -> None:
     with pytest.raises(RuntimeError):
         PX4BootLoader(FakeBootloaderPort(in_sync=False)).get_board_info()  # type: ignore[arg-type]
+
+
+def test_sync_gives_up_after_a_few_short_attempts(monkeypatch: pytest.MonkeyPatch) -> None:
+    clock = {"now": 0.0}
+
+    def fake_sleep(seconds: float) -> None:
+        clock["now"] += seconds
+
+    monkeypatch.setattr(time, "time", lambda: clock["now"])
+    monkeypatch.setattr(time, "sleep", fake_sleep)
+    port = SilentPort()
+    with pytest.raises(RuntimeError):
+        PX4BootLoader(port).get_board_info()  # type: ignore[arg-type]
+    assert port.written == [bytes([PX4BootLoaderCommand.GET_SYNC, PX4BootLoaderProtocol.EOC])] * 3
+    assert clock["now"] < 2.5
 
 
 def test_detector_boots_board_after_reading_info(monkeypatch: pytest.MonkeyPatch) -> None:

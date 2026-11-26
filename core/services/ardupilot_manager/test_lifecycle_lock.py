@@ -121,6 +121,23 @@ async def test_install_pauses_serial_probing_until_flashed(
     assert not Detector.is_probing_paused()
 
 
+async def test_install_waits_for_probe_in_flight(
+    manager: AutoPilotManager, lifecycle: Lifecycle, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    probing_lock = asyncio.Lock()
+    monkeypatch.setattr(Detector, "_probing_lock", probing_lock)
+    await probing_lock.acquire()
+    install = asyncio.create_task(manager.install_firmware_from_file(Path("firmware"), SITL))
+    await asyncio.sleep(0.05)
+    assert Detector.is_probing_paused()
+    assert not lifecycle.calls, "the autopilot must not be stopped while a port is being probed"
+
+    probing_lock.release()
+    await install
+    assert lifecycle.calls == ["kill", "start"]
+    cast(AsyncMock, manager.firmware_manager).install_firmware_from_file.assert_awaited_once()
+
+
 class FakeRouterManager:
     def __init__(self, lifecycle: Lifecycle, should_be_running: bool = True) -> None:
         self.lifecycle = lifecycle

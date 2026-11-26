@@ -1,3 +1,4 @@
+import asyncio
 from dataclasses import dataclass
 from typing import Dict, Iterator, List, Optional
 
@@ -58,6 +59,8 @@ def fixture_probes(monkeypatch: pytest.MonkeyPatch) -> Iterator[FakeProbes]:
     Detector.invalidate_caches()
     monkeypatch.setattr(Detector, "_port_identities", {})
     monkeypatch.setattr(Detector, "_last_serial_boards", [])
+    # A lock that ever waited is bound to the event loop of that test
+    monkeypatch.setattr(Detector, "_probing_lock", asyncio.Lock())
     yield FakeProbes(monkeypatch)
     Detector.invalidate_caches()
 
@@ -159,6 +162,19 @@ async def test_known_board_is_not_reused_for_another_device_on_its_path(probes: 
     assert probes.probed == ["/dev/ttyACM0"]
 
 
+async def test_known_board_is_probed_again_after_flashing_another_build(probes: FakeProbes) -> None:
+    probes.ports = [FakePort("/dev/ttyACM0", product="Pixhawk1", manufacturer="ArduPilot")]
+    probes.mavlink = {"/dev/ttyACM0": 9}
+    (running,) = await detect()
+    probes.probed.clear()
+
+    # Same hardware, VID/PID and MCU serial number, only the USB strings of the build change
+    probes.ports = [FakePort("/dev/ttyACM0", product="fmuv3", manufacturer="ArduPilot")]
+    (board,) = await detect(running)
+    assert board.platform.name == "fmuv3"
+    assert probes.probed == ["/dev/ttyACM0"]
+
+
 async def test_paused_probing_reuses_last_detection(probes: FakeProbes) -> None:
     probes.ports = [
         FakePort("/dev/ttyACM0", product="CubeOrange"),
@@ -185,6 +201,44 @@ async def test_paused_probing_without_previous_detection(probes: FakeProbes) -> 
     probes.bootloader = {"/dev/ttyACM0": 140}
     with Detector.pause_probing():
         assert not await detect()
+    assert not probes.probed
+
+
+async def test_pause_stops_probe_pass_in_flight(probes: FakeProbes, monkeypatch: pytest.MonkeyPatch) -> None:
+    probes.ports = [
+        FakePort("/dev/ttyACM0", product="CubeOrange"),
+        FakePort("/dev/ttyACM1", product="MatekH743", usb_device_path="/sys/devices/usb1/1-2"),
+    ]
+    probes.mavlink = {"/dev/ttyACM0": 140, "/dev/ttyACM1": 1013}
+    previous = await detect()
+    probes.probed.clear()
+
+    first_probe_started = asyncio.Event()
+    release_first_probe = asyncio.Event()
+    get_board_id = probes.get_board_id
+
+    async def slow_get_board_id(device: str) -> Optional[int]:
+        first_probe_started.set()
+        await release_first_probe.wait()
+        return await get_board_id(device)
+
+    monkeypatch.setattr(detector_module, "get_board_id", slow_get_board_id)
+    detection = asyncio.create_task(detect())
+    await first_probe_started.wait()
+
+    with Detector.pause_probing():
+        idle = asyncio.create_task(Detector.wait_for_idle())
+        await asyncio.sleep(0.01)
+        assert not idle.done(), "the probe in flight still holds the port"
+        release_first_probe.set()
+        await idle
+        assert await detection == previous
+        assert probes.probed == ["/dev/ttyACM0"], "no port must be opened once paused"
+
+
+async def test_wait_for_idle_returns_when_not_probing(probes: FakeProbes) -> None:
+    with Detector.pause_probing():
+        await asyncio.wait_for(Detector.wait_for_idle(), timeout=1)
     assert not probes.probed
 
 
@@ -254,6 +308,57 @@ async def test_port_without_board_id_is_skipped(probes: FakeProbes) -> None:
     assert probes.probed == ["/dev/ttyACM0"]
 
 
+async def redetect() -> List[FlightController]:
+    """Detect again, dropping only the detection list cache."""
+    Detector._probe_serial_flight_controllers.invalidate()  # type: ignore[attr-defined]
+    boards: List[FlightController] = await Detector.detect_serial_flight_controllers(())
+    return boards
+
+
+async def test_ports_without_board_are_not_probed_again(probes: FakeProbes) -> None:
+    port = FakePort("/dev/ttyACM0", product="Arduino Uno", manufacturer="Arduino (www.arduino.cc)", vid=0x2341)
+    probes.ports = [port]
+    assert not await redetect()
+    assert not await redetect()
+    assert probes.probed == ["/dev/ttyACM0"]
+
+    Detector.invalidate_caches()
+    assert not await redetect()
+    assert probes.probed == ["/dev/ttyACM0"] * 2
+
+
+async def test_ports_without_board_are_probed_again_once_replugged(probes: FakeProbes) -> None:
+    port = FakePort("/dev/ttyACM0", product="CubeOrange")
+    probes.ports = [port]
+    assert not await redetect()
+
+    probes.ports = []
+    assert not await redetect()
+    probes.ports = [port]
+    probes.mavlink = {"/dev/ttyACM0": 140}
+    assert len(await redetect()) == 1
+    assert probes.probed == ["/dev/ttyACM0"] * 2
+
+
+async def test_ports_without_board_are_probed_again_when_the_device_changes(probes: FakeProbes) -> None:
+    probes.ports = [FakePort("/dev/ttyACM0", product="CubeOrange-BL")]
+    assert not await redetect()
+
+    probes.ports = [FakePort("/dev/ttyACM0", product="CubeOrange")]
+    probes.mavlink = {"/dev/ttyACM0": 140}
+    assert len(await redetect()) == 1
+
+
+async def test_ports_without_board_are_probed_again_after_a_while(probes: FakeProbes) -> None:
+    probes.ports = [FakePort("/dev/ttyACM0", product="CubeOrange")]
+    assert not await redetect()
+
+    for key in Detector._no_board_cache:
+        Detector._no_board_cache[key] -= detector_module.NO_BOARD_CACHE_SECONDS
+    assert not await redetect()
+    assert probes.probed == ["/dev/ttyACM0"] * 2
+
+
 async def test_only_successful_bootloader_probes_are_cached(probes: FakeProbes) -> None:
     port = FakePort("/dev/ttyACM0", product="CubeOrange-BL")
     assert await Detector.ask_bootloader_for_board_id(port) is None  # type: ignore[arg-type]
@@ -297,6 +402,12 @@ def test_plausible_autopilot_by_legacy_identifiers() -> None:
         ("MatekH743-BL", "MatekH743"),
         ("CubeOrange BL", "CubeOrange"),
         ("CubeOrangePlus", "CubeOrangePlus"),
+        ("CubeOrange+", "CubeOrangePlus"),
+        ("CubeOrange+-BL", "CubeOrangePlus"),
+        ("CubeRed", "CubeRedPrimary"),
+        ("MatekH743-BL-v10", "MatekH743"),
+        ("MatekH743-Secure-BL-v10", "MatekH743"),
+        ("CubeOrange-Secure-BL", "CubeOrange"),
         ("PX4 FMU v5.x", "Pixhawk4"),
         ("PX4 BL FMU v6X.x", "Pixhawk6X"),
         ("PX4 FMU v6C.x", "Pixhawk6C"),
