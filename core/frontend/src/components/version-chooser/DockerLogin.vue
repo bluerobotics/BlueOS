@@ -1,5 +1,5 @@
 <template>
-  <v-card>
+  <v-card data-testid="docker-login">
     <v-card-subtitle class="text-center pt-6">
       <!-- eslint-disable-next-line max-len -->
       {{ t`Log in using your Docker Hub credentials to access private repositories and benefit from an increased rate limit.` }}
@@ -9,6 +9,7 @@
       v-if="op_loading"
       size="100px"
       :subtitle="op_description"
+      data-testid="docker-login-loading"
     />
     <div v-else>
       <v-tabs
@@ -16,13 +17,23 @@
         fixed-tabs
         @change="onTabChange"
       >
-        <v-tab key="0" href="#0" class="tab-text">
+        <v-tab
+          key="0"
+          href="#0"
+          class="tab-text"
+          data-testid="docker-login-tab-login"
+        >
           <v-icon class="mr-3">
             mdi-login
           </v-icon>
           {{ t`Login` }}
         </v-tab>
-        <v-tab key="1" href="#1" class="tab-text">
+        <v-tab
+          key="1"
+          href="#1"
+          class="tab-text"
+          data-testid="docker-login-tab-accounts"
+        >
           <v-icon class="mr-3">
             mdi-account
           </v-icon>
@@ -35,11 +46,13 @@
             v-model="log_in_info.root"
             :label="t`Login root user`"
             class="pb-3"
+            data-testid="docker-login-root"
           />
           <v-switch
             v-model="use_custom_registry"
             :label="t`Custom registry`"
             class="pb-3"
+            data-testid="docker-login-custom-registry"
           />
         </div>
 
@@ -50,6 +63,7 @@
           :label="t`Custom Registry`"
           outlined
           hide-details
+          data-testid="docker-login-registry"
         />
 
         <v-text-field
@@ -58,6 +72,7 @@
           :label="t`Docker Username`"
           outlined
           hide-details
+          data-testid="docker-login-username"
         />
 
         <v-text-field
@@ -66,6 +81,7 @@
           type="password"
           outlined
           hide-details
+          data-testid="docker-login-password"
         />
       </v-card-text>
       <v-card-text v-if="is_accounts_tab">
@@ -75,19 +91,23 @@
           <v-list-item
             v-for="account in accounts"
             :key="account.username"
+            data-testid="docker-login-account"
           >
             <v-list-item-content>
-              <v-list-item-title>
+              <v-list-item-title data-testid="docker-login-account-username">
                 {{ account.username }}
               </v-list-item-title>
-              <v-list-item-subtitle>
+              <v-list-item-subtitle data-testid="docker-login-account-registry">
                 {{ account.registry }}
               </v-list-item-subtitle>
             </v-list-item-content>
             <div v-if="account.root">
               <v-tooltip bottom>
                 <template #activator="{ on }">
-                  <v-icon v-on="on">
+                  <v-icon
+                    data-testid="docker-login-account-root"
+                    v-on="on"
+                  >
                     mdi-shield-account
                   </v-icon>
                 </template>
@@ -97,6 +117,7 @@
             <v-list-item-action>
               <v-btn
                 icon
+                data-testid="docker-login-logout"
                 @click="logout(account.username, account.registry)"
               >
                 <v-icon>mdi-logout</v-icon>
@@ -107,6 +128,7 @@
         <v-card-subtitle
           v-else
           class="text-center pt-6"
+          data-testid="docker-login-no-accounts"
         >
           {{ t`No connected accounts` }}
         </v-card-subtitle>
@@ -116,6 +138,7 @@
       v-if="has_error"
       class="mx-4"
       type="error"
+      data-testid="docker-login-error"
     >
       {{ op_error }}
     </v-alert>
@@ -123,12 +146,14 @@
       v-if="has_success"
       class="mx-4"
       type="success"
+      data-testid="docker-login-success"
     >
       {{ op_success }}
     </v-alert>
     <v-card-actions class="justify-center pb-4">
       <v-btn
         color="primary"
+        data-testid="docker-login-cancel"
         @click="$emit('cancel')"
       >
         {{ t`Cancel` }}
@@ -136,6 +161,7 @@
       <v-spacer />
       <v-btn
         color="success"
+        data-testid="docker-login-submit"
         @click="login"
       >
         {{ t`Login` }}
