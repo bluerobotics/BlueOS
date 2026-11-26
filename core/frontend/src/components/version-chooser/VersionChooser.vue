@@ -16,12 +16,14 @@
         v-if="!settings.is_pirate_mode"
         max-width="900"
         class="mx-auto my-12 pa-4"
+        data-testid="version-chooser-current"
       >
         <v-alert
           border="top"
           colored-border
           type="info"
           elevation="2"
+          data-testid="version-chooser-pirate-mode-info"
         >
           <!-- eslint-disable-next-line max-len -->
           {{ t`Turn on Pirate mode to view all available BlueOS versions, including previous installs stored onboard, as well as past and current stable, beta, and development releases downloadable from ${'Blue Robotics'}.` }}
@@ -48,6 +50,7 @@
 
           color="red lighten-2"
           dark
+          data-testid="version-chooser-remote-error"
         >
           <div class="d-flex align-center justify-space-between">
             <span>{{ remote_alert_message }}</span>
@@ -57,6 +60,7 @@
               small
               :loading="loading_images"
               :disabled="loading_images"
+              data-testid="version-chooser-remote-retry"
               @click="loadAvailableVersions"
             >
               {{ t`Retry` }}
@@ -69,6 +73,7 @@
         v-if="settings.is_pirate_mode"
         max-width="900"
         class="mx-auto my-12 pa-4"
+        data-testid="version-chooser-local"
       >
         <h2>{{ t`Local Versions` }}</h2>
         <version-card
@@ -92,17 +97,20 @@
           v-if="local_versions.loading"
           size="15%"
           :subtitle="t`Loading local images...`"
+          data-testid="version-chooser-local-loading"
         />
       </v-card>
       <v-card
         v-if="settings.is_pirate_mode"
         max-width="900"
         class="mx-auto my-12 pa-4"
+        data-testid="version-chooser-remote"
       >
         <div class="d-flex justify-space-between pb-3">
           <h2>{{ t`Remote Versions` }}</h2>
           <v-btn
             color="primary"
+            data-testid="version-chooser-docker-login"
             @click="show_docker_login_dialog = true"
           >
             {{ t`Docker Login` }}
@@ -116,6 +124,7 @@
             name="BlueOS Remote Repository"
             :label="t`Remote repository`"
             :append-icon="selected_image != default_repository ? 'mdi-restore' : undefined"
+            data-testid="version-chooser-repository"
             @click:append="resetToDefaultRepository()"
           />
         </v-form>
@@ -125,12 +134,14 @@
           :label="t`Search images`"
           prepend-inner-icon="mdi-magnify"
           clearable
+          data-testid="version-chooser-search"
         />
         <v-alert
           v-if="remote_alert_message"
 
           color="red lighten-2"
           dark
+          data-testid="version-chooser-remote-error"
         >
           <div class="d-flex align-center justify-space-between">
             <span>{{ remote_alert_message }}</span>
@@ -140,6 +151,7 @@
               small
               :loading="loading_images"
               :disabled="loading_images"
+              data-testid="version-chooser-remote-retry"
               @click="loadAvailableVersions"
             >
               {{ t`Retry` }}
@@ -159,6 +171,7 @@
           v-if="loading_images"
           size="15%"
           :subtitle="t`Loading remote images...`"
+          data-testid="version-chooser-remote-loading"
         />
         <version-card
           v-for="(image, index) in paginatedComponents"
@@ -178,6 +191,7 @@
             v-if="totalPages > 1"
             v-model="page"
             :length="totalPages"
+            data-testid="version-chooser-pagination"
           />
         </v-card-actions>
       </v-card>
@@ -185,6 +199,7 @@
         v-if="settings.is_pirate_mode"
         max-width="900"
         class="mx-auto my-12 pa-4"
+        data-testid="version-chooser-upload"
       >
         <h2>
           {{ t`Manual Upload` }}
@@ -225,16 +240,19 @@
           :rules="[isFileInputNotEmpty]"
           :error-messages="file_input_error"
           :label="t`File input`"
+          data-testid="version-chooser-upload-file"
         />
         <v-progress-linear
           v-if="disable_upload_controls && upload_percentage !== 100"
           class="mb-4 mt-4"
           :value="upload_percentage"
+          data-testid="version-chooser-upload-progress"
         />
         <v-btn
           v-if="!disable_upload_controls"
           color="primary"
           class="mr-2 mb-4 mt-1"
+          data-testid="version-chooser-upload-button"
           @click="validateInputFileForm() && upload()"
           v-text="t`Upload`"
         />
@@ -245,6 +263,7 @@
           colored-border
           type="info"
           elevation="2"
+          data-testid="version-chooser-upload-decompressing"
         >
           {{ t`Decompressing file, this usually takes up to one minute, please stand by...` }}
           <spinning-logo
@@ -262,6 +281,7 @@
       :extraction="major_tom_extraction_percentage"
       :statustext="major_tom_status_text"
       :step="major_tom_step"
+      test-id="major-tom-pull-progress"
     />
     <pull-progress
       :progress="pull_output"
@@ -270,6 +290,7 @@
       :extraction="extraction_percentage"
       :statustext="status_text"
       :step="pull_step"
+      test-id="version-pull-progress"
     />
     <warning-dialog
       v-model="show_restart_warning"
@@ -279,11 +300,13 @@
       cancel-label="Skip"
       confirm-color="primary"
       persistent
+      test-id="version-chooser-restart-warning"
       @confirm="reloadPage"
     />
     <v-overlay
       :z-index="10"
       :value="waiting"
+      data-testid="version-chooser-switching"
     >
       <spinning-logo
         size="100%"
