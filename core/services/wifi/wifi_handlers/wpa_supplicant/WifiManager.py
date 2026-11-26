@@ -44,6 +44,11 @@ class WifiManager(AbstractWifiManager):
         # wpa_supplicant handles a single interface, so the only valid choice is the current one
         await self.validate_interface(interface)
 
+    async def hotspot_interfaces(self) -> List[str]:
+        if not await self.supports_hotspot():
+            return []
+        return [self.interface_name]
+
     async def try_connect_to_network(
         self, credentials: WifiCredentials, hidden: bool = False, interface: Optional[str] = None
     ) -> Any:

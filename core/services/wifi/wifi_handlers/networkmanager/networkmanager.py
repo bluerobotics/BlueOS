@@ -1,6 +1,7 @@
 import asyncio
 import hashlib
 import json
+import re
 import select
 import signal
 import subprocess
@@ -9,7 +10,7 @@ from typing import Any, Dict, List, NamedTuple, Optional
 
 import sdbus
 from commonwealth.utils.general import device_id
-from exceptions import InterfaceNotFound
+from exceptions import HotspotNotSupported, InterfaceNotFound
 from loguru import logger
 from sdbus.dbus_exceptions import DbusUnknownMethodError
 from sdbus_async.networkmanager import (
@@ -143,8 +144,13 @@ class NetworkManagerWifi(AbstractWifiManager):
             return preferred
         return next(iter(devices), None)
 
+    async def hotspot_interfaces(self) -> List[str]:
+        return [name for name in await self.get_interfaces() if self._supports_ap_with_station(name)]
+
     async def set_hotspot_interface(self, interface: str) -> None:
         await self.validate_interface(interface)
+        if not self._supports_ap_with_station(interface):
+            raise HotspotNotSupported(interface)
         self._settings_manager.settings.hotspot_interface = interface
         self._settings_manager.save()
         was_running = await self.hotspot_is_running()
@@ -167,24 +173,33 @@ class NetworkManagerWifi(AbstractWifiManager):
                 return True
 
             phys_name = await self.hotspot_interface()
-            if phys_name is None:
-                logger.error("No wifi interface available to host the AP")
+            if phys_name is None or not self._supports_ap_with_station(phys_name):
+                if phys_name is None:
+                    logger.error("No wifi interface available to host the AP")
+                else:
+                    logger.error(f"{phys_name} cannot host an AP beside its station interface")
                 return False
 
             # Create virtual interface
-            subprocess.run(
-                [
-                    "iw",
-                    "dev",
-                    phys_name,
-                    "interface",
-                    "add",
-                    self._ap_interface,
-                    "type",
-                    "__ap",
-                ],
-                check=True,
-            )
+            try:
+                subprocess.run(
+                    [
+                        "iw",
+                        "dev",
+                        phys_name,
+                        "interface",
+                        "add",
+                        self._ap_interface,
+                        "type",
+                        "__ap",
+                    ],
+                    check=True,
+                )
+            except subprocess.CalledProcessError as e:
+                logger.error(f"Failed to create virtual interface: {e}")
+                # Adding an AP can take the parent down; put it back if the add failed
+                subprocess.run(["ip", "link", "set", phys_name, "up"], check=False)
+                return False
             logger.info(f"Created virtual AP interface {self._ap_interface}")
 
             # The kernel copies the physical interface's current address onto the
@@ -213,6 +228,55 @@ class NetworkManagerWifi(AbstractWifiManager):
         except subprocess.CalledProcessError as e:
             logger.error(f"Failed to create virtual interface: {e}")
             return False
+
+    def _iw_output(self, args: List[str]) -> Optional[str]:
+        result = subprocess.run(["iw", *args], capture_output=True, text=True, check=False)
+        if result.returncode != 0:
+            logger.warning(f"iw {' '.join(args)} failed: {result.stderr.strip()}")
+            return None
+        return result.stdout
+
+    def _supports_ap_with_station(self, interface: str) -> bool:
+        info = self._iw_output(["dev", interface, "info"])
+        if info is None:
+            return False
+        match = re.search(r"wiphy\s+(?:phy)?(\d+)", info)
+        if match is None:
+            logger.warning(f"Could not find a phy for {interface}")
+            return False
+        phy_info = self._iw_output(["phy", f"phy{match.group(1)}", "info"])
+        if phy_info is None:
+            return False
+        return self._phy_allows_ap_and_station(phy_info)
+
+    @staticmethod
+    def _phy_allows_ap_and_station(info: str) -> bool:
+        marker = "valid interface combinations:"
+        if marker not in info:
+            modes = info.split("Supported interface modes:", 1)[-1]
+            return re.search(r"(?m)^\s+\*\s+AP\s*$", modes) is not None
+        blocks = re.split(r"\n\s+\*\s+", info.split(marker, 1)[1])
+        return any(NetworkManagerWifi._combination_allows_ap_and_station(block) for block in blocks)
+
+    @staticmethod
+    def _combination_allows_ap_and_station(combination: str) -> bool:
+        ap_slots = 0
+        managed_slots = 0
+        for types_text, limit_text in re.findall(r"#\{\s*([^}]+)\}\s*<=\s*(\d+)", combination):
+            types = {part.strip() for part in types_text.split(",")}
+            limit = int(limit_text)
+            has_ap = "AP" in types
+            has_managed = "managed" in types
+            # One shared slot cannot be an AP and a station at the same time
+            if has_ap and has_managed:
+                if limit >= 2:
+                    return True
+                continue
+            if has_ap:
+                ap_slots = max(ap_slots, limit)
+            if has_managed:
+                managed_slots = max(managed_slots, limit)
+        return ap_slots >= 1 and managed_slots >= 1
 
     @staticmethod
     def _ap_interface_address(phys_name: str) -> str:

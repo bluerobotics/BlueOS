@@ -1,6 +1,7 @@
 import asyncio
 import io
 import json
+import subprocess
 import sys
 from pathlib import Path
 from types import SimpleNamespace
@@ -15,12 +16,15 @@ _saved = {name: sys.modules.get(name) for name in ("exceptions", "settings", "ty
 for name in _saved:
     sys.modules.pop(name, None)
 
+import wifi_handlers.networkmanager.networkmanager as networkmanager_module
 from commonwealth.settings.manager import PydanticManager
 from sdbus.dbus_exceptions import DbusUnknownMethodError
 from sdbus_async.networkmanager import DeviceState, DeviceType
 from settings import SettingsV1
 from typedefs import WifiCredentials, WifiStatus
 from wifi_handlers.networkmanager.networkmanager import NetworkManagerWifi
+
+_HotspotNotSupported = getattr(networkmanager_module, "HotspotNotSupported")
 
 for name, module in _saved.items():
     if module is not None:
@@ -402,6 +406,7 @@ def _mock_hotspot(manager: NetworkManagerWifi, running: bool) -> MagicMock:
     manager.hotspot_is_running = hotspot.is_running  # type: ignore[method-assign]
     manager.disable_hotspot = hotspot.disable  # type: ignore[method-assign]
     manager.enable_hotspot = hotspot.enable  # type: ignore[method-assign]
+    manager._supports_ap_with_station = MagicMock(return_value=True)  # type: ignore[method-assign]
     return hotspot
 
 
@@ -445,12 +450,31 @@ def _run(returncode: int = 0) -> MagicMock:
     return MagicMock(returncode=returncode)
 
 
+_AP_AND_STATION = """
+    Supported interface modes:
+         * managed
+         * AP
+    valid interface combinations:
+         * #{ managed } <= 1, #{ AP } <= 1, total <= 2, #channels <= 1
+"""
+
+_AP_OR_STATION = """
+    valid interface combinations:
+         * #{ managed } <= 1, total <= 1, #channels <= 1
+         * #{ AP } <= 1, total <= 1, #channels <= 1
+"""
+
+
 def _subprocess_result(command: List[str], *_args: Any, **_kwargs: Any) -> MagicMock:
-    result = MagicMock(returncode=0, stdout="")
+    result = MagicMock(returncode=0, stdout="", stderr="")
     if command == ["ip", "link", "show", "uap0"]:
         result.returncode = 1
     elif command[:4] == ["ip", "-j", "link", "show"]:
         result.stdout = json.dumps([{"permaddr": "00:11:22:33:44:55", "address": "02:00:00:00:00:01"}])
+    elif command[:2] == ["iw", "dev"] and command[-1] == "info":
+        result.stdout = "wiphy 0\n"
+    elif command[:2] == ["iw", "phy"]:
+        result.stdout = _AP_AND_STATION
     return result
 
 
@@ -471,6 +495,53 @@ async def test_ap_interface_is_created_on_the_hotspot_card() -> None:
         ] in commands
         assert ["ip", "link", "set", "uap0", "address", "02:ff:22:33:44:55"] in commands
         assert ["iw", "wlan1", "set", "power_save", "off"] in commands
+
+
+def test_phy_report_that_allows_an_ap_beside_a_station() -> None:
+    assert NetworkManagerWifi._phy_allows_ap_and_station(_AP_AND_STATION) is True
+
+
+def test_phy_report_that_cannot_hold_an_ap_and_a_station() -> None:
+    assert NetworkManagerWifi._phy_allows_ap_and_station(_AP_OR_STATION) is False
+    shared_slot = "valid interface combinations:\n\t\t * #{ AP, managed } <= 1, total <= 1\n"
+    assert NetworkManagerWifi._phy_allows_ap_and_station(shared_slot) is False
+
+
+async def test_ap_interface_is_not_created_when_the_card_cannot_host_it() -> None:
+    def result(command: List[str], *_args: Any, **_kwargs: Any) -> MagicMock:
+        response = _subprocess_result(command)
+        if command[:2] == ["iw", "phy"]:
+            response.stdout = _AP_OR_STATION
+        return response
+
+    with _two_cards() as harness, patch(f"{NM_MODULE}.subprocess.run", side_effect=result) as run:
+        harness.manager._settings_manager.settings.hotspot_interface = "wlan1"
+        assert await harness.manager._create_virtual_interface() is False
+        commands = [command.args[0] for command in run.call_args_list]
+        assert not any(len(command) > 4 and command[3:5] == ["interface", "add"] for command in commands)
+
+
+async def test_failed_ap_creation_brings_the_parent_back_up() -> None:
+    def result(command: List[str], *_args: Any, **_kwargs: Any) -> MagicMock:
+        if len(command) > 4 and command[3:5] == ["interface", "add"]:
+            raise subprocess.CalledProcessError(1, command)
+        return _subprocess_result(command)
+
+    with _two_cards() as harness, patch(f"{NM_MODULE}.subprocess.run", side_effect=result) as run:
+        harness.manager._settings_manager.settings.hotspot_interface = "wlan1"
+        assert await harness.manager._create_virtual_interface() is False
+        commands = [command.args[0] for command in run.call_args_list]
+        assert ["ip", "link", "set", "wlan1", "up"] in commands
+
+
+async def test_set_hotspot_interface_rejects_a_card_that_cannot_host_it() -> None:
+    with _two_cards() as harness:
+        harness.manager._supports_ap_with_station = MagicMock(return_value=False)  # type: ignore[method-assign]
+        # The handler binds this class when it is imported. The exceptions module is loaded again later.
+        with pytest.raises(_HotspotNotSupported, match="wlan1"):
+            await harness.manager.set_hotspot_interface("wlan1")
+        assert harness.manager._settings_manager.settings.hotspot_interface is None
+        harness.settings_manager.save.assert_not_called()
 
 
 async def test_ap_interface_is_not_created_without_cards() -> None:

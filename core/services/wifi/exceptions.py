@@ -32,3 +32,10 @@ class InterfaceNotFound(ValueError):
 
     def __init__(self, interface: str) -> None:
         super().__init__(f"Wifi interface '{interface}' not found.")
+
+
+class HotspotNotSupported(ValueError):
+    """Raised when a wifi interface cannot host an access point beside a station interface."""
+
+    def __init__(self, interface: str) -> None:
+        super().__init__(f"Wifi interface '{interface}' cannot host a hotspot.")

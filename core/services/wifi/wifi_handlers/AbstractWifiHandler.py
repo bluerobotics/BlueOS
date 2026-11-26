@@ -41,6 +41,11 @@ class AbstractWifiManager:
         raise NotImplementedError
 
     @abc.abstractmethod
+    async def hotspot_interfaces(self) -> List[str]:
+        """Wifi interfaces that can host an access point beside a station interface."""
+        raise NotImplementedError
+
+    @abc.abstractmethod
     async def get_wifi_available(self, interface: Optional[str] = None) -> List[ScannedWifiNetwork]:
         """Get a dict from the wifi signals available"""
         raise NotImplementedError

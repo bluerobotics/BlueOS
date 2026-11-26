@@ -74,7 +74,7 @@ import wifi from '@/store/wifi'
 import { wifi_service } from '@/types/frontend_services'
 import { VForm } from '@/types/vuetify'
 import { NetworkCredentials } from '@/types/wifi'
-import back_axios from '@/utils/api'
+import back_axios, { isBackendOffline } from '@/utils/api'
 
 const notifier = new Notifier(wifi_service)
 
@@ -96,6 +96,7 @@ export default Vue.extend({
       inputed_password: wifi.hotspot_credentials?.password || '',
       enable_smart_hotspot: wifi.smart_hotspot_status || false,
       selected_hotspot_interface: wifi.hotspot_interface,
+      hotspot_interfaces: [] as string[],
       saving_settings: false,
     }
   },
@@ -104,17 +105,33 @@ export default Vue.extend({
       return this.$refs.form as VForm
     },
     interfaces(): string[] {
-      return wifi.interfaces
+      return this.hotspot_interfaces
     },
   },
   watch: {
     show(value: boolean): void {
       if (value) {
         this.selected_hotspot_interface = wifi.hotspot_interface
+        this.fetchHotspotInterfaces()
       }
     },
   },
   methods: {
+    async fetchHotspotInterfaces(): Promise<void> {
+      await back_axios({
+        method: 'get',
+        url: `${wifi.API_URL}/hotspot_interfaces`,
+        timeout: 10000,
+      })
+        .then((response) => {
+          this.hotspot_interfaces = response.data
+        })
+        .catch((error) => {
+          this.hotspot_interfaces = []
+          if (isBackendOffline(error)) { return }
+          notifier.pushBackError('HOTSPOT_INTERFACES_FETCH_FAIL', error, true)
+        })
+    },
     async saveSettings(): Promise<boolean> {
       if (!this.form.validate()) {
         return false

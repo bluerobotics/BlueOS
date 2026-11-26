@@ -15,7 +15,7 @@ from commonwealth.utils.apis import (
 )
 from commonwealth.utils.logs import InterceptHandler, init_logger
 from commonwealth.utils.sentry_config import init_sentry_async
-from exceptions import BusyError, InterfaceNotFound
+from exceptions import BusyError, HotspotNotSupported, InterfaceNotFound
 from fastapi import Depends, FastAPI, HTTPException, status
 from fastapi.staticfiles import StaticFiles
 from fastapi_versioning import VersionedFastAPI, version
@@ -186,13 +186,26 @@ async def get_hotspot_interface() -> Any:
     return await require_wifi_manager().hotspot_interface()
 
 
+@app.get(
+    "/hotspot_interfaces",
+    response_model=List[str],
+    summary="Retrieve wifi interfaces that can host the hotspot.",
+)
+@version(1, 0)
+async def get_hotspot_interfaces() -> Any:
+    return await require_wifi_manager().hotspot_interfaces()
+
+
 @app.post("/hotspot_interface", summary="Set the wifi interface hosting the hotspot.")
 @version(1, 0)
 async def set_hotspot_interface(interface: str) -> Any:
     manager = require_wifi_manager()
     await wifi_interface(interface)
-    with interface_not_found_as_404():
-        await manager.set_hotspot_interface(interface)
+    try:
+        with interface_not_found_as_404():
+            await manager.set_hotspot_interface(interface)
+    except HotspotNotSupported as error:
+        raise StackedHTTPException(status_code=status.HTTP_400_BAD_REQUEST, error=error) from error
 
 
 @app.post("/hotspot_credentials", summary="Update hotspot credentials.")

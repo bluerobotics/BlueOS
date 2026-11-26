@@ -23,7 +23,7 @@ with (
     patch("logging.basicConfig"),
 ):
     import main
-    from exceptions import InterfaceNotFound
+    from exceptions import HotspotNotSupported, InterfaceNotFound
     from typedefs import WifiCredentials, WifiStatus
 
 for name, module in _saved.items():
@@ -52,6 +52,7 @@ def fixture_manager(monkeypatch: pytest.MonkeyPatch) -> MagicMock:
     manager.try_connect_to_network = AsyncMock()
     manager.disconnect = AsyncMock()
     manager.hotspot_interface = AsyncMock(return_value="wlan1")
+    manager.hotspot_interfaces = AsyncMock(return_value=["wlan0"])
     manager.set_hotspot_interface = AsyncMock()
     monkeypatch.setattr(main, "wifi_manager", manager)
     return manager
@@ -172,6 +173,20 @@ def test_get_hotspot_interface(client: TestClient, manager: MagicMock) -> None:
 def test_set_hotspot_interface(client: TestClient, manager: MagicMock) -> None:
     assert client.post("/v1.0/hotspot_interface", params={"interface": "wlan1"}).status_code == 200
     manager.set_hotspot_interface.assert_awaited_once_with("wlan1")
+
+
+def test_lists_hotspot_interfaces(client: TestClient, manager: MagicMock) -> None:
+    response = client.get("/v1.0/hotspot_interfaces")
+    assert response.status_code == 200
+    assert response.json() == ["wlan0"]
+    manager.hotspot_interfaces.assert_awaited_once()
+
+
+def test_set_hotspot_interface_rejects_a_card_that_cannot_host_an_ap(client: TestClient, manager: MagicMock) -> None:
+    manager.set_hotspot_interface.side_effect = HotspotNotSupported("wlan1")
+    response = client.post("/v1.0/hotspot_interface", params={"interface": "wlan1"})
+    assert response.status_code == 400
+    assert "wlan1" in response.json()["detail"]
 
 
 def test_set_hotspot_interface_requires_an_interface(client: TestClient, manager: MagicMock) -> None:
