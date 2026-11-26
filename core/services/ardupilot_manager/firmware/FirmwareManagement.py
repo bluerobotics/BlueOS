@@ -1,4 +1,5 @@
 import pathlib
+import re
 import shutil
 import subprocess
 import tempfile
@@ -38,7 +39,8 @@ class FirmwareManager:
     @staticmethod
     def firmware_name(platform: Platform) -> str:
         """Get consistent firmware name for given platform."""
-        return f"ardupilot_{platform.name.lower()}"
+        # Serial platform names may come from USB product strings, which can contain spaces or slashes
+        return f"ardupilot_{re.sub(r'[^a-z0-9_-]', '_', platform.name.lower())}"
 
     def firmware_path(self, platform: Platform) -> pathlib.Path:
         """Get firmware's path for given platform. This is the path where we expect to find
