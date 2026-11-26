@@ -1,8 +1,10 @@
 name: Claude PR Review
 
 on:
-  pull_request_target:
-    types: [opened, reopened, ready_for_review]
+  # pull_request_target is blocked by default on public repositories, and pull_request gets no secrets on forks.
+  workflow_run:
+    workflows: [Claude PR Review Trigger]
+    types: [completed]
   issue_comment:
     types: [created]
 
@@ -18,33 +20,65 @@ jobs:
     if: >-
       ${{
         (
-          github.event_name == 'pull_request_target'
-          && !github.event.pull_request.draft
-          && github.event.pull_request.user.type != 'Bot'
+          github.event_name == 'workflow_run'
+          && github.event.workflow_run.conclusion == 'success'
         )
         || (
           github.event_name == 'issue_comment'
           && github.event.issue.pull_request
+          && github.event.issue.user.type != 'Bot'
           && github.event.comment.user.type != 'Bot'
           && startsWith(github.event.comment.body, '/review')
         )
       }}
     permissions:
       contents: read
+      pull-requests: read
     outputs:
       allowed: ${{ steps.permission.outputs.allowed }}
+      pr_number: ${{ steps.permission.outputs.pr_number }}
+      actors: ${{ steps.permission.outputs.actors }}
     steps:
       - name: Check actor permission
         id: permission
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
           ACTOR: ${{ github.actor }}
+          ISSUE_NUMBER: ${{ github.event.issue.number }}
+          RUN_ACTOR: ${{ github.event.workflow_run.actor.login }}
+          HEAD_REPO: ${{ github.event.workflow_run.head_repository.full_name }}
+          PR_HEAD: ${{ github.event.workflow_run.head_repository.owner.login }}:${{ github.event.workflow_run.head_branch }}
         run: |
-          if gh api "repos/${{ github.repository }}/collaborators/${ACTOR}" --silent; then
-            echo "allowed=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "::notice::Skipping review, ${ACTOR} is not a collaborator"
+          set -euo pipefail
+          actors=("$ACTOR")
+          if [ "${{ github.event_name }}" = "workflow_run" ]; then
+            # On workflow_run, claude-code-action also checks who started the trigger run and who owns the fork.
+            actors+=("$RUN_ACTOR")
+            if [ "${HEAD_REPO,,}" != "${REPO,,}" ]; then
+              actors+=("${HEAD_REPO%%/*}")
+            fi
           fi
+          for actor in "${actors[@]}"; do
+            if [ -z "$actor" ] || ! gh api "repos/${REPO}/collaborators/${actor}" --silent; then
+              echo "::notice::Skipping review, ${actor:-the fork owner} is not a collaborator"
+              exit 0
+            fi
+          done
+          pr="$ISSUE_NUMBER"
+          if [ "${{ github.event_name }}" = "workflow_run" ]; then
+            # workflow_run.pull_requests is empty for fork PRs, so look the PR up by its head. The trigger workflow
+            # runs the PR's own copy of its file, so draft and bot are checked here, from the API.
+            pr=$(gh api --method GET "repos/${REPO}/pulls" -f state=open -f head="$PR_HEAD" \
+              --jq '[.[] | select((.draft | not) and .user.type != "Bot")][0].number // empty')
+          fi
+          if [ -z "$pr" ]; then
+            echo "::notice::Skipping review, no open ready pull request for ${PR_HEAD}"
+            exit 0
+          fi
+          echo "allowed=true" >> "$GITHUB_OUTPUT"
+          echo "pr_number=${pr}" >> "$GITHUB_OUTPUT"
+          echo "actors=$(IFS=,; echo "${actors[*]}")" >> "$GITHUB_OUTPUT"
 
   review:
     name: Claude PR Review
@@ -54,27 +88,25 @@ jobs:
     timeout-minutes: 15
     # Job level, so unrelated comments on the pull request don't cancel a review.
     concurrency:
-      group: claude-pr-review-${{ github.event.pull_request.number || github.event.issue.number }}
+      group: claude-pr-review-${{ needs.permission.outputs.pr_number }}
       cancel-in-progress: true
     permissions:
       contents: read
       pull-requests: write
     env:
-      PR_NUMBER: ${{ github.event.pull_request.number || github.event.issue.number }}
+      PR_NUMBER: ${{ needs.permission.outputs.pr_number }}
     steps:
-      # SECURITY: do not pass `ref:` here. `pull_request_target` checks out the
-      # base ref by default, which is trusted code. We must NEVER checkout the
-      # PR head ref, since the Anthropic API key is available to this job and
-      # we do not want fork code to execute with access to it.
+      # SECURITY: do not pass `ref:` here. `workflow_run` and `issue_comment`
+      # check out the default branch, which is trusted code. We must NEVER
+      # checkout the PR head ref, since the Anthropic API key is available to
+      # this job and we do not want fork code to execute with access to it.
       - name: Checkout base ref (trusted)
         uses: actions/checkout@v4
         with:
           fetch-depth: 1
 
-      # issue_comment checks out default branch. Move to the PR base SHA
-      # (still trusted) so 1.4-dev PRs review against 1.4-dev.
+      # Move to the PR base SHA (still trusted) so 1.4-dev PRs review against 1.4-dev.
       - name: Checkout PR base (trusted)
-        if: github.event_name == 'issue_comment'
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
@@ -133,8 +165,8 @@ jobs:
           show_full_output: "false"
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          # The action hard-fails on actors without write access, the permission job already checked this one.
-          allowed_non_write_users: ${{ github.actor }}
+          # The action hard-fails on actors without write access, the permission job already checked these.
+          allowed_non_write_users: ${{ needs.permission.outputs.actors }}
           # Since v1.0.288 the action skips PRs from forks by default. The permission job gates the actor and only
           # the trusted base is checked out, so fork PRs are safe to review.
           allow_fork_prs: "true"
