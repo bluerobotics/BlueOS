@@ -76,11 +76,11 @@ class VersionChooser:
         }
         return JSONResponse(content=output)
 
-    async def load(self, data: bytes) -> JSONResponse:
+    async def load(self, data: AsyncGenerator[bytes, None]) -> JSONResponse:
         """Load a docker image file.
 
         Args:
-            data (bytes): Tar file from `docker save` output
+            data (AsyncGenerator[bytes, None]): Chunks of the tar file from `docker save` output
 
         Returns:
             Response:
