@@ -55,13 +55,14 @@ class NetworkManagerWifi(AbstractWifiManager):
         self._nm_settings: Optional[NetworkManagerSettings] = None
         self._create_ap_process: Optional[subprocess.Popen[str]] = None
         self._ap_interface = "uap0"
+        self._unmanaged_interface: Optional[str] = None
         self._tasks: List[asyncio.Task[Any]] = []
         self._nm = NetworkManager(self._bus)
         self._nm_settings = NetworkManagerSettings(self._bus)
         logger.info("NetworkManagerWifi initialized")
 
-    async def _wifi_devices(self) -> Dict[str, str]:
-        """Map wifi interface names to their device paths, queried live so hot-plugged cards show up"""
+    async def _all_wifi_devices(self) -> Dict[str, str]:
+        """Map wifi interface names to their device paths, including the AP interface"""
         assert self._nm is not None
         devices: Dict[str, str] = {}
         for device_path in await self._nm.get_devices():
@@ -74,9 +75,49 @@ class NetworkManagerWifi(AbstractWifiManager):
             except DbusUnknownMethodError:
                 logger.debug(f"Device {device_path} disappeared while listing wifi interfaces")
                 continue
-            if name != self._ap_interface:
-                devices[name] = device_path
+            devices[name] = device_path
         return devices
+
+    async def _wifi_devices(self) -> Dict[str, str]:
+        """Map wifi interface names to their device paths, queried live so hot-plugged cards show up"""
+        devices = await self._all_wifi_devices()
+        devices.pop(self._ap_interface, None)
+        return devices
+
+    async def _wifi_device_path(self, interface: str) -> Optional[str]:
+        return (await self._all_wifi_devices()).get(interface)
+
+    async def _set_interface_managed(self, interface: str, managed: bool) -> None:
+        device_path = await self._wifi_device_path(interface)
+        if device_path is None:
+            logger.warning(f"Cannot change managed state of {interface}: device is gone")
+            return
+        device = NetworkDeviceWireless(device_path, self._bus)
+        try:
+            if await device.managed == managed:
+                return
+            await device.managed.set_async(managed)
+            logger.info(f"Set {interface} managed={managed}")
+        except Exception as e:
+            logger.warning(f"Cannot change managed state of {interface}: {e}")
+
+    async def _unmanage_hotspot_card(self) -> None:
+        parent = await self.hotspot_interface()
+        if parent is None:
+            return
+        self._unmanaged_interface = parent
+        await self._set_interface_managed(parent, False)
+        await self._set_interface_managed(self._ap_interface, False)
+
+    async def _manage_hotspot_card(self) -> None:
+        parent = self._unmanaged_interface
+        self._unmanaged_interface = None
+        if parent is not None:
+            await self._set_interface_managed(parent, True)
+
+    async def _manage_all_wifi_devices(self) -> None:
+        for name in await self._all_wifi_devices():
+            await self._set_interface_managed(name, True)
 
     async def _wifi_device(self, interface: Optional[str]) -> Optional[WifiInterface]:
         """The requested interface, or the first one when no interface is requested."""
@@ -116,7 +157,11 @@ class NetworkManagerWifi(AbstractWifiManager):
         """Create virtual AP interface using iw"""
         try:
             # Check if interface already exists
-            existing = subprocess.run(["ip", "link", "show", self._ap_interface], capture_output=True, check=False)
+            existing = subprocess.run(
+                ["ip", "link", "show", self._ap_interface],
+                capture_output=True,
+                check=False,
+            )
             if existing.returncode == 0:
                 logger.info(f"Interface {self._ap_interface} already exists")
                 return True
@@ -127,7 +172,19 @@ class NetworkManagerWifi(AbstractWifiManager):
                 return False
 
             # Create virtual interface
-            subprocess.run(["iw", "dev", phys_name, "interface", "add", self._ap_interface, "type", "__ap"], check=True)
+            subprocess.run(
+                [
+                    "iw",
+                    "dev",
+                    phys_name,
+                    "interface",
+                    "add",
+                    self._ap_interface,
+                    "type",
+                    "__ap",
+                ],
+                check=True,
+            )
             logger.info(f"Created virtual AP interface {self._ap_interface}")
 
             # The kernel copies the physical interface's current address onto the
@@ -139,7 +196,10 @@ class NetworkManagerWifi(AbstractWifiManager):
             except Exception as e:
                 logger.error(f"Could not derive an address for {self._ap_interface}: {e}")
                 return False
-            subprocess.run(["ip", "link", "set", self._ap_interface, "address", address], check=True)
+            subprocess.run(
+                ["ip", "link", "set", self._ap_interface, "address", address],
+                check=True,
+            )
 
             # Set interface up
             subprocess.run(["ip", "link", "set", self._ap_interface, "up"], check=True)
@@ -162,7 +222,12 @@ class NetworkManagerWifi(AbstractWifiManager):
         change when NetworkManager puts a temporary address on it.
         """
         link = json.loads(
-            subprocess.run(["ip", "-j", "link", "show", phys_name], check=True, capture_output=True, text=True).stdout
+            subprocess.run(
+                ["ip", "-j", "link", "show", phys_name],
+                check=True,
+                capture_output=True,
+                text=True,
+            ).stdout
         )[0]
         octets = link.get("permaddr", link["address"]).split(":")
         # 0x02 sets the locally administered bit, so the address cannot collide
@@ -177,7 +242,11 @@ class NetworkManagerWifi(AbstractWifiManager):
         """Remove virtual AP interface"""
         try:
             # Check if interface exists
-            existing = subprocess.run(["ip", "link", "show", self._ap_interface], capture_output=True, check=True)
+            existing = subprocess.run(
+                ["ip", "link", "show", self._ap_interface],
+                capture_output=True,
+                check=True,
+            )
 
             if existing.returncode != 0:
                 return
@@ -196,6 +265,8 @@ class NetworkManagerWifi(AbstractWifiManager):
         for sig in (signal.SIGTERM, signal.SIGINT):
             loop.add_signal_handler(sig, lambda s=sig: asyncio.create_task(self.handle_shutdown(s)))
 
+        # A crash while the hotspot was up leaves the parent unmanaged, and that state dies with NetworkManager
+        await self._manage_all_wifi_devices()
         # Create virtual AP interface if needed
         await self._create_virtual_interface()
         self._tasks.append(asyncio.get_event_loop().create_task(self._autoscan()))
@@ -205,9 +276,13 @@ class NetworkManagerWifi(AbstractWifiManager):
 
         while True:
             for name, device_path in (await self._wifi_devices()).items():
+                if name == self._unmanaged_interface:
+                    continue
                 # A card can be unplugged or busy at any time, that should not stop scans on the others
                 try:
                     device = NetworkDeviceWireless(device_path, self._bus)
+                    if not await device.managed:
+                        continue
                     if await device.last_scan > 10000:
                         await device.request_scan({})
                         logger.info(f"Requested WiFi scan on {name}")
@@ -278,7 +353,10 @@ class NetworkManagerWifi(AbstractWifiManager):
             return []
 
     async def try_connect_to_network(
-        self, credentials: WifiCredentials, hidden: bool = False, interface: Optional[str] = None
+        self,
+        credentials: WifiCredentials,
+        hidden: bool = False,
+        interface: Optional[str] = None,
     ) -> None:
         # Check for existing connection
         assert self._nm is not None
@@ -330,8 +408,14 @@ class NetworkManagerWifi(AbstractWifiManager):
         }
 
         if credentials.password:
-            connection["802-11-wireless-security"] = {"key-mgmt": ("s", "wpa-psk"), "psk": ("s", credentials.password)}
-            connection["802-11-wireless"]["security"] = ("s", "802-11-wireless-security")
+            connection["802-11-wireless-security"] = {
+                "key-mgmt": ("s", "wpa-psk"),
+                "psk": ("s", credentials.password),
+            }
+            connection["802-11-wireless"]["security"] = (
+                "s",
+                "802-11-wireless-security",
+            )
 
         # Add and activate connection
         conn_path = await self._nm_settings.add_connection(connection)
@@ -388,42 +472,55 @@ class NetworkManagerWifi(AbstractWifiManager):
             logger.error(f"Error finding existing connection: {e}")
             return None
 
-    # pylint: disable=too-many-branches
+    # pylint: disable=too-many-branches,too-many-statements
     async def enable_hotspot(self, save_settings: bool = True) -> bool:
-        if not await self._create_virtual_interface():
-            logger.error("Failed to create virtual interface for AP")
-            return False
-
-        credentials = self.hotspot_credentials()
-
-        # Build create_ap command
-        cmd = [
-            "create_ap",
-            "-n",  # self._ap_interface,  # Uncomment for routing internet (seemed to cause communication issues when starting hotspot)
-            "uap0",  # Use physical interface for internet
-            "--no-virt",  # Default for Pi's brcmfmac; other chips get an extra AP on uap0 that breaks wlan0
-            "-g",
-            "192.168.42.1",  # IPv4 Gateway for the Access Point
-            "--redirect-to-localhost",  # Redirect all traffic to localhost, captive-portal style
-            credentials.ssid,
-            credentials.password,
-        ]
-
-        # Start create_ap process with pipe for output
+        success = False
+        started_process: Optional[subprocess.Popen[str]] = None
         try:
+            # Scans on the parent card retune the single channel this radio shares with the AP
+            await self._unmanage_hotspot_card()
+            if not await self._create_virtual_interface():
+                logger.error("Failed to create virtual interface for AP")
+                return False
+            # The AP interface may not have existed when the card was unmanaged above
+            await self._set_interface_managed(self._ap_interface, False)
+
+            credentials = self.hotspot_credentials()
+
+            # Build create_ap command
+            cmd = [
+                "create_ap",
+                "-n",  # self._ap_interface,  # Uncomment for routing internet (seemed to cause communication issues when starting hotspot)
+                "uap0",  # Use physical interface for internet
+                "--no-virt",  # Default for Pi's brcmfmac; other chips get an extra AP on uap0 that breaks wlan0
+                "-g",
+                "192.168.42.1",  # IPv4 Gateway for the Access Point
+                "--redirect-to-localhost",  # Redirect all traffic to localhost, captive-portal style
+                credentials.ssid,
+                credentials.password,
+            ]
+
+            # Start create_ap process with pipe for output
             if self._create_ap_process:
                 logger.info("create_ap process already running, cleaning up...")
-                self._create_ap_process.terminate()
-                self._create_ap_process.wait()
+                # Detach first so the old monitor does not manage the card we just unmanaged
+                previous = self._create_ap_process
+                self._create_ap_process = None
+                previous.terminate()
+                previous.wait()
                 logger.info("Stopped existing create_ap process")
             # pylint: disable=consider-using-with
             self._create_ap_process = subprocess.Popen(
-                cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, universal_newlines=True, bufsize=1
+                cmd,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.STDOUT,
+                universal_newlines=True,
+                bufsize=1,
             )
+            started_process = self._create_ap_process
             # pylint: enable=consider-using-with
 
             # Wait for "Done" or "ERROR" in output
-            success = False
             start_time = asyncio.get_event_loop().time()
             timeout = 30  # 30 second timeout
             assert self._create_ap_process is not None
@@ -467,10 +564,19 @@ class NetworkManagerWifi(AbstractWifiManager):
                 self._settings_manager.save()
             logger.info("Hotspot enabled")
 
-        except CreateAPException as e:
-            raise e
+        except CreateAPException:
+            raise
         except Exception as e:
             logger.error(f"Error starting create_ap: {e}")
+        finally:
+            # Only the process this attempt started. A failed retry must not kill the AP already running.
+            if not success and started_process is not None and started_process.poll() is None:
+                if self._create_ap_process is started_process:
+                    self._create_ap_process = None
+                started_process.terminate()
+                started_process.wait()
+            if not success:
+                await self._manage_hotspot_card()
         return success
 
     async def _monitor_create_ap_output(self, process: subprocess.Popen[str]) -> None:
@@ -493,16 +599,20 @@ class NetworkManagerWifi(AbstractWifiManager):
             logger.info("create_ap process monitoring ended")
             if process == self._create_ap_process:
                 self._create_ap_process = None
+                await self._manage_hotspot_card()
 
     async def disable_hotspot(self, save_settings: bool = True) -> None:
         if self._create_ap_process:
-            self._create_ap_process.terminate()
-            self._create_ap_process.wait()
+            # Detach first so the monitor does not also manage the card
+            process = self._create_ap_process
             self._create_ap_process = None
+            process.terminate()
+            process.wait()
             logger.info("Stopped create_ap process")
 
         # Cleanup virtual interface
         await self._cleanup_virtual_interface()
+        await self._manage_hotspot_card()
 
         if save_settings:
             self._settings_manager.settings.hotspot_enabled = False
@@ -721,6 +831,9 @@ class NetworkManagerWifi(AbstractWifiManager):
             await self.enable_hotspot()
         while True:
             await asyncio.sleep(30)
+            # NetworkManager drops the unmanaged flag when it restarts
+            if await self.hotspot_is_running():
+                await self._unmanage_hotspot_card()
             if not self._settings_manager.settings.smart_hotspot_enabled:
                 continue
 
