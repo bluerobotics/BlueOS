@@ -252,6 +252,12 @@ class FirmwareDownloader:
         if not versions:
             raise NoVersionAvailable(f"Could not find available firmware versions for {board}/{vehicle}.")
 
+        # Versions come with the preferred platform first. For boards with a board id the others are variants built
+        # for the same id, only installed when their firmware is chosen explicitly by URL.
+        preferred_platform = versions[0].platform
+        if board.ardupilot_board_id is not None:
+            versions = [found_version for found_version in versions if found_version.platform == preferred_platform]
+
         if version and not any(version == found_version.name for found_version in versions):
             raise NoVersionAvailable(f"Version {version} was not found for {board}/{vehicle}.")
 
@@ -274,24 +280,14 @@ class FirmwareDownloader:
                 version = f"STABLE-{newest_version}"
             else:
                 version = "BETA"
-        if board.ardupilot_board_id is not None:
-            items = order_by_preferred_platform(
-                await self._find_version_item(
-                    vehicletype=vehicle.value,
-                    mav_firmware_version_type=version,
-                    format=firmware_format,
-                    board_id=board.ardupilot_board_id,
-                ),
-                board,
-            )
-            items = [item for item in items if item.platform == items[0].platform]
-        else:
-            items = await self._find_version_item(
-                vehicletype=vehicle.value,
-                platform=board.platform.name,
-                mav_firmware_version_type=version,
-                format=firmware_format,
-            )
+        board_id_filter = {"board_id": board.ardupilot_board_id} if board.ardupilot_board_id is not None else {}
+        items = await self._find_version_item(
+            vehicletype=vehicle.value,
+            platform=preferred_platform,
+            mav_firmware_version_type=version,
+            format=firmware_format,
+            **board_id_filter,
+        )
 
         if len(items) == 0:
             raise NoCandidate(

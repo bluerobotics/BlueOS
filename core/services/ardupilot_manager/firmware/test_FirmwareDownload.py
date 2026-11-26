@@ -5,6 +5,7 @@ from typing import Any, Dict, List
 
 import aiohttp
 import pytest
+from exceptions import NoVersionAvailable
 from firmware.FirmwareDownload import FirmwareDownloader
 from typedefs import FlightController, Platform, PlatformType, Vehicle
 
@@ -33,6 +34,9 @@ FAKE_MANIFEST = {
         manifest_item(9, "Pixhawk1-1M"),
         manifest_item(9, "fmuv2"),
         manifest_item(9, "Pixhawk1"),
+        manifest_item(1063, "CubeOrangePlus-SimOnHardWare", "STABLE-4.7.0"),
+        manifest_item(1063, "CubeOrangePlus-bdshot", "STABLE-4.6.0"),
+        manifest_item(1063, "CubeOrangePlus", "STABLE-4.5.0"),
     ],
 }
 
@@ -99,6 +103,18 @@ def test_download_url_uses_preferred_platform() -> None:
         "https://firmware.invalid/CubeOrange-bdshot/"
     )
     assert asyncio.run(url(serial_board("Pixhawk1", 9))).startswith("https://firmware.invalid/Pixhawk1/")
+
+
+def test_download_url_picks_newest_stable_of_preferred_platform() -> None:
+    async def url(board: FlightController, version: str = "") -> str:
+        download_url: str = await fake_downloader().get_download_url(Vehicle.Sub, board, version)
+        return download_url
+
+    board = serial_board("CubeOrangePlus", 1063)
+    assert asyncio.run(url(board)) == "https://firmware.invalid/CubeOrangePlus/STABLE-4.5.0/ardusub.apj"
+    # Versions only built for variants are not installed by version
+    with pytest.raises(NoVersionAvailable):
+        asyncio.run(url(board, "STABLE-4.6.0"))
 
 
 Pixhawk1 = FlightController(
