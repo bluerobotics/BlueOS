@@ -940,14 +940,18 @@ class AutoPilotManager(metaclass=Singleton):
     ) -> None:
         # A serial board is only known by the platform of the flashed build once it is detected again with it
         save_default_after_restart = make_default and board.type == PlatformType.Serial
-        async with self._autopilot_paused():
-            firmware = await self.firmware_manager.install_firmware_from_url(
-                url, board, make_default and not save_default_after_restart, default_parameters, output_callback
-            )
-        if save_default_after_restart:
-            current = self.current_board
-            flashed = current if current is not None and is_same_hardware(board, current) else board
-            self.firmware_manager.save_default_firmware(firmware, flashed.platform)
+        firmware: Optional[pathlib.Path] = None
+        try:
+            async with self._autopilot_paused():
+                firmware = await self.firmware_manager.install_firmware_from_url(
+                    url, board, make_default and not save_default_after_restart, default_parameters, output_callback
+                )
+        finally:
+            # Also saved when the restart fails, the firmware is on the board already
+            if save_default_after_restart and firmware is not None:
+                current = self.current_board
+                flashed = current if current is not None and is_same_hardware(board, current) else board
+                self.firmware_manager.save_default_firmware(firmware, flashed.platform)
 
     async def restore_default_firmware(
         self, board: FlightController, output_callback: Optional[Callable[[str, str], Awaitable[None]]] = None

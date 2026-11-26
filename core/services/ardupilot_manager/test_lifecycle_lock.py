@@ -101,6 +101,23 @@ async def test_make_default_of_non_serial_board_is_saved_before_flashing(manager
     firmware_manager.save_default_firmware.assert_not_called()
 
 
+async def test_make_default_of_serial_board_survives_a_failed_restart(manager: AutoPilotManager) -> None:
+    serial_board = FlightController(
+        name="MatekH743",
+        platform=Platform(name="MatekH743", platform_type=PlatformType.Serial),
+        ardupilot_board_id=1013,
+        path="/dev/ttyACM0",
+    )
+    firmware_manager = cast(AsyncMock, manager.firmware_manager)
+    firmware_manager.save_default_firmware = MagicMock()
+    firmware_manager.install_firmware_from_url.return_value = Path("firmware.apj")
+    with patch.object(manager, "_start_ardupilot_locked", AsyncMock(side_effect=RuntimeError("no board"))):
+        with pytest.raises(RuntimeError):
+            await manager.install_firmware_from_url("https://example.invalid/fw", serial_board, make_default=True)
+
+    firmware_manager.save_default_firmware.assert_called_once_with(Path("firmware.apj"), serial_board.platform)
+
+
 @pytest.mark.parametrize("install_error", [None, RuntimeError("upload failed")])
 async def test_install_pauses_serial_probing_until_flashed(
     manager: AutoPilotManager, install_error: Exception | None
