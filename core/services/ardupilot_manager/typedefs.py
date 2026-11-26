@@ -130,6 +130,21 @@ class Parameters(BaseModel):
     params: Dict[str, float]
 
 
+# Platforms used to be a string enum, these are the values that may still be on saved settings
+LEGACY_PLATFORMS = {
+    "Pixhawk1": Platform(name="Pixhawk1", platform_type=PlatformType.Serial),
+    "Pixhawk4": Platform(name="Pixhawk4", platform_type=PlatformType.Serial),
+    "Pixhawk6X": Platform(name="Pixhawk6X", platform_type=PlatformType.Serial),
+    "Pixhawk6C": Platform(name="Pixhawk6C", platform_type=PlatformType.Serial),
+    "CubeOrange": Platform(name="CubeOrange", platform_type=PlatformType.Serial),
+    "GenericSerial": Platform(name="GenericSerial", platform_type=PlatformType.Serial),
+    "navigator": Platform(name="Navigator", platform_type=PlatformType.Linux),
+    "navigator64": Platform(name="Navigator64", platform_type=PlatformType.Linux),
+    "argonot": Platform(name="Argonot", platform_type=PlatformType.Linux),
+    "Manual": Platform(name="Manual", platform_type=PlatformType.Manual),
+}
+
+
 class FlightController(BaseModel):
     """Flight-controller board."""
 
@@ -139,6 +154,17 @@ class FlightController(BaseModel):
     ardupilot_board_id: Optional[int] = None
     path: Optional[str] = None
     flags: List[FlightControllerFlags] = []
+
+    @field_validator("platform", mode="before")
+    @classmethod
+    def accept_legacy_platform(cls: Any, value: Any) -> Any:
+        if not isinstance(value, str):
+            return value
+        if value.startswith("SITL_"):
+            return Platform(name=value, platform_type=PlatformType.SITL)
+        if value in LEGACY_PLATFORMS:
+            return LEGACY_PLATFORMS[value]
+        raise ValueError(f"Unknown platform: {value}")
 
     @property
     def type(self) -> PlatformType:

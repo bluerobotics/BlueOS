@@ -109,6 +109,21 @@ def test_migrate_from_old_settings_copies_supported_fields(tmp_path: Path, monke
     )
 
 
+def test_saved_settings_with_legacy_platform_load(tmp_path: Path) -> None:
+    manager: PydanticManager[SettingsV1] = PydanticManager(SERVICE_NAME, SettingsV1, tmp_path)
+    manager.settings.start_on_boot = False
+    manager.save()
+    settings_file = next(tmp_path.rglob("settings-*.json"))
+    data = json.loads(settings_file.read_text(encoding="utf-8"))
+    data["preferred_board"] = {"name": "Pixhawk1", "platform": "Pixhawk1", "path": "/dev/ttyACM0", "flags": []}
+    settings_file.write_text(json.dumps(data), encoding="utf-8")
+
+    reloaded: PydanticManager[SettingsV1] = PydanticManager(SERVICE_NAME, SettingsV1, tmp_path)
+    assert reloaded.settings.start_on_boot is False
+    assert reloaded.settings.preferred_board is not None
+    assert reloaded.settings.preferred_board.platform == Platform(name="Pixhawk1", platform_type=PlatformType.Serial)
+
+
 def _assert_unmigrated_defaults(target: SettingsV1) -> None:
     assert not target.serials
     assert target.sitl_frame == SITLFrame.UNDEFINED
