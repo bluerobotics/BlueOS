@@ -11,7 +11,10 @@
       color="warning"
       outlined
     >
-      <v-card variant="outlined">
+      <v-card
+        variant="outlined"
+        :data-testid="testId"
+      >
         <v-card-title class="align-center">
           <span class="warning-title">
             <span
@@ -27,11 +30,19 @@
           <slot />
         </v-card-text>
         <v-card-actions>
-          <v-btn :color="cancelColor" @click="close">
+          <v-btn
+            :color="cancelColor"
+            :data-testid="`${testId}-cancel`"
+            @click="close"
+          >
             {{ cancelLabel }}
           </v-btn>
           <v-spacer />
-          <v-btn :color="confirmColor" @click="confirmAndMaybeClose">
+          <v-btn
+            :color="confirmColor"
+            :data-testid="`${testId}-confirm`"
+            @click="confirmAndMaybeClose"
+          >
             {{ confirmLabel }}
           </v-btn>
         </v-card-actions>
@@ -94,6 +105,10 @@ export default Vue.extend({
     closeOnConfirm: {
       type: Boolean,
       default: true,
+    },
+    testId: {
+      type: String,
+      default: 'warning-dialog',
     },
     textClass: {
       type: String,
