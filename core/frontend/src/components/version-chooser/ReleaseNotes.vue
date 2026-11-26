@@ -5,12 +5,14 @@
       indeterminate
       size="24"
       color="primary"
+      data-testid="release-notes-loading"
     />
     <div v-else-if="notes">
       <!-- Rendered and sanitized by GitHub itself, which is what the release page serves -->
       <!-- eslint-disable vue/no-v-html -->
       <div
         class="release-notes"
+        data-testid="release-notes"
         v-html="notes.html"
       />
       <!-- eslint-enable vue/no-v-html -->
@@ -18,6 +20,7 @@
     <p
       v-else
       class="text-caption text--secondary ma-0"
+      data-testid="release-notes-unavailable"
     >
       {{ t`Release notes are not available for this version.` }}
     </p>
