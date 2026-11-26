@@ -2,11 +2,16 @@ import asyncio
 import json
 import pathlib
 import platform
+from typing import Union
 
 import pytest
+from ardupilot_fw_decoder import BoardSubType, BoardType
 from exceptions import InvalidFirmwareFile
 from firmware.FirmwareDownload import FirmwareDownloader
-from firmware.FirmwareInstall import FirmwareInstaller
+from firmware.FirmwareInstall import (
+    FirmwareInstaller,
+    get_correspondent_decoder_platform,
+)
 from typedefs import FlightController, Platform, PlatformType, Vehicle
 
 Pixhawk1 = FlightController(
@@ -76,6 +81,21 @@ def test_apj_validation_requires_board_id(tmp_path: pathlib.Path) -> None:
     for board in (Pixhawk1, GenericSerial):
         with pytest.raises(InvalidFirmwareFile, match="Could not find board_id"):
             FirmwareInstaller.validate_firmware(firmware_path, board)
+
+
+@pytest.mark.parametrize(
+    "board_platform, decoder_platform",
+    [
+        (Platform(name="Navigator", platform_type=PlatformType.Linux), BoardSubType.LINUX_NAVIGATOR),
+        (Platform(name="navigator64", platform_type=PlatformType.Linux), BoardSubType.LINUX_NAVIGATOR),
+        (Platform(name="Argonot", platform_type=PlatformType.Linux), BoardSubType.LINUX_NAVIGATOR),
+        (Platform(name="Navio2", platform_type=PlatformType.Linux), BoardType.EMPTY),
+        (Platform.SITL(), BoardType.SITL),
+        (Platform(name="Pixhawk1", platform_type=PlatformType.Serial), BoardType.EMPTY),
+    ],
+)
+def test_decoder_platform_mapping(board_platform: Platform, decoder_platform: Union[BoardType, BoardSubType]) -> None:
+    assert get_correspondent_decoder_platform(board_platform) == decoder_platform
 
 
 def test_apj_validation_reports_board_id_mismatch(tmp_path: pathlib.Path) -> None:

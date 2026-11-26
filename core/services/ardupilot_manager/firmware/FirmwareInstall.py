@@ -27,9 +27,16 @@ def is_valid_elf_type(elf_arch: str) -> bool:
     return False
 
 
-def get_correspondent_decoder_platform(current_platform_type: PlatformType) -> Union[BoardType, BoardSubType]:
-    correspondent_decoder_platform = {PlatformType.SITL: BoardType.SITL, PlatformType.Linux: BoardType.LINUX}
-    return correspondent_decoder_platform.get(current_platform_type, BoardType.EMPTY)
+NAVIGATOR_PLATFORMS = {"navigator", "navigator64", "argonot"}
+
+
+def get_correspondent_decoder_platform(platform: Platform) -> Union[BoardType, BoardSubType]:
+    if platform.platform_type == PlatformType.SITL:
+        return BoardType.SITL
+    # Other Linux boards (Navio2, BBBmini...) run different HALs, an unknown one must never match any firmware
+    if platform.platform_type == PlatformType.Linux and platform.name.lower() in NAVIGATOR_PLATFORMS:
+        return BoardSubType.LINUX_NAVIGATOR
+    return BoardType.EMPTY
 
 
 class FirmwareInstaller:
@@ -82,10 +89,7 @@ class FirmwareInstaller:
             firm_decoder.process(firmware_path)
             firm_board = BoardType(firm_decoder.fwversion.board_type)
             firm_sub_board = BoardSubType(firm_decoder.fwversion.board_subtype)
-            current_decoder_platform = get_correspondent_decoder_platform(platform.platform_type)
-            logger.debug(
-                f"firm_board: {firm_board}, firm_sub_board: {firm_sub_board}, current_decoder_platform: {current_decoder_platform}"
-            )
+            current_decoder_platform = get_correspondent_decoder_platform(platform)
             if current_decoder_platform not in [firm_board, firm_sub_board]:
                 raise InvalidFirmwareFile(
                     (
@@ -99,10 +103,8 @@ class FirmwareInstaller:
     @staticmethod
     def validate_firmware(firmware_path: pathlib.Path, board: FlightController) -> None:
         """Check if given firmware is valid for given platform."""
-        logger.debug(f"Validating firmware for board {board}.")
-        logger.debug(f"platform type: {board.platform.platform_type}")
         firmware_format = FirmwareDownloader._supported_firmware_formats[board.platform.platform_type]
-        logger.debug(f"Firmware format: {firmware_format}")
+        logger.debug(f"Validating {firmware_format.value} firmware for board {board.name}.")
         if firmware_format == FirmwareFormat.APJ:
             FirmwareInstaller._validate_apj(firmware_path, board)
             return
