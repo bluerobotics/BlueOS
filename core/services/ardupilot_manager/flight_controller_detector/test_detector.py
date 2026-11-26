@@ -310,26 +310,58 @@ async def test_port_without_board_id_is_skipped(probes: FakeProbes) -> None:
 
 async def redetect() -> List[FlightController]:
     """Detect again, dropping only the detection list cache."""
-    Detector._probe_serial_flight_controllers.invalidate()  # type: ignore[attr-defined]
+    Detector.invalidate_detection()
     boards: List[FlightController] = await Detector.detect_serial_flight_controllers(())
     return boards
+
+
+def age_ports() -> None:
+    for key in Detector._first_seen:
+        Detector._first_seen[key] -= detector_module.NEW_PORT_SECONDS + 1
 
 
 async def test_ports_without_board_are_not_probed_again(probes: FakeProbes) -> None:
     port = FakePort("/dev/ttyACM0", product="Arduino Uno", manufacturer="Arduino (www.arduino.cc)", vid=0x2341)
     probes.ports = [port]
     assert not await redetect()
+    age_ports()
     assert not await redetect()
-    assert probes.probed == ["/dev/ttyACM0"]
+    assert not await redetect()
+    assert probes.probed == ["/dev/ttyACM0"] * 2
 
     Detector.invalidate_caches()
     assert not await redetect()
+    assert probes.probed == ["/dev/ttyACM0"] * 3
+
+
+async def test_new_ports_are_probed_until_their_board_boots(probes: FakeProbes) -> None:
+    probes.ports = [FakePort("/dev/ttyACM0", product="CubeOrange")]
+    assert not await redetect()
+    assert not await redetect()
+    probes.mavlink = {"/dev/ttyACM0": 140}
+    assert len(await redetect()) == 1
+    assert probes.probed == ["/dev/ttyACM0"] * 3
+
+
+async def test_invalidate_detection_keeps_ports_without_board(probes: FakeProbes) -> None:
+    probes.ports = [FakePort("/dev/ttyACM0", product="CubeOrange")]
+    assert not await redetect()
+    age_ports()
+    assert not await redetect()
+    probes.mavlink = {"/dev/ttyACM0": 140}
+    Detector.invalidate_detection()
+    assert not await Detector.detect_serial_flight_controllers(())
     assert probes.probed == ["/dev/ttyACM0"] * 2
+
+    Detector.invalidate_caches()
+    assert len(await Detector.detect_serial_flight_controllers(())) == 1
 
 
 async def test_ports_without_board_are_probed_again_once_replugged(probes: FakeProbes) -> None:
     port = FakePort("/dev/ttyACM0", product="CubeOrange")
     probes.ports = [port]
+    assert not await redetect()
+    age_ports()
     assert not await redetect()
 
     probes.ports = []
@@ -337,11 +369,13 @@ async def test_ports_without_board_are_probed_again_once_replugged(probes: FakeP
     probes.ports = [port]
     probes.mavlink = {"/dev/ttyACM0": 140}
     assert len(await redetect()) == 1
-    assert probes.probed == ["/dev/ttyACM0"] * 2
+    assert probes.probed == ["/dev/ttyACM0"] * 3
 
 
 async def test_ports_without_board_are_probed_again_when_the_device_changes(probes: FakeProbes) -> None:
     probes.ports = [FakePort("/dev/ttyACM0", product="CubeOrange-BL")]
+    assert not await redetect()
+    age_ports()
     assert not await redetect()
 
     probes.ports = [FakePort("/dev/ttyACM0", product="CubeOrange")]
@@ -352,11 +386,15 @@ async def test_ports_without_board_are_probed_again_when_the_device_changes(prob
 async def test_ports_without_board_are_probed_again_after_a_while(probes: FakeProbes) -> None:
     probes.ports = [FakePort("/dev/ttyACM0", product="CubeOrange")]
     assert not await redetect()
+    age_ports()
+    assert not await redetect()
+    assert not await redetect()
+    assert probes.probed == ["/dev/ttyACM0"] * 2
 
     for key in Detector._no_board_cache:
         Detector._no_board_cache[key] -= detector_module.NO_BOARD_CACHE_SECONDS
     assert not await redetect()
-    assert probes.probed == ["/dev/ttyACM0"] * 2
+    assert probes.probed == ["/dev/ttyACM0"] * 3
 
 
 async def test_only_successful_bootloader_probes_are_cached(probes: FakeProbes) -> None:

@@ -21,6 +21,8 @@ from typedefs import FlightController, FlightControllerFlags, Platform, Platform
 BOOTLOADER_CACHE_SECONDS = 60
 # Short enough to pick up a board that was still booting on its first probe
 NO_BOARD_CACHE_SECONDS = 15
+# A board that just showed up may still be booting, its ports are probed on every pass for this long
+NEW_PORT_SECONDS = 10
 
 # (vid, pid, serial number, USB device path, product, manufacturer). The product tells apart builds sharing the same
 # hardware, like Pixhawk1 and fmuv3
@@ -36,6 +38,8 @@ class Detector:
     _bootloader_cache: Dict[Tuple[str, Optional[str]], Tuple[float, int]] = {}
     # (device, USB identity) -> time of the probe that found no board there
     _no_board_cache: Dict[Tuple[str, UsbIdentity], float] = {}
+    # (device, USB identity) -> time it was first seen by a probe pass
+    _first_seen: Dict[Tuple[str, UsbIdentity], float] = {}
     # Device path -> identity of the USB device last probed there. Kept by invalidate_caches(), since the running
     # board's port can't be probed again while the router holds it
     _port_identities: Dict[str, UsbIdentity] = {}
@@ -163,7 +167,9 @@ class Detector:
         if board_id is None:
             board_id = await get_board_id(port.device)
         if board_id is None:
-            Detector._no_board_cache[no_board_key] = time.monotonic()
+            now = time.monotonic()
+            if now - Detector._first_seen.get(no_board_key, now) > NEW_PORT_SECONDS:
+                Detector._no_board_cache[no_board_key] = now
             return None
 
         Detector._no_board_cache.pop(no_board_key, None)
@@ -215,6 +221,11 @@ class Detector:
         present = {(port.device, Detector._usb_identity(port)) for ports in usb_devices.values() for port in ports}
         for key in set(Detector._no_board_cache) - present:
             del Detector._no_board_cache[key]
+        for key in set(Detector._first_seen) - present:
+            del Detector._first_seen[key]
+        now = time.monotonic()
+        for key in present:
+            Detector._first_seen.setdefault(key, now)
 
         boards = []
         for ports in sorted(usb_devices.values(), key=lambda ports: min(port.name for port in ports)):
@@ -230,10 +241,22 @@ class Detector:
         return boards
 
     @classmethod
-    def invalidate_caches(cls) -> None:
+    def invalidate_detection(cls) -> None:
+        """Detect again on the next call, ports known to have no board are still skipped."""
         cls._probe_serial_flight_controllers.invalidate()  # type: ignore[attr-defined]
+
+    @classmethod
+    def invalidate_caches(cls) -> None:
+        cls.invalidate_detection()
         cls._bootloader_cache.clear()
         cls._no_board_cache.clear()
+        cls._first_seen.clear()
+
+    @classmethod
+    def usb_serial_number(cls, device: Optional[str]) -> Optional[str]:
+        """USB serial number of the board last detected on this device path."""
+        identity = cls._port_identities.get(device) if device is not None else None
+        return identity[2] if identity is not None else None
 
     @staticmethod
     def detect_sitl() -> FlightController:
