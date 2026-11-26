@@ -68,21 +68,22 @@ async def target_board(board_name: Optional[str], board_id: Optional[int] = None
     operations on the running board or on some of the connected boards. This function abstract this logic that is
     common on all the routes.
 
-    If the `board_name` argument is None, it will check if there's a running board, and return it if so. If one
-    provides the `board_name`, this function will check if there's a connected board with that name and return it if so.
+    If both `board_name` and `board_id` are None, it will check if there's a running board, and return it if so.
+    Otherwise it returns the first connected board, bootloaders included, matching the ArduPilot board id and whose
+    platform (case-insensitive) or name matches `board_name`.
     """
-    if board_name is not None:
-        try:
-            if board_id is not None:
-                return next(
-                    board for board in await autopilot.available_boards(True) if board.ardupilot_board_id == board_id
-                )
-            return next(board for board in await autopilot.available_boards(True) if board.platform.name == board_name)
-        except StopIteration as error:
-            raise ValueError("Chosen board not available.") from error
-    if autopilot.current_board is None:
-        raise RuntimeError("No board running and no target board set.")
-    return autopilot.current_board
+    if board_name is None and board_id is None:
+        if autopilot.current_board is None:
+            raise RuntimeError("No board running and no target board set.")
+        return autopilot.current_board
+
+    for board in await autopilot.available_boards(True):
+        if board_id is not None and board.ardupilot_board_id != board_id:
+            continue
+        if board_name is not None and board_name.lower() != board.platform.name.lower() and board_name != board.name:
+            continue
+        return board
+    raise ValueError("Chosen board not available.")
 
 
 def raise_lock(*raise_args: str, **kwargs: int) -> None:
@@ -330,14 +331,7 @@ async def install_firmware_from_file(
 def get_board() -> Any:
     if autopilot.current_board is None:
         return None
-    return {
-        "name": autopilot.current_board.name,
-        "manufacturer": autopilot.current_board.manufacturer,
-        "platform": autopilot.current_board.platform.name,
-        "platform_type": autopilot.current_board.platform.platform_type.value,
-        "ardupilot_board_id": autopilot.current_board.ardupilot_board_id,
-        "flags": autopilot.current_board.flags,
-    }
+    return FlightControllerV1.from_flight_controller(autopilot.current_board)
 
 
 @index_router_v1.post("/board", summary="Set board to be used.")
