@@ -6,6 +6,7 @@
   >
     <v-card
       min-width="450"
+      :data-testid="testId"
     >
       <v-card-title class="text-h5 grey lighten-2 black--text">
         {{ t`Pulling new version` }}
@@ -15,6 +16,7 @@
         <p
           v-if="step !== ''"
           class="text-subtitle-2 mb-1 mt-3"
+          :data-testid="`${testId}-step`"
         >
           {{ step }}
         </p>
@@ -25,6 +27,7 @@
           class="mt-5 mb-5"
           color="blue"
           height="20"
+          :data-testid="`${testId}-bar`"
         >
           <template #default>
             <strong
@@ -48,6 +51,7 @@
             <v-expansion-panel-content>
               <p
                 style="white-space: pre; font-family:monospace;"
+                :data-testid="`${testId}-details`"
               >
                 {{ progress }}
                 {{ statustext }}
@@ -89,6 +93,10 @@ export default Vue.extend({
     step: {
       type: String,
       default: '',
+    },
+    testId: {
+      type: String,
+      default: 'pull-progress',
     },
   },
   data() {
