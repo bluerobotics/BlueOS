@@ -394,16 +394,11 @@ async def install_firmware_progress() -> Any:
 
 
 @index_router_v1.get(
-    "/available_boards", response_model=List[FlightController], summary="Retrieve list of connected boards."
+    "/available_boards", response_model=List[FlightControllerV1], summary="Retrieve list of connected boards."
 )
 @index_to_http_exception
 async def available_boards() -> Any:
-    """List the connected boards, bootloaders included.
-
-    `platform.name` is the ArduPilot manifest platform name and `platform.platform_type` is serialized with
-    capitalized values ("Serial", "Linux", "SITL", "Unknown", "Manual").
-    """
-    return await autopilot.available_boards(True)
+    return [FlightControllerV1.from_flight_controller(board) for board in await autopilot.available_boards(True)]
 
 
 @index_router_v1.post("/system_id", summary="Set the vehicle's system id.")

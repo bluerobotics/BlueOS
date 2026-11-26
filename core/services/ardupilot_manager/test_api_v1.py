@@ -21,6 +21,9 @@ _stub_manager._current_board = None
 Singleton._instances.setdefault(AutoPilotManager, _stub_manager)
 
 from api.v1.routers import index  # noqa: E402 pylint: disable=wrong-import-position
+from api.v2.routers import (  # noqa: E402 pylint: disable=wrong-import-position
+    index as index_v2,
+)
 
 pytestmark = pytest.mark.asyncio
 
@@ -63,6 +66,31 @@ async def test_v1_board_without_running_board(monkeypatch: pytest.MonkeyPatch) -
     assert await get_v1_board(monkeypatch, None) is None
 
 
+@pytest.mark.parametrize(
+    "platform, legacy_name",
+    [
+        (Platform(name="Navigator", platform_type=PlatformType.Linux), "navigator"),
+        (Platform(name="Navigator64", platform_type=PlatformType.Linux), "navigator64"),
+        (Platform(name="Argonot", platform_type=PlatformType.Linux), "argonot"),
+        (Platform(name="Manual", platform_type=PlatformType.Manual), "Manual"),
+        (Platform.SITL(), Platform.SITL().name),
+        (Platform(name="Pixhawk1", platform_type=PlatformType.Serial), "Pixhawk1"),
+        (Platform(name="Pixhawk4", platform_type=PlatformType.Serial), "Pixhawk4"),
+        (Platform(name="Pixhawk6X", platform_type=PlatformType.Serial), "Pixhawk6X"),
+        (Platform(name="Pixhawk6C", platform_type=PlatformType.Serial), "Pixhawk6C"),
+        (Platform(name="CubeOrange", platform_type=PlatformType.Serial), "CubeOrange"),
+        (Platform(name="GenericSerial", platform_type=PlatformType.Serial), "GenericSerial"),
+        (Platform(name="MatekH743", platform_type=PlatformType.Serial), "GenericSerial"),
+        (Platform(name="CubeOrangePlus", platform_type=PlatformType.Serial), "GenericSerial"),
+    ],
+)
+async def test_v1_board_uses_legacy_platform_names(
+    monkeypatch: pytest.MonkeyPatch, platform: Platform, legacy_name: str
+) -> None:
+    board = FlightController(name="Board", platform=platform)
+    assert (await get_v1_board(monkeypatch, board))["platform"] == legacy_name
+
+
 async def test_target_board_lookup(monkeypatch: pytest.MonkeyPatch) -> None:
     available_boards = AsyncMock(return_value=[CUBE_BL, MATEK])
     monkeypatch.setattr(index, "autopilot", SimpleNamespace(current_board=MATEK, available_boards=available_boards))
@@ -101,6 +129,58 @@ def fixture_client() -> httpx.AsyncClient:
     app = FastAPI()
     app.include_router(index.index_router_v1)
     return httpx.AsyncClient(transport=httpx.ASGITransport(app=app), base_url="http://test")
+
+
+async def test_v1_available_boards_keep_old_shape(client: httpx.AsyncClient, fake_autopilot: SimpleNamespace) -> None:
+    response = await client.get("/available_boards")
+    assert response.status_code == 200
+    assert response.json() == [
+        {
+            "name": "CubeOrange-BL",
+            "manufacturer": "CubePilot",
+            "platform": "CubeOrange",
+            "ardupilot_board_id": 140,
+            "path": "/dev/ttyACM0",
+            "flags": ["is_bootloader"],
+        },
+        {
+            "name": "MatekH743",
+            "manufacturer": "ArduPilot",
+            "platform": "GenericSerial",
+            "ardupilot_board_id": 1013,
+            "path": "/dev/ttyACM1",
+            "flags": [],
+        },
+    ]
+    fake_autopilot.available_boards.assert_awaited_once_with(True)
+
+
+async def test_v2_available_boards(monkeypatch: pytest.MonkeyPatch, fake_autopilot: SimpleNamespace) -> None:
+    monkeypatch.setattr(index_v2, "autopilot", fake_autopilot)
+    app = FastAPI()
+    app.include_router(index_v2.index_router_v2)
+    async with httpx.AsyncClient(transport=httpx.ASGITransport(app=app), base_url="http://test") as client:
+        response = await client.get("/available_boards")
+    assert response.status_code == 200
+    assert response.json() == [
+        {
+            "name": "CubeOrange-BL",
+            "manufacturer": "CubePilot",
+            "platform": {"name": "CubeOrange", "platform_type": "Serial"},
+            "ardupilot_board_id": 140,
+            "path": "/dev/ttyACM0",
+            "flags": ["is_bootloader"],
+        },
+        {
+            "name": "MatekH743",
+            "manufacturer": "ArduPilot",
+            "platform": {"name": "MatekH743", "platform_type": "Serial"},
+            "ardupilot_board_id": 1013,
+            "path": "/dev/ttyACM1",
+            "flags": [],
+        },
+    ]
+    fake_autopilot.available_boards.assert_awaited_once_with(True)
 
 
 def stream_lines(response: httpx.Response) -> List[List[str]]:

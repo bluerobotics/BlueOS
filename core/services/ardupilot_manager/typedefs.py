@@ -167,6 +167,21 @@ def platform_from_legacy(value: str) -> Platform:
     raise ValueError(f"Unknown platform: {value}")
 
 
+def platform_to_legacy(platform: Platform) -> str:
+    """Name a platform like the former platform enum did, serial platforms it didn't know are "GenericSerial"."""
+    if platform.platform_type == PlatformType.SITL:
+        return platform.name
+    for legacy_name, legacy_platform in LEGACY_PLATFORMS.items():
+        if (
+            legacy_platform.platform_type == platform.platform_type
+            and legacy_platform.name.lower() == platform.name.lower()
+        ):
+            return legacy_name
+    if platform.platform_type == PlatformType.Serial:
+        return "GenericSerial"
+    return platform.name
+
+
 class FlightController(BaseModel):
     """Flight-controller board."""
 
@@ -207,7 +222,7 @@ class FlightControllerV1(BaseModel):
         return cls(
             name=board.name,
             manufacturer=board.manufacturer,
-            platform=board.platform.name,
+            platform=platform_to_legacy(board.platform),
             ardupilot_board_id=board.ardupilot_board_id,
             path=board.path,
             flags=board.flags,
