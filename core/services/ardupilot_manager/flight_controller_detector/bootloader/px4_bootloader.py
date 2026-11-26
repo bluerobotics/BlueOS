@@ -1,43 +1,39 @@
 import time
 from dataclasses import dataclass
-from enum import Enum
+from enum import IntEnum
 
 import serial
+from loguru import logger
 
 
-class PX4BootLoaderCommands(int, Enum):
-    # Protocol Bytes
-    PROTO_INSYNC = 0x12  # 'in sync' byte sent before status
-    PROTO_BAD_SILICON_REV = 0x14  # Device is using silicon not suitable
-    PROTO_EOC = 0x20  # End of command
+class PX4BootLoaderProtocol(IntEnum):
+    INSYNC = 0x12  # 'in sync' byte sent before status
+    EOC = 0x20  # End of command
 
     # Reply bytes
-    PROTO_OK = 0x10  # 'ok' response
-    PROTO_FAILED = 0x11  # 'fail' response
-    PROTO_INVALID = 0x13  # 'invalid' response for bad commands
+    OK = 0x10  # 'ok' response
+    FAILED = 0x11  # 'fail' response
+    INVALID = 0x13  # 'invalid' response for bad commands
+    BAD_SILICON_REV = 0x14  # Device is using silicon not suitable
 
-    # Command bytes
-    PROTO_GET_SYNC = 0x21  # NOP for re-establishing sync
-    PROTO_GET_DEVICE = 0x22  # get device ID bytes
-    PROTO_CHIP_ERASE = 0x23  # erase program area and reset program address
-    PROTO_LOAD_ADDRESS = 0x24  # set next programming address
-    PROTO_PROG_MULTI = 0x27  # write bytes at program address and increment
-    PROTO_GET_CRC = 0x29  # compute & return a CRC
-    PROTO_BOOT = 0x30  # boot the application
 
-    # Command bytes - Rev 2 boootloader only
-    PROTO_CHIP_VERIFY = 0x24  # begin verify mode
-    PROTO_READ_MULTI = 0x28  # read bytes at programm address and increment
+class PX4BootLoaderCommand(IntEnum):
+    GET_SYNC = 0x21  # NOP for re-establishing sync
+    GET_DEVICE = 0x22  # get device ID bytes
+    BOOT = 0x30  # boot the application
 
-    INFO_BL_REV = 1  # bootloader protocol revision
-    BL_REV_MIN = 2  # Minimum supported bootlader protocol
-    BL_REV_MAX = 5  # Maximum supported bootloader protocol
-    INFO_BOARD_ID = 2  # board type
-    INFO_BOARD_REV = 3  # board revision
-    INFO_FLASH_SIZE = 4  # max firmware size in bytes
 
-    PROG_MULTI_MAX = (64,)  # write size for PROTO_PROG_MULTI, must be multiple of 4
-    READ_MULTI_MAX = 0x28  # read size for PROTO_READ_MULTI, must be multiple of 4. Sik Radio max size is 0x28
+class PX4BootLoaderDeviceInfo(IntEnum):
+    """Parameters of the GET_DEVICE command"""
+
+    BL_REV = 1  # bootloader protocol revision
+    BOARD_ID = 2  # board type
+    BOARD_REV = 3  # board revision
+    FLASH_SIZE = 4  # max firmware size in bytes
+
+
+BL_REV_MIN = 2  # Minimum supported bootloader protocol
+BL_REV_MAX = 5  # Maximum supported bootloader protocol
 
 
 @dataclass
@@ -48,12 +44,6 @@ class PX4BootLoaderBoardInfo:
 
 
 class PX4BootLoader:
-    # Specific boards that need special handling when in certain versions of boot loader
-    _board_id_px4_fmu_v2 = 9
-    _board_id_px4_fmu_v3 = 255
-    _board_flash_size_small = 1032192
-    _boot_loader_version_v2_correct_flash = 5
-
     def __init__(self, port: serial.Serial):
         self.port = port
 
@@ -62,34 +52,25 @@ class PX4BootLoader:
         self._sync()
 
         # Get bootloader version
-        bootloader_version = self._proto_get_device(PX4BootLoaderCommands.INFO_BL_REV)
+        bootloader_version = self._proto_get_device(PX4BootLoaderDeviceInfo.BL_REV)
 
-        if (
-            bootloader_version < PX4BootLoaderCommands.BL_REV_MIN
-            or bootloader_version > PX4BootLoaderCommands.BL_REV_MAX
-        ):
-            raise ValueError("Unsupported bootloader version")
+        if bootloader_version < BL_REV_MIN or bootloader_version > BL_REV_MAX:
+            raise ValueError(f"Unsupported bootloader version {bootloader_version}")
 
-        # Get board ID
-        board_id = self._proto_get_device(PX4BootLoaderCommands.INFO_BOARD_ID)
-
-        # Get flash size
-        flash_size = self._proto_get_device(PX4BootLoaderCommands.INFO_FLASH_SIZE)
-
-        # From QGC source code
-        # Older V2 boards have large flash space but silicon error which prevents it from being used. Bootloader v5 and above
-        # will correctly account/report for this. Older bootloaders will not. Newer V2 board which support larger flash space are
-        # reported as V3 board id.
-        if (
-            board_id == self._board_id_px4_fmu_v2
-            and bootloader_version >= self._boot_loader_version_v2_correct_flash
-            and flash_size > self._board_flash_size_small
-        ):
-            board_id = self._board_id_px4_fmu_v3
+        board_id = self._proto_get_device(PX4BootLoaderDeviceInfo.BOARD_ID)
+        flash_size = self._proto_get_device(PX4BootLoaderDeviceInfo.FLASH_SIZE)
 
         return PX4BootLoaderBoardInfo(board_id, bootloader_version, flash_size)
 
-    def _safe_read(self, expected_bytes: int, timeout: int) -> bytearray:
+    def boot(self) -> None:
+        """Ask the bootloader to boot the application. It stops its autoboot timeout after any valid command."""
+        try:
+            self.port.write(bytearray([PX4BootLoaderCommand.BOOT, PX4BootLoaderProtocol.EOC]))
+            self.port.flush()
+        except serial.SerialException as error:
+            logger.debug(f"Failed to ask bootloader to boot: {error}")
+
+    def _safe_read(self, expected_bytes: int, timeout: float) -> bytearray:
         started_reading_at = time.time()
         while self.port.in_waiting < expected_bytes:
             if time.time() - started_reading_at > timeout:
@@ -98,18 +79,17 @@ class PX4BootLoader:
 
         return bytearray(self.port.read(expected_bytes))
 
-    def _read_command_response(self, timeout: int) -> bytearray:
+    def _read_command_response(self, timeout: float) -> bytearray:
         # By default PX4 responses are 2 bytes long
         res = self._safe_read(2, timeout)
 
-        if res[0] != PX4BootLoaderCommands.PROTO_INSYNC:
+        if res[0] != PX4BootLoaderProtocol.INSYNC:
             raise serial.SerialException("Unable to sync with bootloader")
-        if res[0] == PX4BootLoaderCommands.PROTO_INSYNC and res[1] == PX4BootLoaderCommands.PROTO_BAD_SILICON_REV:
+        if res[1] == PX4BootLoaderProtocol.BAD_SILICON_REV:
             raise serial.SerialException("Device is using silicon not suitable")
-
-        if res[1] == PX4BootLoaderCommands.PROTO_FAILED:
+        if res[1] == PX4BootLoaderProtocol.FAILED:
             raise serial.SerialException("Failed to execute command")
-        if res[1] == PX4BootLoaderCommands.PROTO_INVALID:
+        if res[1] == PX4BootLoaderProtocol.INVALID:
             raise serial.SerialException("Invalid command")
 
         return res
@@ -119,8 +99,8 @@ class PX4BootLoader:
         if bytes_written != len(data):
             raise serial.SerialException("Invalid number of bytes written to serial port")
 
-    def _send_serial_command(self, command: PX4BootLoaderCommands, timeout: int = 1) -> None:
-        buffer = bytearray([command, PX4BootLoaderCommands.PROTO_EOC])
+    def _send_serial_command(self, command: PX4BootLoaderCommand, timeout: float = 1.0) -> None:
+        buffer = bytearray([command, PX4BootLoaderProtocol.EOC])
 
         self._safe_serial_write(buffer)
         self.port.flush()
@@ -134,18 +114,18 @@ class PX4BootLoader:
         # Getting in sync some times requires multiple attempts
         for _ in range(10):
             try:
-                self._send_serial_command(PX4BootLoaderCommands.PROTO_GET_SYNC)
+                self._send_serial_command(PX4BootLoaderCommand.GET_SYNC)
                 return
-            except Exception:
+            except serial.SerialException:
                 time.sleep(0.1)
 
         raise RuntimeError("Failed to sync with bootloader")
 
-    def _proto_get_device(self, command: PX4BootLoaderCommands) -> int:
-        buffer = bytearray([PX4BootLoaderCommands.PROTO_GET_DEVICE, command, PX4BootLoaderCommands.PROTO_EOC])
+    def _proto_get_device(self, param: PX4BootLoaderDeviceInfo) -> int:
+        buffer = bytearray([PX4BootLoaderCommand.GET_DEVICE, param, PX4BootLoaderProtocol.EOC])
 
         self._safe_serial_write(buffer)
-        val = self._safe_read(4, 1)
-        self._read_command_response(1)
+        val = self._safe_read(4, 1.0)
+        self._read_command_response(1.0)
 
         return int.from_bytes(val, byteorder="little")
