@@ -9,7 +9,14 @@ from loguru import logger
 # MAVLink protocol constants
 MAVLINK_V2_MAGIC = 0xFD
 MAVLINK_V1_MAGIC = 0xFE
+MAVLINK_V2_HEADER_LEN = 10
+MAVLINK_V1_HEADER_LEN = 6
+MAVLINK_CRC_LEN = 2
+MAVLINK_SIGNATURE_LEN = 13
+MAVLINK_IFLAG_SIGNED = 0x01
 AUTOPILOT_VERSION_MSG_ID = 148
+AUTOPILOT_VERSION_CRC_EXTRA = 178
+AUTOPILOT_VERSION_PAYLOAD_LEN = 78
 BOARD_ID_OFFSET = 28  # Offset in AUTOPILOT_VERSION payload where board_id is located
 BOARD_ID_SHIFT = 16  # Shift to extract board type from full board_id (upper 16 bits)
 
@@ -20,71 +27,64 @@ REQUEST_AUTOPILOT_VERSION_MSG = bytes.fromhex(
 )
 
 
+def x25_crc(data: bytes, crc: int = 0xFFFF) -> int:
+    """CRC-16/MCRF4XX, the checksum used by MAVLink."""
+    for byte in data:
+        tmp = byte ^ (crc & 0xFF)
+        tmp = (tmp ^ (tmp << 4)) & 0xFF
+        crc = ((crc >> 8) ^ (tmp << 8) ^ (tmp << 3) ^ (tmp >> 4)) & 0xFFFF
+    return crc
+
+
+def _parse_frame_at(data: bytes, start: int) -> Optional[int]:
+    """Return board_version of a valid AUTOPILOT_VERSION frame starting at `start`, None otherwise."""
+    if data[start] == MAVLINK_V2_MAGIC:
+        header_len = MAVLINK_V2_HEADER_LEN
+        if start + header_len > len(data):
+            return None
+        msg_id = int.from_bytes(data[start + 7 : start + 10], "little")
+        signature_len = MAVLINK_SIGNATURE_LEN if data[start + 2] & MAVLINK_IFLAG_SIGNED else 0
+    else:
+        header_len = MAVLINK_V1_HEADER_LEN
+        if start + header_len > len(data):
+            return None
+        msg_id = data[start + 5]
+        signature_len = 0
+
+    payload_len = data[start + 1]
+    if msg_id != AUTOPILOT_VERSION_MSG_ID or payload_len > AUTOPILOT_VERSION_PAYLOAD_LEN:
+        return None
+
+    payload_end = start + header_len + payload_len
+    if payload_end + MAVLINK_CRC_LEN + signature_len > len(data):
+        return None
+
+    crc = x25_crc(data[start + 1 : payload_end] + bytes([AUTOPILOT_VERSION_CRC_EXTRA]))
+    if crc != int.from_bytes(data[payload_end : payload_end + MAVLINK_CRC_LEN], "little"):
+        return None
+
+    # MAVLink 2 removes trailing zeros from the payload
+    payload = data[start + header_len : payload_end].ljust(AUTOPILOT_VERSION_PAYLOAD_LEN, b"\x00")
+    return int(struct.unpack_from("<I", payload, BOARD_ID_OFFSET)[0])
+
+
 def parse_autopilot_version_board_id(data: bytes) -> Optional[int]:
     """
-    Manually parse MAVLink AUTOPILOT_VERSION message to extract board_id field.
-
-    The AUTOPILOT_VERSION message (ID 148) has the following structure:
-    - Header: 1 byte (magic byte 0xFD for MAVLink 2.0)
-    - Payload length: 1 byte
-    - Incompatibility flags: 1 byte
-    - Compatibility flags: 1 byte
-    - Sequence: 1 byte
-    - System ID: 1 byte
-    - Component ID: 1 byte
-    - Message ID: 3 bytes (little endian)
-    - Payload: variable
-    - Checksum: 2 bytes
-
-    In the AUTOPILOT_VERSION payload, board_id is at offset 28 (uint32)
+    Find a valid MAVLink 1 or 2 AUTOPILOT_VERSION (ID 148) frame in `data` and return its board_version field
+    (uint32 at offset 28 of the payload). Frames with invalid length or CRC are ignored.
 
     Args:
         data: Raw bytes from serial port
 
     Returns:
-        board_id as integer, or None if parsing fails
-
-    Raises:
-        ValueError: If MAVLink 1.0 protocol is detected
+        board_version as integer, or None if no valid frame was found
     """
-    i = 0
-    while i < len(data):
-        # Look for MAVLink 2.0 magic byte
-        if data[i] == MAVLINK_V2_MAGIC:
-            if i + 10 > len(data):
-                break
-
-            msg_id = struct.unpack("<I", data[i + 7 : i + 10] + b"\x00")[0]  # 24-bit little endian
-
-            # Check if this is AUTOPILOT_VERSION
-            if msg_id == AUTOPILOT_VERSION_MSG_ID:
-                header_len = 10
-                payload_start = i + header_len
-
-                if payload_start + BOARD_ID_OFFSET + 4 <= len(data):  # board_id is uint32 (4 bytes)
-                    # Extract board_id (uint32 at BOARD_ID_OFFSET)
-                    board_id_bytes = data[payload_start + BOARD_ID_OFFSET : payload_start + BOARD_ID_OFFSET + 4]
-                    board_id = struct.unpack("<I", board_id_bytes)[0]
-                    return int(board_id)
-
-            i += 1
-        # Raise error if MAVLink 1.0 is detected
-        elif data[i] == MAVLINK_V1_MAGIC:
-            if i + 6 > len(data):
-                break
-            msg_id = data[i + 5]
-            # AUTOPILOT_VERSION is usually MAVLink 2.0, but handle just in case
-            if msg_id == AUTOPILOT_VERSION_MSG_ID:
-                header_len = 6
-                payload_start = i + header_len
-                if payload_start + 32 <= len(data):
-                    board_id_bytes = data[payload_start + 28 : payload_start + 32]
-                    board_id = struct.unpack("<I", board_id_bytes)[0]
-                    return int(board_id)
-            i += 1
-        else:
-            i += 1
-
+    for start, byte in enumerate(data):
+        if byte not in (MAVLINK_V2_MAGIC, MAVLINK_V1_MAGIC):
+            continue
+        board_version = _parse_frame_at(data, start)
+        if board_version is not None:
+            return board_version
     return None
 
 
@@ -94,9 +94,6 @@ def _get_board_id_sync(port_path: str, baudrate: int = 115200) -> Optional[int]:
     Internal function - use get_board_id() instead.
 
     Returns the board type ID (upper 16 bits of the full board_id).
-
-    Raises:
-        ValueError: If MAVLink 1.0 protocol is detected
     """
     try:
         # Set a short timeout for individual reads
@@ -124,21 +121,17 @@ def _get_board_id_sync(port_path: str, baudrate: int = 115200) -> Optional[int]:
             if board_id is not None:
                 # Return board type ID (upper 16 bits)
                 return board_id >> BOARD_ID_SHIFT
-            logger.info(f"no board id found on {port_path}")
+            logger.debug(f"no board id found on {port_path}")
             ser.reset_input_buffer()
             ser.reset_output_buffer()
             ser.flush()
             return None
 
-    except ValueError as e:
-        # Specifically handle MAVLink 1.0 detection
-        logger.error(f"Protocol error on {port_path}: {e}")
-        raise  # Re-raise to inform caller about unsupported protocol
     except serial.SerialException as e:
-        logger.error(f"Serial port error on {port_path}: {e}")
+        logger.debug(f"Serial port error on {port_path}: {e}")
         return None
     except Exception as e:
-        logger.error(f"Error getting board version: {e}")
+        logger.error(f"Error getting board version on {port_path}: {e}")
         return None
 
 
@@ -158,12 +151,9 @@ async def get_board_id(port_path: str, baudrate: int = 115200) -> Optional[int]:
 
     Returns:
         Board type ID (upper 16 bits of board_id) as integer, or None if failed
-
-    Raises:
-        ValueError: If MAVLink 1.0 protocol is detected
     """
     start = time.time()
     board_id = await asyncio.to_thread(_get_board_id_sync, port_path, baudrate)
     end = time.time()
-    logger.info(f"get_board_id to port {port_path} took {end - start} seconds")
+    logger.debug(f"get_board_id to port {port_path} took {end - start} seconds")
     return board_id
