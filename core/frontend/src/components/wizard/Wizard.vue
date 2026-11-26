@@ -719,7 +719,13 @@ export default Vue.extend({
 
       return availableFirmwares(vehicle)
         .then((firmwares: Firmware[]) => {
-          const found: Firmware | undefined = firmwares.find((firmware) => firmware.name.includes('STABLE'))
+          // The backend lists the preferred platform for the board first
+          const board_platform = autopilot.current_board?.platform.name.toLowerCase()
+          const preferred_platform = firmwares.find((firmware) => firmware.platform.toLowerCase() === board_platform)
+            ?.platform ?? firmwares.first()?.platform
+          const found: Firmware | undefined = firmwares
+            .filter((firmware) => firmware.platform === preferred_platform)
+            .find((firmware) => firmware.name.includes('STABLE'))
           if (found === undefined) {
             return `Failed to find a stable version for vehicle (${vehicle})`
           }

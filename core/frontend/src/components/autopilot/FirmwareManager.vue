@@ -162,6 +162,7 @@
             :label="platform_selector_label"
             :loading="loading_firmware_options"
             required
+            @change="clearChosenFirmware"
           />
           <v-select
             v-model="chosen_firmware_url"
@@ -253,7 +254,7 @@
         dark
       >
         <v-card-title>
-          Installing firmware
+          {{ t`Installing firmware. Please wait.` }}
         </v-card-title>
         <v-card-text>
           <v-progress-linear
@@ -272,7 +273,7 @@
               :class="{ 'error-log': log.stream === 'stderr', 'info-log': log.stream === 'stdout' }"
               class="log-line"
             >
-              {{ log.data.replace(/\r/g, '\n') }}<br>
+              {{ log.data.replace(/\r/g, '\n') }}
             </div>
           </div>
         </v-card-text>
@@ -310,8 +311,15 @@
 
 <script lang="ts">
 import { coerce } from 'semver'
+import { t } from 'ttag'
 import Vue from 'vue'
 
+import {
+  FirmwareInstallLog,
+  firmwareInstallResult,
+  lastFirmwareInstallError,
+  readFirmwareInstallStream,
+} from '@/components/autopilot/AutopilotManagerUpdater'
 import WarningDialog from '@/components/common/WarningDialog.vue'
 import Notifier from '@/libs/notifier'
 import { fetchParamSets, ParamSets, paramSetsForFirmware } from '@/libs/parameter_repository'
@@ -379,7 +387,7 @@ export default Vue.extend({
       firmware_file: null as (Blob | null),
       install_result_message: '',
       chosen_platform: null as (string | null),
-      install_logs: [] as Array<{stream: string, data: string}>,
+      install_logs: [] as FirmwareInstallLog[],
       rebootOnBoardComputer,
       requestOnBoardComputerReboot,
     }
@@ -389,10 +397,10 @@ export default Vue.extend({
       return Array.from(new Set(this.available_firmwares.map((firmware) => firmware.platform)))
     },
     platform_selector_label(): string {
-      return this.loading_firmware_options ? 'Fetching available platforms...' : 'Platform'
+      return this.loading_firmware_options ? t`Fetching available platforms...` : t`Platform`
     },
     firmware_selector_label(): string {
-      return this.loading_firmware_options ? 'Fetching available firmware...' : 'Firmware'
+      return this.loading_firmware_options ? t`Fetching available firmware...` : t`Firmware`
     },
     loading_firmware_options(): boolean {
       return this.cloud_firmware_options_status === CloudFirmwareOptionsStatus.Fetching
@@ -508,7 +516,7 @@ export default Vue.extend({
         + ' It may not behave as expected.'
     },
     showable_firmware_deduplicated(): {value: URL, text: string}[] {
-      // qdd the trailing filename from the url to the value of an entry if another entry has the same text
+      // add the trailing filename from the url to the value of an entry if another entry has the same text
       return this.showable_firmwares.map((firmware) => {
         const same_text_entries = this.showable_firmwares.filter((f) => f.text === firmware.text)
         if (same_text_entries.length > 1) {
@@ -553,18 +561,10 @@ export default Vue.extend({
       immediate: true,
     },
     platforms_available(new_value: string[]): void {
-      if (new_value.length === 1) {
-        const [chosen_platform] = new_value
-        this.chosen_platform = chosen_platform
-      }
-    },
-    available_boards(new_value: FlightController[]): void {
-      if (autopilot.current_board) {
-        const chosen_board = new_value.find((board: FlightController) => board.name === autopilot.current_board?.name)
-        if (chosen_board) {
-          this.chosen_board = chosen_board
-        }
-      }
+      // The backend lists the preferred platform for the board first
+      const board_platform = this.target_board?.platform.name.toLowerCase()
+      this.chosen_platform = new_value.find((platform) => platform.toLowerCase() === board_platform)
+        ?? new_value.first() ?? null
     },
     install_logs(): void {
       this.$nextTick(() => {
@@ -579,6 +579,7 @@ export default Vue.extend({
     if (this.only_bootloader_boards_available) {
       this.setFirstNoSitlBoard()
     }
+    this.attachToRunningInstall()
     this.all_param_sets = await fetchParamSets().catch(() => ({}))
   },
   methods: {
@@ -601,6 +602,10 @@ export default Vue.extend({
     enableUntestedWarning(): void {
       settings.skip_untested_firmware_warning = false
       this.skip_untested_warning_next_time = false
+    },
+    clearChosenFirmware(): void {
+      this.chosen_firmware_url = null
+      this.cloud_firmware_options_status = CloudFirmwareOptionsStatus.FetchSucceeded
     },
     clearFirmwareSelection(): void {
       this.chosen_firmware_url = null
@@ -695,89 +700,73 @@ export default Vue.extend({
       autopilot.setInstallingFirmware(true)
       try {
         const response = await fetch(url, requestOptions)
-
         if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`)
+          throw new Error(await this.installHttpErrorMessage(response))
         }
-
-        const reader = response.body?.getReader()
-        const decoder = new TextDecoder()
-
-        if (!reader) {
-          throw new Error('No response body')
-        }
-
-        let buffer = ''
-
-        // eslint-disable-next-line no-constant-condition
-        while (true) {
-          const { done, value } = await reader.read()
-
-          if (done) break
-
-          buffer += decoder.decode(value, { stream: true })
-          const lines = buffer.split('\n')
-
-          // Keep the last incomplete line in the buffer
-          buffer = lines.pop() ?? ''
-
-          // Process complete lines
-          for (const line of lines) {
-            if (line.trim()) {
-              try {
-                const log = JSON.parse(line)
-
-                // Check if backend sent control message
-                if (log.stream === 'control') {
-                  if (log.data === 'done') {
-                    // Close the progress dialog immediately
-                    this.install_status = InstallStatus.Succeeded
-                    this.install_result_message = 'Installation completed'
-                    return
-                  }
-                  if (log.data === 'error') {
-                    // Mark as failed but continue processing remaining logs
-                    this.install_status = InstallStatus.Failed
-                  }
-                  // Don't add control messages to the log display
-                  continue
-                }
-
-                this.install_logs.push(log)
-              } catch (e) {
-                console.error('Failed to parse log line:', line, e)
-              }
-            }
-          }
-        }
-
-        // Check if there were any error messages in the logs
-        const hasErrors = this.install_logs.some((log) => log.stream === 'stderr')
-        const lastError = this.install_logs.filter((log) => log.stream === 'stderr').pop()
-        // edge case. the re-plug message is not an error, but is thrown to stderr to get user's attention
-        if (hasErrors && !lastError?.data.includes('re-plug the USB connector')) {
-          this.install_status = InstallStatus.Failed
-          this.install_result_message = lastError?.data || 'Installation failed'
-          const message = `Could not install firmware: ${this.install_result_message}.`
-          notifier.pushError('FILE_FIRMWARE_INSTALL_FAIL', message)
-        } else {
-          this.install_status = InstallStatus.Succeeded
-          this.install_result_message = 'Successfully installed new firmware'
-          autopilot_data.reset()
-        }
+        this.finishInstall(await readFirmwareInstallStream(response, this.appendInstallLogs))
       } catch (error) {
-        this.install_status = InstallStatus.Failed
-        // Catch Chrome's net:::ERR_UPLOAD_FILE_CHANGED error
-        if (error.message && error.message === 'Network Error') {
-          this.install_result_message = 'Upload fail. If the file was changed, clean the form and re-select it.'
+        // fetch rejects with a TypeError on network failures, like Chrome's net::ERR_UPLOAD_FILE_CHANGED
+        if (!(error instanceof TypeError)) {
+          this.failInstall(error.message)
+        } else if (this.upload_type === UploadType.File) {
+          this.failInstall(t`Upload fail. If the file was changed, clean the form and re-select it.`)
         } else {
-          this.install_result_message = error.response?.data?.detail ?? error.message
+          this.failInstall(t`Could not communicate with the autopilot manager.`)
         }
-        const message = `Could not install firmware: ${this.install_result_message}.`
-        notifier.pushError('FILE_FIRMWARE_INSTALL_FAIL', message)
       } finally {
         autopilot.setInstallingFirmware(false)
       }
+    },
+    // Re-attaches to an installation started before this page was (re)loaded
+    async attachToRunningInstall(): Promise<void> {
+      const response = await fetch(`${autopilot.API_URL}/install_firmware_progress`).catch(() => null)
+      // 404 means no installation is running
+      if (!response?.ok || this.install_status === InstallStatus.Installing) {
+        return
+      }
+      this.install_status = InstallStatus.Installing
+      this.install_logs = []
+      autopilot.setInstallingFirmware(true)
+      try {
+        this.finishInstall(await readFirmwareInstallStream(response, this.appendInstallLogs))
+      } catch (error) {
+        this.failInstall(t`Could not communicate with the autopilot manager.`)
+      } finally {
+        autopilot.setInstallingFirmware(false)
+      }
+    },
+    async installHttpErrorMessage(response: Response): Promise<string> {
+      if (response.status === 423) {
+        return t`Another firmware installation is already in progress.`
+      }
+      const body = await response.json().catch(() => null)
+      if (typeof body?.detail === 'string') {
+        return body.detail
+      }
+      return response.statusText || `HTTP ${response.status}`
+    },
+    appendInstallLogs(logs: FirmwareInstallLog[]): void {
+      this.install_logs.push(...logs.filter((log) => log.stream !== 'control'))
+    },
+    finishInstall(logs: FirmwareInstallLog[]): void {
+      const result = firmwareInstallResult(logs)
+      const last_error = lastFirmwareInstallError(logs)
+      // Backends without a final control line: the re-plug message is not an error,
+      // but is thrown to stderr to get user's attention
+      const legacy_success = result === null && last_error?.includes('re-plug the USB connector')
+      if (result === 'done' || legacy_success) {
+        this.install_status = InstallStatus.Succeeded
+        this.install_result_message = t`Successfully installed new firmware`
+        autopilot_data.reset()
+        return
+      }
+      this.failInstall(last_error ?? t`Firmware installation did not complete.`)
+    },
+    failInstall(reason: string): void {
+      this.install_status = InstallStatus.Failed
+      this.install_result_message = reason
+      const message = `Could not install firmware: ${this.install_result_message}.`
+      notifier.pushError('FILE_FIRMWARE_INSTALL_FAIL', message)
     },
   },
 })
@@ -838,11 +827,11 @@ export default Vue.extend({
 }
 
 .info-log {
-  color: #fff;
+  color: inherit;
 }
 
 .error-log {
-  color: #ff5252;
+  color: var(--v-error-base);
   font-weight: bold;
 }
 </style>
