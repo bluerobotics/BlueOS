@@ -28,12 +28,9 @@ else
     SUDO="$(command -v sudo || echo '')"
 fi
 readonly SUDO
-if [ ! -f "$LOCAL_PATH_UPLOADER" ]; then
-  $SUDO wget "$REMOTE_URL_UPLOADER" -O "$LOCAL_PATH_UPLOADER"
-  $SUDO chmod +x "$LOCAL_PATH_UPLOADER"
-else
-  echo "File $LOCAL_PATH_UPLOADER already exists. Skipping download."
-fi
+# Always downloaded, an existing file may come from an older commit
+$SUDO wget "$REMOTE_URL_UPLOADER" -O "$LOCAL_PATH_UPLOADER"
+$SUDO chmod +x "$LOCAL_PATH_UPLOADER"
 
 ## Download and install necessary modules to site-packages folder
 
