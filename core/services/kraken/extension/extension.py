@@ -354,9 +354,12 @@ class Extension:
         try:
             self.lock(self.unique_entry)
 
-            docker_auth = self._prepare_docker_auth()
-            async for line in self._pull_docker_image(docker_auth):
-                yield line
+            async with DockerCtx() as client:
+                # A local digest image is the exact content, so only a tag-only install needs the registry
+                is_local = bool(self.digest) and await self._local_image_id(client, exact=True) is not None
+            if not is_local:
+                async for line in self._pull_docker_image(self._prepare_docker_auth()):
+                    yield line
         except Exception as error:
             # In case of some external installs kraken shouldn't try to install it again so we remove from settings
             if await self._can_use_local_image(running_ext, sibling_image_id):
