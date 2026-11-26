@@ -5,6 +5,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 from autopilot_manager import AutoPilotManager
+from flight_controller_detector.Detector import Detector
 from mavlink_proxy.Endpoint import Endpoint, EndpointType
 from mavlink_proxy.Manager import Manager
 from typedefs import FlightController, Platform, PlatformType
@@ -89,6 +90,35 @@ async def test_failed_install_starts_autopilot_again(manager: AutoPilotManager, 
 
     assert lifecycle.calls == ["kill", "start"]
     assert not manager._lifecycle_lock.locked()
+
+
+@pytest.mark.parametrize("install_error", [None, RuntimeError("upload failed")])
+async def test_install_pauses_serial_probing_until_flashed(
+    manager: AutoPilotManager, install_error: Exception | None
+) -> None:
+    paused: dict[str, bool] = {}
+
+    async def install(*_args: Any) -> None:
+        paused["install"] = Detector.is_probing_paused()
+        if install_error:
+            raise install_error
+
+    async def start() -> None:
+        paused["start"] = Detector.is_probing_paused()
+
+    with (
+        patch.object(manager.firmware_manager, "install_firmware_from_file", install),
+        patch.object(manager, "_start_ardupilot_locked", start),
+    ):
+        if install_error:
+            with pytest.raises(RuntimeError):
+                await manager.install_firmware_from_file(Path("firmware"), SITL)
+        else:
+            await manager.install_firmware_from_file(Path("firmware"), SITL)
+
+    # The autopilot restart must detect the freshly flashed board again
+    assert paused == {"install": True, "start": False}
+    assert not Detector.is_probing_paused()
 
 
 class FakeRouterManager:

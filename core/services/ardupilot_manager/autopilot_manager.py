@@ -881,8 +881,11 @@ class AutoPilotManager(metaclass=Singleton):
     async def _autopilot_paused(self) -> AsyncIterator[None]:
         async with self._lifecycle_lock:
             try:
-                await self._kill_ardupilot_locked()
-                yield
+                BoardDetector.invalidate_caches()
+                # Probing a port, bootloaders above all, while the uploader talks to the board can break the flash
+                with BoardDetector.pause_probing():
+                    await self._kill_ardupilot_locked()
+                    yield
             finally:
                 # Flashing reboots the board, which can come back on another path
                 BoardDetector.invalidate_caches()

@@ -1,6 +1,7 @@
 import asyncio
 import time
-from typing import Dict, List, Optional, Sequence, Tuple
+from contextlib import contextmanager
+from typing import Dict, Iterator, List, Optional, Sequence, Tuple
 
 import serial
 from commonwealth.utils.decorators import temporary_cache
@@ -19,10 +20,32 @@ from typedefs import FlightController, FlightControllerFlags, Platform, Platform
 
 BOOTLOADER_CACHE_SECONDS = 60
 
+# (vid, pid, serial number, USB device path)
+UsbIdentity = Tuple[Optional[int], Optional[int], Optional[str], Optional[str]]
+
 
 class Detector:
     # (device, USB serial number) -> (time of the probe, board id)
     _bootloader_cache: Dict[Tuple[str, Optional[str]], Tuple[float, int]] = {}
+    # Device path -> identity of the USB device last probed there. Kept by invalidate_caches(), since the running
+    # board's port can't be probed again while the router holds it
+    _port_identities: Dict[str, UsbIdentity] = {}
+    _probing_pauses = 0
+    _last_serial_boards: List[FlightController] = []
+
+    @classmethod
+    @contextmanager
+    def pause_probing(cls) -> Iterator[None]:
+        """Keep serial detection from opening any port, e.g. while the firmware uploader talks to the board."""
+        cls._probing_pauses += 1
+        try:
+            yield
+        finally:
+            cls._probing_pauses -= 1
+
+    @classmethod
+    def is_probing_paused(cls) -> bool:
+        return cls._probing_pauses > 0
 
     @classmethod
     async def detect_linux_board(cls) -> Optional[FlightController]:
@@ -86,12 +109,21 @@ class Detector:
             return 0
 
     @staticmethod
+    def _usb_identity(port: SysFS) -> UsbIdentity:
+        return (port.vid, port.pid, port.serial_number, port.usb_device_path)
+
+    @staticmethod
+    def _is_same_device(port: SysFS) -> bool:
+        recorded = Detector._port_identities.get(port.device)
+        return recorded is None or recorded == Detector._usb_identity(port)
+
+    @staticmethod
     async def _detect_serial_port(port: SysFS, known_boards: Sequence[FlightController]) -> Optional[FlightController]:
         if not is_plausible_autopilot(port):
             return None
 
         is_bootloader = Detector.is_serial_bootloader(port)
-        if not is_bootloader:
+        if not is_bootloader and Detector._is_same_device(port):
             # The running board's port is held exclusively by the router, probing it would fail
             known_board = next((board for board in known_boards if board.path == port.device), None)
             if known_board is not None:
@@ -108,6 +140,7 @@ class Detector:
         if board_id is None:
             return None
 
+        Detector._port_identities[port.device] = Detector._usb_identity(port)
         return FlightController(
             name=port.product or port.name,
             manufacturer=port.manufacturer,
@@ -117,12 +150,14 @@ class Detector:
             flags=[FlightControllerFlags.is_bootloader] if is_bootloader else [],
         )
 
-    @staticmethod
-    @temporary_cache(timeout_seconds=5)
+    @classmethod
     async def detect_serial_flight_controllers(
+        cls,
         known_boards: Tuple[FlightController, ...] = (),
     ) -> List[FlightController]:
         """Check if a standalone flight controller is connected via USB.
+
+        While probing is paused (see pause_probing) no port is opened and the last detection result is returned.
 
         Arguments:
             known_boards: Boards already in use, reused without probing when their port is still present.
@@ -130,6 +165,16 @@ class Detector:
         Returns:
             List[FlightController]: List with connected serial flight controller.
         """
+        if cls.is_probing_paused():
+            logger.debug("Serial probing is paused, reusing the last detected serial boards.")
+            return list(cls._last_serial_boards)
+        boards = await cls._probe_serial_flight_controllers(known_boards)
+        cls._last_serial_boards = boards
+        return list(boards)
+
+    @staticmethod
+    @temporary_cache(timeout_seconds=5)
+    async def _probe_serial_flight_controllers(known_boards: Tuple[FlightController, ...]) -> List[FlightController]:
         usb_devices: Dict[str, List[SysFS]] = {}
         for port in comports():
             if is_usb_port(port):
@@ -149,7 +194,7 @@ class Detector:
 
     @classmethod
     def invalidate_caches(cls) -> None:
-        cls.detect_serial_flight_controllers.invalidate()  # type: ignore[attr-defined]
+        cls._probe_serial_flight_controllers.invalidate()  # type: ignore[attr-defined]
         cls._bootloader_cache.clear()
 
     @staticmethod

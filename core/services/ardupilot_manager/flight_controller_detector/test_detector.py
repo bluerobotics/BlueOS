@@ -56,6 +56,8 @@ class FakeProbes:
 @pytest.fixture(name="probes")
 def fixture_probes(monkeypatch: pytest.MonkeyPatch) -> Iterator[FakeProbes]:
     Detector.invalidate_caches()
+    monkeypatch.setattr(Detector, "_port_identities", {})
+    monkeypatch.setattr(Detector, "_last_serial_boards", [])
     yield FakeProbes(monkeypatch)
     Detector.invalidate_caches()
 
@@ -124,6 +126,74 @@ async def test_known_running_board_is_reused_without_probing(probes: FakeProbes)
     )
     probes.ports = [FakePort("/dev/ttyACM0", product="CubeOrange")]
     assert await detect(running) == [running]
+    assert not probes.probed
+
+
+async def test_known_board_is_reused_while_the_same_device_is_on_its_path(probes: FakeProbes) -> None:
+    probes.ports = [FakePort("/dev/ttyACM0", product="CubeOrange")]
+    probes.mavlink = {"/dev/ttyACM0": 140}
+    (running,) = await detect()
+    probes.probed.clear()
+
+    # The router now holds the port, the identity recorded by the first probe must survive cache invalidation
+    probes.mavlink = {}
+    assert await detect(running) == [running]
+    assert not probes.probed
+
+
+async def test_known_board_is_not_reused_for_another_device_on_its_path(probes: FakeProbes) -> None:
+    probes.ports = [FakePort("/dev/ttyACM0", product="CubeOrange")]
+    probes.mavlink = {"/dev/ttyACM0": 140}
+    (running,) = await detect()
+    probes.probed.clear()
+
+    probes.ports = [
+        FakePort(
+            "/dev/ttyACM0", product="MatekH743", vid=0x1209, pid=0x5740, serial_number="9999", manufacturer="ArduPilot"
+        )
+    ]
+    probes.mavlink = {"/dev/ttyACM0": 1013}
+    (board,) = await detect(running)
+    assert board.ardupilot_board_id == 1013
+    assert board.platform.name == "MatekH743"
+    assert probes.probed == ["/dev/ttyACM0"]
+
+
+async def test_paused_probing_reuses_last_detection(probes: FakeProbes) -> None:
+    probes.ports = [
+        FakePort("/dev/ttyACM0", product="CubeOrange"),
+        FakePort("/dev/ttyACM1", product="MatekH743-BL", usb_device_path="/sys/devices/usb1/1-2"),
+    ]
+    probes.mavlink = {"/dev/ttyACM0": 140}
+    probes.bootloader = {"/dev/ttyACM1": 1013}
+    boards = await detect()
+    assert len(boards) == 2
+    probes.probed.clear()
+
+    with Detector.pause_probing():
+        assert Detector.is_probing_paused()
+        assert await detect() == boards
+    assert not probes.probed
+    assert not Detector.is_probing_paused()
+
+    await detect()
+    assert sorted(probes.probed) == ["/dev/ttyACM0", "/dev/ttyACM1"]
+
+
+async def test_paused_probing_without_previous_detection(probes: FakeProbes) -> None:
+    probes.ports = [FakePort("/dev/ttyACM0", product="CubeOrange-BL")]
+    probes.bootloader = {"/dev/ttyACM0": 140}
+    with Detector.pause_probing():
+        assert not await detect()
+    assert not probes.probed
+
+
+async def test_probing_pause_is_released_on_errors(probes: FakeProbes) -> None:
+    with pytest.raises(RuntimeError):
+        with Detector.pause_probing():
+            with Detector.pause_probing():
+                raise RuntimeError("flash failed")
+    assert not Detector.is_probing_paused()
     assert not probes.probed
 
 
