@@ -25,7 +25,7 @@ from loguru import logger
 from mavlink_proxy.Endpoint import Endpoint, EndpointType
 from mavlink_proxy.exceptions import EndpointAlreadyExists
 from mavlink_proxy.Manager import Manager as MavlinkManager
-from settings import SettingsV1
+from settings import SettingsV2
 from typedefs import (
     Firmware,
     FlightController,
@@ -40,10 +40,27 @@ from typedefs import (
 )
 
 
+def board_matches_preferred(preferred: FlightController, detected: FlightController) -> bool:
+    """Check if a detected board is the saved one. Path, flags and USB strings can change between sessions."""
+    if preferred.type != detected.type:
+        return False
+    if (
+        preferred.ardupilot_board_id is not None
+        and detected.ardupilot_board_id is not None
+        and preferred.ardupilot_board_id != detected.ardupilot_board_id
+    ):
+        return False
+    # Serial boards saved before board ids existed may only be known by their USB product name
+    is_legacy_generic = preferred.platform.name == "GenericSerial" and preferred.ardupilot_board_id is None
+    if preferred.type == PlatformType.Serial and is_legacy_generic:
+        return preferred.name == detected.name
+    return preferred.platform.name.lower() == detected.platform.name.lower()
+
+
 class AutoPilotManager(metaclass=Singleton):
     # pylint: disable=too-many-instance-attributes
     def __init__(self) -> None:
-        self._settings_manager: PydanticManager[SettingsV1] = PydanticManager(SERVICE_NAME, SettingsV1)
+        self._settings_manager: PydanticManager[SettingsV2] = PydanticManager(SERVICE_NAME, SettingsV2)
         self._settings_manager.settings.create_app_folders()
         self._current_board: Optional[FlightController] = None
         self.should_be_running = False
@@ -277,7 +294,7 @@ class AutoPilotManager(metaclass=Singleton):
             await mavlink_manager.restart()
 
     @property
-    def settings(self) -> SettingsV1:
+    def settings(self) -> SettingsV2:
         return self._settings_manager.settings
 
     @property
@@ -552,9 +569,10 @@ class AutoPilotManager(metaclass=Singleton):
         await self.mavlink_manager.start(device)
 
     async def available_boards(self, include_bootloaders: bool = False) -> List[FlightController]:
-        all_boards = await BoardDetector.detect(True)
-        if self.current_board and self.current_board.path is not None and self.current_board not in all_boards:
-            all_boards.append(self.current_board)
+        known_boards = (
+            [self.current_board] if self.current_board and self.current_board.type == PlatformType.Serial else []
+        )
+        all_boards = await BoardDetector.detect(True, known_boards=known_boards)
         if include_bootloaders:
             return all_boards
         return [board for board in all_boards if FlightControllerFlags.is_bootloader not in board.flags]
@@ -562,7 +580,7 @@ class AutoPilotManager(metaclass=Singleton):
     async def change_board(self, board: FlightController) -> None:
         logger.info(f"Trying to run with '{board.name}'.")
         boards = await self.available_boards()
-        if not any(board.name == detectedboard.name for detectedboard in boards):
+        if not any(board_matches_preferred(board, detected_board) for detected_board in boards):
             logger.error(f"Attempted to change active board to {board} which is not detected.")
             logger.info(f"detected boards are: {boards}")
             raise ValueError(f"Cannot use '{board.name}'. Board not detected.")
@@ -588,8 +606,7 @@ class AutoPilotManager(metaclass=Singleton):
             preferred_board = self.get_preferred_board()
             logger.debug(f"Preferred flight-controller is {preferred_board.name}.")
             for board in boards:
-                # Compare connected boards with saved board, excluding path (which can change between sessions)
-                if preferred_board.model_dump(exclude={"path"}).items() <= board.model_dump().items():
+                if board_matches_preferred(preferred_board, board):
                     return board
             logger.debug(f"Flight-controller {preferred_board.name} not connected.")
         except NoPreferredBoardSet as error:
@@ -601,24 +618,21 @@ class AutoPilotManager(metaclass=Singleton):
         real_boards = [board for board in boards if board.type not in [PlatformType.SITL, PlatformType.Manual]]
         if not real_boards:
             raise RuntimeError("No physical board detected and SITL/Manual board aren't explicitly chosen.")
-        real_boards.sort(key=lambda board: board.platform.name)
+        # Serial boards first, then by platform, so the choice doesn't depend on the detection order
+        real_boards.sort(key=lambda board: (board.type != PlatformType.Serial, board.platform.name, board.name))
         return real_boards[0]
 
     def running_ardupilot_processes(self) -> List[psutil.Process]:
         """Return list of all Ardupilot process running on system."""
+        firmware_prefix = str(self.firmware_manager.firmware_folder / "ardupilot_")
 
         def is_ardupilot_process(process: psutil.Process) -> bool:
-            """Checks if given process is using a Ardupilot's firmware file, for the current platform."""
-            if not self._current_board:
-                return False
-            firmware_path = self.firmware_manager.firmware_path(self._current_board.platform)
+            """Checks if given process is using a Ardupilot's firmware file, for any platform."""
             try:
-                if str(firmware_path) in " ".join(process.cmdline()):
-                    return True
-            except psutil.NoSuchProcess:
-                # process may have died before we could call cmdline()
-                pass
-            return False
+                return firmware_prefix in " ".join(process.cmdline())
+            except (psutil.NoSuchProcess, psutil.AccessDenied):
+                # process may have died, or be inaccessible, before we could call cmdline()
+                return False
 
         return list(filter(is_ardupilot_process, psutil.process_iter()))
 
@@ -735,11 +749,12 @@ class AutoPilotManager(metaclass=Singleton):
             self.should_be_running = True
 
     async def _detect_serial_board(self, board: FlightController) -> Optional[FlightController]:
+        BoardDetector.invalidate_caches()
         return next(
             (
                 detected
                 for detected in await self.available_boards()
-                if detected.type == PlatformType.Serial and detected.platform == board.platform and detected.path
+                if detected.type == PlatformType.Serial and board_matches_preferred(board, detected) and detected.path
             ),
             None,
         )
@@ -869,6 +884,8 @@ class AutoPilotManager(metaclass=Singleton):
                 await self._kill_ardupilot_locked()
                 yield
             finally:
+                # Flashing reboots the board, which can come back on another path
+                BoardDetector.invalidate_caches()
                 await self._start_ardupilot_locked()
 
     async def install_firmware_from_file(
