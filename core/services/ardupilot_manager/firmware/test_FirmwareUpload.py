@@ -2,7 +2,9 @@ import asyncio
 import os
 import pathlib
 import pty
+from typing import List, Tuple
 
+import firmware.FirmwareUpload as upload_module
 import pytest
 from exceptions import FirmwareUploadFail
 from firmware.FirmwareUpload import FirmwareUploader
@@ -18,6 +20,19 @@ while True:
 
 FAILING_UPLOADER = """
 sys.exit("ERROR: Program CRC failed")
+"""
+
+# Longer than the 1 s partial-line flush, so the readers time out before the mismatch is printed
+SILENT_THEN_MISMATCHED_UPLOADER = """
+time.sleep(1.5)
+print("WARNING: Firmware not suitable for this board (board_type=9 (fmuv3) board_id=1013 (None))")
+while True:
+    time.sleep(1)
+"""
+
+NON_UTF8_UPLOADER = """
+sys.stdout.buffer.write(b"Erase  \\xff\\xfe done\\n")
+print("Upload complete")
 """
 
 
@@ -54,3 +69,32 @@ def test_upload_reports_uploader_failure(tmp_path: pathlib.Path, monkeypatch: py
 
     with pytest.raises(FirmwareUploadFail, match="non-zero code 1.*Program CRC failed"):
         asyncio.run(FirmwareUploader().upload(tmp_path / "custom.apj"))
+
+
+@pytest.mark.timeout(30)
+def test_upload_detects_mismatch_after_silence(tmp_path: pathlib.Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    install_fake_uploader(tmp_path, monkeypatch, SILENT_THEN_MISMATCHED_UPLOADER)
+    monkeypatch.setattr(upload_module, "BOARD_REBOOT_SECONDS", 0)
+    bootloader, autopilot_port = pty.openpty()
+    uploader = FirmwareUploader()
+    uploader.set_autopilot_port(pathlib.Path(os.ttyname(autopilot_port)))
+
+    try:
+        with pytest.raises(FirmwareUploadFail, match="Firmware not suitable for this board"):
+            asyncio.run(uploader.upload(tmp_path / "custom.apj"))
+    finally:
+        os.close(bootloader)
+        os.close(autopilot_port)
+
+
+@pytest.mark.timeout(30)
+def test_upload_survives_non_utf8_output(tmp_path: pathlib.Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    install_fake_uploader(tmp_path, monkeypatch, NON_UTF8_UPLOADER)
+    monkeypatch.setattr(upload_module, "BOARD_REBOOT_SECONDS", 0)
+    output: List[Tuple[str, str]] = []
+
+    async def collect(stream: str, line: str) -> None:
+        output.append((stream, line))
+
+    asyncio.run(FirmwareUploader().upload(tmp_path / "custom.apj", collect))
+    assert output == [("stdout", "Erase  \ufffd\ufffd done"), ("stdout", "Upload complete")]
