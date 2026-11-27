@@ -21,6 +21,7 @@ jobs:
       ${{
         (
           github.event_name == 'workflow_run'
+          && github.event.workflow_run.event == 'pull_request'
           && github.event.workflow_run.conclusion == 'success'
           && github.event.workflow_run.actor.type != 'Bot'
         )
