@@ -113,6 +113,12 @@ class ExtensionMetadata(BaseModel):
 class RepositoryEntry(ExtensionMetadata):
     versions: Dict[str, ExtensionVersion] = Field(default_factory=dict)
 
+    def without_readme(self) -> "RepositoryEntry":
+        # Never mutate: entries come from the cached manifest.
+        return self.copy(
+            update={"versions": {tag: version.copy(update={"readme": None}) for tag, version in self.versions.items()}}
+        )
+
 
 # Local Manifest models
 

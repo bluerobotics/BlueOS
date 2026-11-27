@@ -69,6 +69,7 @@ export async function fetchConsolidatedManifests(): Promise<ExtensionData[]> {
   const response = await back_axios({
     method: 'get',
     url: `${KRAKEN_API_V2_URL}/manifest/consolidated`,
+    params: { readme: false },
     timeout: 25000,
   })
 
@@ -78,6 +79,24 @@ export async function fetchConsolidatedManifests(): Promise<ExtensionData[]> {
       (version) => version.images.some((image) => image.compatible),
     ),
   }))
+}
+
+/**
+ * Fetch the readme of one extension version from the consolidated manifests, uses API v2
+ * @param {string} identifier The extension identifier
+ * @param {string} tag The version tag
+ */
+export async function fetchExtensionReadme(identifier: string, tag: string): Promise<string> {
+  const response = await back_axios({
+    method: 'get',
+    url: `${KRAKEN_API_V2_URL}/manifest/consolidated/${encodeURIComponent(identifier)}/`
+      + `${encodeURIComponent(tag)}/readme`,
+    responseType: 'text',
+    // Margin for slow links: the request may first wait on the shared 5 s backend status check
+    timeout: 60000,
+  })
+
+  return response.data as string
 }
 
 /**
@@ -409,6 +428,7 @@ export default {
   fetchManifestSources,
   fetchManifestSource,
   fetchConsolidatedManifests,
+  fetchExtensionReadme,
   fetchInstalledExtensions,
   addManifestSource,
   updateManifestSource,

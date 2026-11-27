@@ -94,6 +94,7 @@ module.exports = {
     'no-await-in-loop': 'off',
   },
   settings: {
+    'import/core-modules': ['bun:test'],
     'import/resolver': {
       typescript: {
         alwaysTryTypes: true,

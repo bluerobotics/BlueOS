@@ -170,11 +170,25 @@
     <v-card-text class="mt-5">
       <!-- This is a compiled markdown we compile ourselves. it should be safe -->
       <!-- eslint-disable -->
+      <v-progress-linear
+        v-if="readme_loading"
+        indeterminate
+      />
       <div
+        v-else
         class="readme"
         v-html="compiled_markdown"
       />
       <!-- eslint-enable -->
+      <v-btn
+        v-if="readme_error && !readme_loading"
+        class="mt-2"
+        color="primary"
+        small
+        @click="loadReadme"
+      >
+        {{ t`Retry` }}
+      </v-btn>
     </v-card-text>
   </v-card>
 </template>
@@ -182,9 +196,12 @@
 <script lang="ts">
 import { marked } from 'marked'
 import { compare } from 'semver'
+import { t } from 'ttag'
 import Vue, { PropType } from 'vue'
 
 import JsonEditor from '@/components/common/JsonEditor.vue'
+import kraken from '@/components/kraken/KrakenManager'
+import ReadmeLoader from '@/components/kraken/readmeLoader'
 import { JSONValue } from '@/types/common'
 import { ExtensionData, InstalledExtensionData, Version } from '@/types/kraken'
 
@@ -214,18 +231,26 @@ export default Vue.extend({
       selected_version: '' as string | undefined,
       editing_permissions: '' as string | JSONValue,
       custom_permissions: {} as Record<string, JSONValue>,
+      readmes: {} as Record<string, string>,
+      readme_loading: false,
+      readme_error: false,
+      readme_loader: undefined as ReadmeLoader | undefined,
     }
   },
   computed: {
+    readme_key(): string {
+      return `${this.extension.identifier}:${this.selected_version}`
+    },
     selected(): Version | null {
       return this.selected_version ? this.extension.versions[this.selected_version] : null
     },
     compiled_markdown(): string {
-      if (!this.selected?.readme) {
-        return 'No readme available'
+      const readme = this.selected?.readme ?? this.readmes[this.readme_key]
+      if (!readme) {
+        return this.readme_error ? t`Failed to load readme` : t`No readme available`
       }
       // TODO: make sure we sanitize this
-      return marked(this.selected.readme)
+      return marked(readme)
     },
     available_tags(): {text: string, value: string, active: boolean}[] {
       const tags = this.getSortedTags().map((tag) => ({
@@ -259,7 +284,12 @@ export default Vue.extend({
     },
   },
   watch: {
-    extension() {
+    extension(extension: ExtensionData, previous: ExtensionData) {
+      if (extension?.identifier !== previous?.identifier) {
+        this.readme_error = false
+        this.readme_loading = false
+        this.readmes = {}
+      }
       this.selected_version = this.getLatestTag()
       this.editing_permissions = this.getVersionPermissions()
       this.custom_permissions = {}
@@ -267,11 +297,35 @@ export default Vue.extend({
     selected_version() {
       this.editing_permissions = this.getVersionPermissions()
     },
+    readme_key() {
+      this.loadReadme()
+    },
+  },
+  created() {
+    this.readme_loader = new ReadmeLoader({
+      has: (key) => key in this.readmes,
+      store: (key, readme) => this.$set(this.readmes, key, readme),
+      setLoading: (loading) => { this.readme_loading = loading },
+      setError: (error) => { this.readme_error = error },
+    })
   },
   mounted() {
     this.selected_version = this.getLatestTag()
   },
   methods: {
+    async loadReadme(): Promise<void> {
+      if (!this.selected_version || this.selected?.readme) {
+        this.readme_loading = false
+        this.readme_error = false
+        return
+      }
+      const { identifier } = this.extension
+      const tag = this.selected_version
+      await this.readme_loader?.load(
+        this.readme_key,
+        () => kraken.fetchExtensionReadme(identifier, tag),
+      )
+    },
     getSortedTags(): string[] {
       return Object.keys(this.extension.versions).sort((a, b) => compare(b, a))
     },
