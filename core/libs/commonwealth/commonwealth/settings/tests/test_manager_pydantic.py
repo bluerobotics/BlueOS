@@ -195,7 +195,8 @@ def test_invalid_json_fallback_to_defaults_v1() -> None:
 
     # Verify that a v1 settings will be replaced
     settings_manager.save()
-    assert len(os.listdir(settings_folder)) == 1
+    assert len(os.listdir(settings_folder)) == 2
+    assert len(list(settings_folder.glob("settings-1.json.invalid-*"))) == 1
 
 
 def test_invalid_json_fallback_to_defaults_v1_from_invalid_v2() -> None:
@@ -223,7 +224,8 @@ def test_invalid_json_fallback_to_defaults_v1_from_invalid_v2() -> None:
 
     # Verify that a v2 settings will be replaced
     settings_manager.save()
-    assert len(os.listdir(settings_folder)) == 2
+    assert len(os.listdir(settings_folder)) == 3
+    assert len(list(settings_folder.glob("settings-2.json.invalid-*"))) == 1
 
 
 def test_invalid_json_fallback_to_defaults_v2_from_invalid_v2_and_v1() -> None:
