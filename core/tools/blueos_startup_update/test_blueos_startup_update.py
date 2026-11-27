@@ -4,7 +4,7 @@ import subprocess
 import sys
 from pathlib import Path
 from types import ModuleType
-from typing import Callable, Dict, List, NamedTuple, Optional, Tuple
+from typing import Callable, Dict, List, NamedTuple, Optional, Set, Tuple
 from unittest.mock import patch
 
 import pytest
@@ -781,6 +781,71 @@ def locate_boot_file_on_host(host_files: Dict[str, str], candidates: List[str]) 
     with patch.object(blueos_startup_update, "locate_file", lambda _candidates: located):
         with patch.object(blueos_startup_update, "run_command", fake_host_run_command(host_files)):
             return blueos_startup_update.locate_boot_file(candidates)
+
+
+def test_equivalent_link_detection_follows_the_inode(tmp_path: Path) -> None:
+    # is_same_file() leans on `-ef`, so its answer is only as good as what bash does for the states
+    # a resolv conf bind can be in on a host. Pinning them here keeps the patch from drifting into
+    # either rebuilding a bind that is fine or trusting one that has gone stale.
+    live = tmp_path / "resolv.conf"
+    bind = tmp_path / "resolv.conf.host"
+    live.write_text("nameserver 192.0.2.1\n", encoding="utf-8")
+
+    def same_file() -> bool:
+        result = subprocess.run(["bash", "-c", f"[ '{bind}' -ef '{live}' ]"], capture_output=True, check=False)
+        return result.returncode == 0
+
+    assert not same_file(), "a bind that does not exist yet has to count as missing"
+
+    os.symlink(live, bind)
+    assert same_file(), "a symlink the init system manages already serves as the bind"
+
+    bind.unlink()
+    os.link(live, bind)
+    assert same_file(), "a hard link is the bind this patch creates, so it has to be recognised"
+
+    # resolvconf replaces the file by rename, which leaves an existing bind on the previous inode.
+    # Missing that would leave the container reading a file the host no longer updates.
+    replacement = tmp_path / "resolv.conf.new"
+    replacement.write_text("nameserver 198.51.100.7\n", encoding="utf-8")
+    os.replace(replacement, live)
+    assert not same_file(), "a bind left on the previous inode has to be rebuilt"
+
+    bind.unlink()
+    os.symlink(tmp_path / "gone", bind)
+    assert not same_file(), "a dangling symlink has to count as missing"
+
+
+def test_dns_patch_leaves_an_equivalent_link_alone() -> None:
+    # The bind only has to point at the live resolv conf. On a host that manages it with a symlink
+    # the link count stays at one, so a count-based check rebuilt it every boot and reported a
+    # restart every boot. Driving the real patch proves the equivalence check is what decides.
+    commands: List[str] = []
+    equivalent: Set[str] = set()
+
+    def run_command(command: str, _check: bool = True, _log_output: bool = True) -> "subprocess.CompletedProcess[str]":
+        commands.append(command)
+        match = re.fullmatch(r"\[ '(?P<dest>[^']+)' -ef '(?P<src>[^']+)' \]", command)
+        if not match:
+            return subprocess.CompletedProcess(command, 0, stdout="", stderr="")
+        return subprocess.CompletedProcess(command, 0 if match["dest"] in equivalent else 1, stdout="", stderr="")
+
+    def apply(host_points_bind_at_live_file: bool) -> bool:
+        equivalent.clear()
+        commands.clear()
+        if host_points_bind_at_live_file:
+            equivalent.add("/etc/resolv.conf.host")
+        with patch.object(blueos_startup_update, "run_command", run_command):
+            return blueos_startup_update.create_dns_conf_host_link()
+
+    assert apply(True) is False, (
+        "a bind that already points at the live file reports a restart, so every boot rebuilds it and "
+        "reboots the board again"
+    )
+    assert not any("ln " in command for command in commands), "an equivalent bind was rebuilt instead of left alone"
+
+    assert apply(False) is True, "a missing bind has to be patched, or the bind never gets created"
+    assert any("ln " in command for command in commands), "a missing bind was reported without being created"
 
 
 @pytest.mark.parametrize("boot_file", ["config.txt", "cmdline.txt"])

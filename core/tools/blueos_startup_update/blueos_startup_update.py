@@ -331,8 +331,10 @@ def navigator_managed_entries(cpu_type: CpuType) -> List[Tuple[str, str]]:
     raise ValueError(f"No Navigator configuration for {cpu_type}")
 
 
-def hardlink_exists(file_name: str) -> bool:
-    command = f"[ -f '{file_name}' ] && [ $(stat -c '%h' '{file_name}') -gt 1 ]"
+def is_same_file(source_file_name: str, destination_file_name: str) -> bool:
+    # -ef compares the inode behind each path, so it follows symlinks and tells a link that is
+    # still on the file apart from one left behind on a previous inode
+    command = f"[ '{destination_file_name}' -ef '{source_file_name}' ]"
     return run_command(command, False).returncode == 0
 
 
@@ -614,11 +616,12 @@ def create_dns_conf_host_link() -> bool:
     """This patch creates a hard link of /etc/resolv.conf as /etc/resolv.conf.host, to be used as
     a binding with an fixed file-descriptor, which is neccessary for docker bindings if the original
     file is being replaced by some system service, like is the case when dnsmasq or dhcpcd changes
-    the /etc/resolf.conf file."""
+    the /etc/resolf.conf file. A hard link is the usual result, but a bind that already resolves to
+    the live file, such as a symlink the init system manages, serves the same purpose."""
     logger.info("Creating dns link with host...")
     original_resolv_conf_file = "/etc/resolv.conf"
     resolv_conf_file_host_link = "/etc/resolv.conf.host"
-    if hardlink_exists(resolv_conf_file_host_link):
+    if is_same_file(original_resolv_conf_file, resolv_conf_file_host_link):
         return False
 
     # Creates a static reoslv conf to allow docker binds
