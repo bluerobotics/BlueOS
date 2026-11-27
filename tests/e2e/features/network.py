@@ -7,7 +7,13 @@ from typing import Protocol
 class Router(Protocol):
     """The router the vehicle's ethernet is plugged into"""
 
+    def without_internet(self) -> AbstractContextManager[None]:
+        ...
+
     def without_dhcp_server(self) -> AbstractContextManager[None]:
+        ...
+
+    def without_vehicle_cable(self) -> AbstractContextManager[None]:
         ...
 
 
