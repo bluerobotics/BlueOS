@@ -338,8 +338,13 @@ class Extension:
         to_clear = [version for version in to_clear if version.source.tag != self.tag]
         await asyncio.gather(*(version.uninstall() for version in to_clear))
 
-    async def install(self, clear_remaining_tags: bool = True) -> AsyncGenerator[bytes, None]:
+    async def install(self, clear_remaining_tags: bool = True, pull: bool = True) -> AsyncGenerator[bytes, None]:
         logger.info(f"Installing extension {self.identifier}:{self.tag}")
+
+        if not pull:
+            async with DockerCtx() as client:
+                if await self._local_image_id(client, exact=True) is None:
+                    raise ExtensionPullFailed(f"Image {self.source.docker}:{self.tag} is not available locally")
 
         try:
             prior_settings: Optional[ExtensionSettings] = copy.deepcopy(self.settings)
@@ -356,7 +361,7 @@ class Extension:
 
             async with DockerCtx() as client:
                 # A local digest image is the exact content, so only a tag-only install needs the registry
-                is_local = bool(self.digest) and await self._local_image_id(client, exact=True) is not None
+                is_local = not pull or bool(self.digest) and await self._local_image_id(client, exact=True) is not None
             if not is_local:
                 async for line in self._pull_docker_image(self._prepare_docker_auth()):
                     yield line
