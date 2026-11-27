@@ -187,35 +187,38 @@ class DiskStore extends VuexModule {
     this.setSpeedTestProgress('Starting tests...')
 
     let processedFragments = 0
+    const processNewPoints = (response: string): void => {
+      const fragments = parseStreamingResponse(response)
+      const validFragments = fragments.filter((f) => f.fragment >= 0 && f.status === 200 && f.data)
+
+      for (let i = processedFragments; i < validFragments.length; i++) {
+        const fragment = validFragments[i]
+        if (!fragment.data) continue
+
+        try {
+          const point = JSON.parse(fragment.data) as DiskSpeedTestPoint
+          this.addSpeedResult(point)
+          this.setSpeedTestProgress(`Tested ${point.size_mb} MB`)
+        } catch (e) {
+          console.error('Failed to parse speed test point:', e)
+        }
+      }
+      processedFragments = validFragments.length
+    }
 
     try {
-      await back_axios({
+      const response = await back_axios({
         method: 'get',
         url: `${this.API_URL}/speed/stream`,
         timeout: 600000,
         // axios 0.21 has no .event, it passes the ProgressEvent directly
         onDownloadProgress: (progressEvent) => {
-          const response = (progressEvent.event ?? progressEvent).currentTarget?.response
-          if (!response) return
-
-          const fragments = parseStreamingResponse(response)
-          const validFragments = fragments.filter((f) => f.fragment >= 0 && f.status === 200 && f.data)
-
-          for (let i = processedFragments; i < validFragments.length; i++) {
-            const fragment = validFragments[i]
-            if (!fragment.data) continue
-
-            try {
-              const point = JSON.parse(fragment.data) as DiskSpeedTestPoint
-              this.addSpeedResult(point)
-              this.setSpeedTestProgress(`Tested ${point.size_mb} MB`)
-            } catch (e) {
-              console.error('Failed to parse speed test point:', e)
-            }
-          }
-          processedFragments = validFragments.length
+          const partial = (progressEvent.event ?? progressEvent).currentTarget?.response
+          if (partial) processNewPoints(partial)
         },
       })
+      // The last points can arrive with the end of the response, after the last progress event
+      if (typeof response.data === 'string') processNewPoints(response.data)
 
       this.setSpeedTestProgress('Test complete')
     } catch (error) {
