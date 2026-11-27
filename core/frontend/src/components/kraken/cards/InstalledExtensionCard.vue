@@ -1,5 +1,5 @@
 <template>
-  <v-card class="main-card d-flex flex-column">
+  <v-card class="main-card d-flex flex-column" :data-testid="`installed-extension-${extension.identifier}`">
     <div
       v-if="loading"
       class="card-loading-overlay"
@@ -40,6 +40,7 @@
             v-tooltip="extension.tag"
             class="d-block text-truncate"
             style="color: grey;"
+            data-testid="installed-extension-tag"
           >
             {{ extension.tag }}
           </span>
@@ -51,6 +52,7 @@
         class="card-update-button ml-2 flex-shrink-0"
         color="primary"
         small
+        data-testid="installed-extension-update"
         @click="$emit('update', extension, update_available)"
       >
         {{ t`Update to ${update_available}` }}
@@ -63,7 +65,9 @@
           <tbody>
             <tr>
               <td>{{ t`Status` }}</td>
-              <td>{{ extension.enabled ? getStatus() : t`Disabled` }}</td>
+              <td data-testid="installed-extension-status">
+                {{ extension.enabled ? getStatus() : t`Disabled` }}
+              </td>
             </tr>
             <tr v-if="extension.enabled">
               <td>{{ t`CPU usage` }}</td>
@@ -188,6 +192,7 @@
       <v-btn
         v-if="!is_extension_major_tom"
         :style="{ backgroundColor: buttonBgColor }"
+        data-testid="installed-extension-uninstall"
         @click="$emit('uninstall', extension)"
       >
         {{ t`Uninstall` }}

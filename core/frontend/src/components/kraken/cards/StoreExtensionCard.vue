@@ -7,6 +7,7 @@
     elevation="2"
     :class="{ 'disabled-card': !is_compatible }"
     class="store-extension-card"
+    :data-testid="`store-extension-${extension.identifier}`"
   >
     <div
       v-if="is_beta_only_extension"
@@ -41,6 +42,7 @@
       <template #activator="{ on, attrs }">
         <div
           class="content-wrapper"
+          data-testid="store-extension-open"
           v-bind="attrs"
           v-on="on"
           @click="$emit('selected')"

@@ -36,6 +36,8 @@
         outlined
         dense
         class="mr-2"
+        data-testid="extension-version"
+        :menu-props="{ contentClass: 'extension-version-menu' }"
       >
         <template #item="{ item }">
           <v-tooltip :disabled="item.active" bottom>
@@ -65,7 +67,7 @@
             width="120px"
             height="40px"
             :color="is_installed ? 'error' : 'primary'"
-
+            data-testid="extension-action"
             v-bind="attrs"
             v-on="on"
             @click="performAction"
