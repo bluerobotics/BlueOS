@@ -338,8 +338,8 @@ jobs:
         with:
           name: e2e-logs
           path: |
-            tests/e2e/.run/serial.log
-            tests/e2e/.run/startup.json
+            tests/e2e/.run/*/serial.log
+            tests/e2e/.run/*/startup.json
           if-no-files-found: ignore
 
   deploy-raspberry-image:

@@ -43,8 +43,6 @@ class Qemu:
         ]
 
     def start(self) -> None:
-        # A previous run that was killed leaves its vm behind, holding the ports and the pid file
-        self.stop()
         result = subprocess.run(["qemu-system-x86_64", *self.args], capture_output=True, text=True, check=False)
         if result.returncode != 0:
             raise RuntimeError(f"qemu failed to start: {result.stderr.strip()}")
@@ -60,8 +58,7 @@ class Qemu:
                 time.sleep(0.1)
         self.pidfile.unlink(missing_ok=True)
 
-    @staticmethod
-    def _is_qemu(pid: int) -> bool:
+    def _is_qemu(self, pid: int) -> bool:
         with contextlib.suppress(OSError):
-            return b"qemu-system" in Path(f"/proc/{pid}/cmdline").read_bytes()
+            return str(self.pidfile).encode() in Path(f"/proc/{pid}/cmdline").read_bytes()
         return False
