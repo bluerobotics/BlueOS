@@ -15,11 +15,11 @@ Ctrl+D stops the VM"""
 def main() -> None:
     logging.basicConfig(level=logging.DEBUG, format="%(asctime)s %(levelname)-7s %(message)s", datefmt="%H:%M:%S")
     target = SilTarget()
-    target.up()
-    banner = BANNER.format(
-        url=target.base_url, password=target.ssh.password, port=target.vm_ssh_forward_port, user=target.ssh.user
-    )
     try:
+        target.up()
+        banner = BANNER.format(
+            url=target.base_url, password=target.ssh.password, port=target.vm_ssh_forward_port, user=target.ssh.user
+        )
         code.interact(banner=banner, local={"target": target}, exitmsg="")
     finally:
         target.down()

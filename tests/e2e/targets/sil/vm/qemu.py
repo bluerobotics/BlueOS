@@ -11,6 +11,8 @@ logger = logging.getLogger(__name__)
 
 class Qemu:
     def __init__(self, run_dir: Path, disk: Path, ssh_port: int, http_port: int) -> None:
+        if not disk.exists():
+            raise FileNotFoundError(f"{disk} not found, build it first with targets/sil/image/build.sh")
         self.pidfile = run_dir / "qemu.pid"
         self.serial_log = run_dir / "serial.log"
         self.args = [
@@ -32,7 +34,8 @@ class Qemu:
             logger.warning("/dev/kvm is not available, the vm will run without acceleration and be very slow")
         self.args += [
             "-drive",
-            f"file={disk},if=virtio",
+            # Disk is a temporary snapshot of the base image
+            f"file={disk},if=virtio,snapshot=on",
             "-netdev",
             f"user,id=n0,hostfwd=tcp:127.0.0.1:{ssh_port}-:22,hostfwd=tcp:127.0.0.1:{http_port}-:80",
             "-device",
@@ -40,8 +43,6 @@ class Qemu:
         ]
 
     def start(self) -> None:
-        # A previous run that was killed leaves its vm behind, holding the ports and the pid file
-        self.stop()
         result = subprocess.run(["qemu-system-x86_64", *self.args], capture_output=True, text=True, check=False)
         if result.returncode != 0:
             raise RuntimeError(f"qemu failed to start: {result.stderr.strip()}")
@@ -57,8 +58,7 @@ class Qemu:
                 time.sleep(0.1)
         self.pidfile.unlink(missing_ok=True)
 
-    @staticmethod
-    def _is_qemu(pid: int) -> bool:
+    def _is_qemu(self, pid: int) -> bool:
         with contextlib.suppress(OSError):
-            return b"qemu-system" in Path(f"/proc/{pid}/cmdline").read_bytes()
+            return str(self.pidfile).encode() in Path(f"/proc/{pid}/cmdline").read_bytes()
         return False

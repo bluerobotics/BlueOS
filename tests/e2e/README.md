@@ -4,7 +4,7 @@ End-to-end tests that run a full BlueOS (bootstrap + core) in different targets 
 
 ## Requirements
 
-- `docker`, `qemu-img`, `qemu-system-x86_64`, `ssh`, `sshpass`
+- `docker`, `qemu-system-x86_64`, `ssh`, `sshpass`
 - `uv`
 - `/dev/kvm` (without it the VM runs, but very slowly)
 
@@ -66,5 +66,4 @@ Here is an example of how to use the interactive prompt:
 >>> print(target.shell("sudo docker ps"))
 ```
 
-Per-run files (disk overlay, `qemu.pid`, `serial.log`, `startup.json`) are in `.run/`. Changes made inside the VM are
-lost when it stops.
+Changes made inside the VM are lost when it stops.

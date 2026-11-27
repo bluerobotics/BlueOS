@@ -5,6 +5,7 @@
   system.stateVersion = "26.05";
   networking.hostName = "blueos";
   boot.kernelParams = [ "console=ttyS0" ];
+  virtualisation.diskSize = 8 * 1024;
 
   # Enable the mac80211_hwsim module to simulate wifi radios
   boot.kernelModules = [ "mac80211_hwsim" ];
