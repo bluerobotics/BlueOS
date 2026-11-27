@@ -8,6 +8,7 @@ from http.client import HTTPException
 from ipaddress import IPv4Address
 from typing import Any, Dict, List, Optional
 
+import radio
 from commonwealth.utils.general import HostOs, get_host_os
 from exceptions import FetchError, ParseError
 from fastapi import status
@@ -452,8 +453,16 @@ class WifiManager(AbstractWifiManager):
             if not networks_reenabled and seconds_disconnected >= seconds_before_reconnecting:
                 logger.debug("Watchdog activated.")
                 logger.debug("Trying to reconnect to available networks.")
-                await self.enable_saved_networks(self._ignored_reconnection_networks)
-                await self.wpa.send_command_reconnect()
+                # wpa_supplicant answers FAIL while the interface is disabled (e.g. rfkill-blocked), and an
+                # exception here would end the watchdog for good
+                try:
+                    await self.enable_saved_networks(self._ignored_reconnection_networks)
+                except Exception:
+                    logger.exception("Could not re-enable the saved networks.")
+                try:
+                    await self.wpa.send_command_reconnect()
+                except Exception:
+                    logger.exception("Could not ask wpa_supplicant to reconnect.")
                 try:
                     if self._settings_manager.settings.smart_hotspot_enabled in [None, True]:
                         logger.debug("Starting smart-hotspot.")
@@ -586,6 +595,44 @@ class WifiManager(AbstractWifiManager):
         loop = asyncio.get_event_loop()
         loop.create_task(self.auto_reconnect(60))
         loop.create_task(self.start_hotspot_watchdog())
+
+    async def _apply_country(self, code: str) -> None:
+        # The code goes to the wpa_supplicant control socket before radio.set_country could check it, and it can come
+        # from a hand-edited setting through apply_saved_country, which no API validated
+        radio.check_country_format(code)
+        if self.wpa_path is None:
+            await super()._apply_country(code)
+            return
+        # The kernel's domain is always defined (00 by default), unlike wpa_supplicant's own country
+        previous_country = await radio.current_country()
+        saved = False
+        try:
+            await self.wpa.send_command_set("country", code)
+            await self.wpa.send_command_save_config()
+            saved = True
+            await super()._apply_country(code)
+        except Exception:
+            logger.exception("Could not set the country, restoring the previous one.")
+            await self._restore_country_after_failure(previous_country, saved)
+            raise
+
+    async def _restore_country_after_failure(self, previous_country: str, saved: bool) -> None:
+        # SET already made wpa_supplicant ask the kernel for the new country, and SAVE_CONFIG may have persisted it
+        try:
+            await self.wpa.send_command_set("country", previous_country)
+        except Exception:
+            logger.exception("Could not restore the previous country.")
+            return
+        try:
+            # Belt and braces for when the wpa SET itself failed before reaching the kernel
+            await radio.set_country(previous_country)
+        except Exception:
+            logger.exception("Could not restore the previous country in the kernel.")
+        if saved:
+            try:
+                await self.wpa.send_command_save_config()
+            except Exception:
+                logger.exception("Could not save the previous country.")
 
     async def supports_hotspot(self) -> bool:
         if self.wpa_path is None:

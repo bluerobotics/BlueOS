@@ -42,6 +42,31 @@
       </v-btn>
     </v-app-bar>
 
+    <v-alert
+      v-if="rfkill_blocked"
+      type="warning"
+      dense
+      text
+      class="ma-2"
+    >
+      {{ rfkill_hard_blocked
+        ? t`The wifi radio is blocked by hardware and cannot be unblocked from BlueOS.`
+        : t`The wifi radio is blocked, so no network can be scanned or hosted.` }}
+      <template
+        v-if="!rfkill_hard_blocked"
+        #append
+      >
+        <v-btn
+          color="warning"
+          small
+          :loading="rfkill_unblocking"
+          @click="unblockRfkill"
+        >
+          {{ t`Unblock` }}
+        </v-btn>
+      </template>
+    </v-alert>
+
     <v-sheet v-if="!wifi_is_loading">
       <wifi-network-card
         v-if="current_network"
@@ -203,6 +228,7 @@ export default Vue.extend({
       show_qr_code_dialog: false,
       wifi_qr_code_img: '',
       ssid_filter: undefined as string | undefined,
+      rfkill_unblocking: false,
     }
   },
   computed: {
@@ -243,6 +269,12 @@ export default Vue.extend({
           && domain.ip === beacon.nginx_ip_address,
       )
     },
+    rfkill_blocked(): boolean {
+      return wifi.rfkill_status?.soft_blocked === true || wifi.rfkill_status?.hard_blocked === true
+    },
+    rfkill_hard_blocked(): boolean {
+      return wifi.rfkill_status?.hard_blocked === true
+    },
     show_search(): boolean {
       if (!this.connectable_networks) {
         return false
@@ -257,6 +289,8 @@ export default Vue.extend({
   },
   mounted() {
     beacon.registerBeaconListener(this)
+    // The block only changes on boot or on a user action, so there is no need to poll it
+    this.fetchRfkillStatus()
   },
   methods: {
     forgetNetwork(network: Network): void {
@@ -296,6 +330,42 @@ export default Vue.extend({
       }
       this.toggleHotspot()
     },
+    async fetchRfkillStatus(): Promise<void> {
+      await back_axios({
+        method: 'get',
+        url: `${wifi.API_URL}/rfkill`,
+        timeout: 10000,
+      })
+        .then((response) => {
+          wifi.setRfkillStatus(response.data)
+        })
+        .catch((error) => {
+          // Keeps the last known state: a failed request must not hide the warning of a blocked radio
+          notifier.pushBackError('WIFI_RFKILL_FETCH_FAIL', error)
+        })
+    },
+    async unblockRfkill(): Promise<void> {
+      this.rfkill_unblocking = true
+      await back_axios({
+        method: 'post',
+        url: `${wifi.API_URL}/rfkill/unblock`,
+        timeout: 10000,
+      })
+        .then((response) => {
+          wifi.setRfkillStatus(response.data)
+          if (response.data.soft_blocked) {
+            notifier.pushError('WIFI_RFKILL_UNBLOCK_FAIL', t`The wifi radio is still blocked.`, true)
+            return
+          }
+          notifier.pushSuccess('WIFI_RFKILL_UNBLOCK_SUCCESS', t`Successfully unblocked the wifi radio.`)
+        })
+        .catch((error) => {
+          notifier.pushBackError('WIFI_RFKILL_UNBLOCK_FAIL', error, true)
+        })
+        .finally(() => {
+          this.rfkill_unblocking = false
+        })
+    },
     async toggleHotspot(): Promise<void> {
       this.hotspot_status_loading = true
       await back_axios({
@@ -310,6 +380,10 @@ export default Vue.extend({
         .catch((error) => {
           notifier.pushBackError('HOTSPOT_STATUS_TOGGLE_FAIL', error, true)
           this.hotspot_status_loading = false
+        })
+        // Starting the hotspot is what fails on a blocked radio
+        .finally(() => {
+          this.fetchRfkillStatus()
         })
     },
   },

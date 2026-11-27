@@ -6,6 +6,7 @@ import logging
 from pathlib import Path
 from typing import Any, List, Optional
 
+import radio
 from commonwealth.utils.apis import (
     GenericErrorHandlingRoute,
     PrettyJSONResponse,
@@ -15,13 +16,16 @@ from commonwealth.utils.apis import (
 from commonwealth.utils.logs import InterceptHandler, init_logger
 from commonwealth.utils.sentry_config import init_sentry_async
 from exceptions import BusyError
-from fastapi import FastAPI, HTTPException, status
+from fastapi import FastAPI, HTTPException, Query, status
 from fastapi.staticfiles import StaticFiles
 from fastapi_versioning import VersionedFastAPI, version
 from loguru import logger
 from tabulate import tabulate  # type: ignore
 from typedefs import (
+    Country,
     HotspotStatus,
+    RegulatoryCountry,
+    RfkillStatus,
     SavedWifiNetwork,
     ScannedWifiNetwork,
     WifiCredentials,
@@ -164,6 +168,54 @@ def get_hotspot_credentials() -> Any:
     return wifi_manager.hotspot_credentials()
 
 
+@app.get("/rfkill", response_model=RfkillStatus, summary="Get the rfkill state of the wifi radio.")
+@version(1, 0)
+async def get_rfkill() -> Any:
+    if wifi_manager is None:
+        return await radio.rfkill_status()
+    return await wifi_manager.rfkill_status()
+
+
+@app.post("/rfkill/unblock", response_model=RfkillStatus, summary="Unblock the wifi radio.")
+@version(1, 0)
+async def unblock_rfkill() -> Any:
+    if wifi_manager is None:
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="No wifi manager available.")
+    await wifi_manager.rfkill_unblock()
+    rfkill = await wifi_manager.rfkill_status()
+    # The button is hidden when the radio is blocked by hardware, so this is only reachable through the API
+    if rfkill.hard_blocked:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Wifi radio is blocked by hardware.")
+    return rfkill
+
+
+@app.get("/countries", response_model=List[Country], summary="Get the regulatory countries supported by the system.")
+@version(1, 0)
+async def get_countries() -> Any:
+    return await radio.supported_countries()
+
+
+@app.get("/country", response_model=RegulatoryCountry, summary="Get the regulatory country.")
+@version(1, 0)
+async def get_country() -> Any:
+    return RegulatoryCountry(code=await radio.current_country())
+
+
+@app.post("/country", response_model=RegulatoryCountry, summary="Set the regulatory country.")
+@version(1, 0)
+async def set_country(code: str = Query(..., pattern=f"^{radio.COUNTRY_CODE_PATTERN}$")) -> Any:
+    if wifi_manager is None:
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="No wifi manager available.")
+    try:
+        await radio.check_supported(code)
+    except radio.CountryDatabaseError as error:
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=str(error)) from error
+    except ValueError as error:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(error)) from error
+    await wifi_manager.set_country(code)
+    return RegulatoryCountry(code=code)
+
+
 app = VersionedFastAPI(app, version="1.0.0", prefix_format="/v{major}.{minor}", enable_latest=True)
 use_local_docs_assets(app)
 app.mount("/", StaticFiles(directory=str(FRONTEND_FOLDER), html=True))
@@ -195,6 +247,17 @@ async def main() -> None:
             logger.info(f"Using {implementation} as wifi manager.")
             await implementation.start()
             wifi_manager = implementation
+            # Installs that shipped with the radio soft-blocked would otherwise never scan nor host a hotspot. Only
+            # done here, and not when the hotspot starts, so the watchdog never overrides a deliberate block
+            try:
+                await wifi_manager.rfkill_unblock()
+            except Exception:
+                logger.exception("Could not unblock the wifi radio.")
+            try:
+                await wifi_manager.apply_saved_country()
+            except Exception:
+                # The service has to come up even if the host can't apply it, or the UI can't change it
+                logger.exception("Could not apply the saved regulatory country.")
             break
 
     await server.serve()
