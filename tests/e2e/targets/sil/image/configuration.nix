@@ -1,6 +1,9 @@
 { modulesPath, pkgs, ... }:
 {
-  imports = [ (modulesPath + "/profiles/qemu-guest.nix") ];
+  imports = [
+    (modulesPath + "/profiles/qemu-guest.nix")
+    ./router.nix
+  ];
 
   system.stateVersion = "26.05";
   networking.hostName = "blueos";

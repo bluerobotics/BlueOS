@@ -3,7 +3,10 @@ import shutil
 from pathlib import Path
 
 from blueos.core import BlueOS
+from features.network import ClientPc, Router
 from targets.sil import docker
+from targets.sil.client_pc import SilClientPcDriver
+from targets.sil.router import SilRouterDriver
 from targets.sil.vm import disk
 from targets.sil.vm.qemu import Qemu
 from targets.sil.vm.ssh import Ssh
@@ -33,6 +36,7 @@ class SilTarget(Target):
             self.vm_http_forward_port,
         )
         self.ssh = Ssh(self.vm_ssh_forward_port)
+        self.features = {Router: SilRouterDriver(self), ClientPc: SilClientPcDriver(self)}
 
     @property
     def base_url(self) -> str:
