@@ -22,7 +22,12 @@
         <v-container fluid>
           <v-row v-if="error">
             <v-col cols="12">
-              <v-alert type="error" dense outlined>
+              <v-alert
+                type="error"
+                dense
+                outlined
+                data-testid="disk-usage-error"
+              >
                 {{ error }}
               </v-alert>
             </v-col>
@@ -42,12 +47,13 @@
             <v-col cols="12">
               <v-card outlined>
                 <v-card-title class="py-2 d-flex align-center">
-                  <span>{{ path }} {{ totalSize ? ` (${totalSize})` : '' }}</span>
+                  <span data-testid="disk-usage-path">{{ path }} {{ totalSize ? ` (${totalSize})` : '' }}</span>
                   <v-spacer />
                   <v-btn
                     icon
                     small
                     :disabled="!canGoUp"
+                    data-testid="disk-usage-up"
                     @click="goUp"
                   >
                     <v-icon>mdi-arrow-up</v-icon>
@@ -99,6 +105,7 @@
                         v-for="child in sortedChildren"
                         :key="child.path"
                         :class="{ 'clickable-row': child.is_dir }"
+                        data-testid="disk-usage-entry"
                         @click="navigate(child)"
                       >
                         <td class="text-center select-col" @click.stop>
@@ -109,7 +116,7 @@
                             @click.stop="toggleSelection(child.path)"
                           />
                         </td>
-                        <td>
+                        <td data-testid="disk-usage-entry-name">
                           <v-icon
                             left
                             small
@@ -119,7 +126,7 @@
                           </v-icon>
                           {{ child.name }}
                         </td>
-                        <td class="usage-col">
+                        <td class="usage-col" data-testid="disk-usage-entry-usage">
                           <v-progress-linear
                             :value="getPercentage(child.size_bytes)"
                             height="16"
@@ -167,9 +174,11 @@
                   color="primary"
                   size="200"
                 >
-                  <span v-if="speedTesting">{{ speedTestProgress }}</span>
-                  <span v-else-if="hasResults">{{ speedResults.length }}/{{ totalTests }}</span>
-                  <span v-else>Click to start</span>
+                  <span v-if="speedTesting" data-testid="disk-speed-progress">{{ speedTestProgress }}</span>
+                  <span v-else-if="hasResults" data-testid="disk-speed-progress">
+                    {{ speedResults.length }}/{{ totalTests }}
+                  </span>
+                  <span v-else data-testid="disk-speed-progress">Click to start</span>
                 </v-progress-circular>
 
                 <v-list>
@@ -179,7 +188,7 @@
                         mdi-pencil
                       </v-icon>
                     </v-list-item-icon>
-                    <v-list-item-subtitle>
+                    <v-list-item-subtitle data-testid="disk-speed-write">
                       {{ avgWriteSpeed }} MiB/s
                     </v-list-item-subtitle>
                   </v-list-item>
@@ -190,27 +199,35 @@
                         mdi-book-open-page-variant
                       </v-icon>
                     </v-list-item-icon>
-                    <v-list-item-subtitle>
+                    <v-list-item-subtitle data-testid="disk-speed-read">
                       {{ avgReadSpeed }} MiB/s
                     </v-list-item-subtitle>
                   </v-list-item>
                 </v-list>
               </v-col>
 
-              <v-col v-if="hasResults">
+              <v-col v-if="hasResults" data-testid="disk-speed-graph">
                 <disk-speed-graph
                   style="width: 100%"
                   :data="speedResults"
                 />
               </v-col>
 
-              <v-alert v-if="speedError" type="error" dense outlined class="ma-4">
+              <v-alert
+                v-if="speedError"
+                type="error"
+                dense
+                outlined
+                class="ma-4"
+                data-testid="disk-speed-error"
+              >
                 {{ speedError }}
               </v-alert>
 
               <div
                 class="transition-swing pa-6"
                 align="center"
+                data-testid="disk-speed-state"
                 v-text="state"
               />
 
@@ -218,6 +235,7 @@
                 <v-btn
                   color="primary"
                   :disabled="speedTesting"
+                  data-testid="disk-speed-start"
                   @click="runSpeedTest"
                 >
                   <v-icon>
