@@ -53,10 +53,15 @@ jobs:
           if [ "${{ github.event_name }}" = "workflow_run" ]; then
             # pull_requests is empty for forks, so look the PR up by its head.
             pr=$(gh api --method GET "repos/${REPO}/pulls" -f state=open -f head="${HEAD_REPO%%/*}:${HEAD_BRANCH}" |
-              jq -c --arg sha "$HEAD_SHA" '
+              jq -c --arg sha "$HEAD_SHA" --arg repo "$REPO" '
                 map(select(
                   .head.sha == $sha and # the commit the trigger ran on
-                  (.draft | not)
+                  (.draft | not) and
+                  ( # not Crowdin translations, a crowdin/ branch of this repository (not a fork)
+                    (.head.repo.full_name // "" | ascii_downcase) == ($repo | ascii_downcase) and # head.repo is null for a deleted fork
+                    (.head.ref | startswith("crowdin/"))
+                    | not
+                  )
                 ))[0] // empty')
             user=$(jq -r '.user.login // empty' <<< "$pr")
           else
