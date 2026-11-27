@@ -3,10 +3,12 @@ import shutil
 from pathlib import Path
 
 from blueos.core import BlueOS
+from features.wifi import WifiAccessPoints, WifiScanner
 from targets.sil import docker
 from targets.sil.vm import disk
 from targets.sil.vm.qemu import Qemu
 from targets.sil.vm.ssh import Ssh
+from targets.sil.wifi import SilWifiAccessPointsDriver, SilWifiScannerDriver
 from targets.target import Target
 
 E2E_DIR = Path(__file__).resolve().parents[2]
@@ -33,6 +35,7 @@ class SilTarget(Target):
             self.vm_http_forward_port,
         )
         self.ssh = Ssh(self.vm_ssh_forward_port)
+        self.features = {WifiAccessPoints: SilWifiAccessPointsDriver(self), WifiScanner: SilWifiScannerDriver(self)}
 
     @property
     def base_url(self) -> str:
