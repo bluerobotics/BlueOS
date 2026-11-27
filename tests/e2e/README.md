@@ -36,9 +36,12 @@ Build the core image from this checkout and point the tests to it:
 ```bash
 docker build --platform linux/amd64 \
   --build-arg GIT_DESCRIBE_TAGS=$(git describe --tags --long --always) \
-  --build-arg VITE_APP_GIT_DESCRIBE=$(git describe --long --always --dirty --all) \
+  --build-arg GIT_COMMIT_DATE=$(git log -1 --format=%cI) \
   --tag blueos-core:dev --file core/Dockerfile core
 ```
+
+Without `GIT_DESCRIBE_TAGS` the image gets `0.0.0-999-g00000000`. The distance 999 marks a local build: the
+UI shows it as the version and never treats it as a tag build.
 
 Run it from the repository root. Then set it in `tests/e2e/.env`:
 

@@ -3,7 +3,7 @@ import pathlib
 import re
 import sys
 from dataclasses import asdict
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Any, AsyncGenerator, Dict, List, Optional, Tuple, Union
 
 import aiodocker
@@ -21,7 +21,20 @@ from utils.dockerhub import (
     remote_tags_error_message,
 )
 
+# Builds pin the image config "created" to the epoch for reproducible layers, so the real date is a label.
+CREATED_LABEL = "org.opencontainers.image.created"
 DOCKER_CONFIG_PATH = pathlib.Path(appdirs.user_config_dir("bootstrap"), "startup.json")
+
+
+def image_date(label: Optional[str], created: str) -> str:
+    """The later of the created label and the image's own creation date.
+
+    A committed image inherits its parent's labels, so the label alone would show the parent's date.
+    """
+    try:
+        return label if label and datetime.fromisoformat(label) > datetime.fromisoformat(created) else created
+    except (TypeError, ValueError):  # a label without a timezone cannot be compared with an aware date
+        return created
 
 
 class VersionChooser:
@@ -70,7 +83,9 @@ class VersionChooser:
         output = {
             "repository": image_name,
             "tag": tag,
-            "last_modified": image["Created"],
+            "last_modified": image_date(
+                ((image.get("Config") or {}).get("Labels") or {}).get(CREATED_LABEL), image["Created"]
+            ),
             "sha": image["Id"],
             "architecture": image["Architecture"],
         }
@@ -416,7 +431,10 @@ class VersionChooser:
                     {
                         "repository": image_repository,
                         "tag": tag,
-                        "last_modified": datetime.fromtimestamp(image["Created"]).strftime("%Y-%m-%dT%H:%M:%S.%fZ"),
+                        "last_modified": image_date(
+                            (image.get("Labels") or {}).get(CREATED_LABEL),
+                            datetime.fromtimestamp(image["Created"], tz=timezone.utc).strftime("%Y-%m-%dT%H:%M:%S.%fZ"),
+                        ),
                         "sha": image["Id"],
                         # Parent is the base docker image from the committed image
                         "parent_sha": image["ParentId"] or None,

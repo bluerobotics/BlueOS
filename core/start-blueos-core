@@ -138,7 +138,7 @@ SERVICES=(
     'helper',250,0,0,0,"$BLUEOS_PYTHON_BIN $SERVICES_PATH/helper/main.py"
     'iperf3',250,0,0,0," iperf3 --server --port 5201"
     'linux2rest',250,0,0,0,"linux2rest --log-settings netstat=30,platform=10,serial-ports=10,cpu=10,disk=30,info=10,memory=10,network=10,process=60,temperature=10,unix-time-seconds=10,usb=60"
-    'filebrowser',250,0,0,0,"nice -19 filebrowser --database /etc/filebrowser/filebrowser.db --baseurl /file-browser"
+    'filebrowser',250,0,0,0,"nice -19 $TOOLS_PATH/filebrowser/start.sh"
     'versionchooser',0,0,0,0,"$BLUEOS_PYTHON_BIN $SERVICES_PATH/versionchooser/main.py"
     'pardal',250,0,0,0,"nice -19 $BLUEOS_PYTHON_BIN $SERVICES_PATH/pardal/main.py"
     'ping',0,0,0,0,"nice -19 $RUN_AS_REGULAR_USER_BEGIN $BLUEOS_PYTHON_BIN $SERVICES_PATH/ping/main.py $RUN_AS_REGULAR_USER_END"

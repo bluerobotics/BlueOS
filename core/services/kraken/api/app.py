@@ -11,12 +11,15 @@ from api.v2.routers import (
     jobs_router_v2,
     manifest_router_v2,
 )
-from commonwealth.utils.apis import GenericErrorHandlingRoute, use_local_docs_assets
+from commonwealth.utils.apis import (
+    GenericErrorHandlingRoute,
+    RevalidatedStaticFiles,
+    use_local_docs_assets,
+)
 from commonwealth.utils.zenoh_helper import ZenohRouter, ZenohSession
 from config import SERVICE_NAME
 from fastapi import FastAPI
 from fastapi.responses import RedirectResponse
-from fastapi.staticfiles import StaticFiles
 from fastapi_versioning import VersionedFastAPI
 
 
@@ -64,4 +67,6 @@ async def root() -> RedirectResponse:
 
 
 # Mount static files
-application.mount("/static", StaticFiles(directory=path.join(path.dirname(__file__), "static")), name="static")
+application.mount(
+    "/static", RevalidatedStaticFiles(directory=path.join(path.dirname(__file__), "static")), name="static"
+)

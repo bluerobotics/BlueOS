@@ -1,21 +1,9 @@
+# syntax=docker/dockerfile:1.20@sha256:26147acbda4f14c5add9946e2fd2ed543fc402884fd75146bd342a7f6271dc1d
 # Override with --build-arg BASE_IMAGE=blueos-base:dev for local builds
 ARG BASE_IMAGE=bluerobotics/blueos-base:0.2.6
 
 # Build frontend
 FROM --platform=$BUILDPLATFORM oven/bun:1.3.14-slim AS frontend-builder
-
-ARG VITE_APP_GIT_DESCRIBE
-ENV VITE_APP_GIT_DESCRIBE=${VITE_APP_GIT_DESCRIBE:-none/none-0-g00000000}
-RUN <<-EOF
-set -e
-
-    if [ -z "$VITE_APP_GIT_DESCRIBE" ]; then
-        echo "VITE_APP_GIT_DESCRIBE argument not provided."
-        echo "Use: --build-arg VITE_APP_GIT_DESCRIBE=\$(git describe --long --always --dirty --all)"
-        exit 1
-    fi
-
-EOF
 
 COPY frontend /home/pi/frontend
 ENV BUN_FEATURE_FLAG_DISABLE_STREAMING_INSTALL=1
@@ -45,28 +33,41 @@ ADD https://astral.sh/uv/install.sh /uv-installer.sh
 RUN sh /uv-installer.sh && rm /uv-installer.sh
 ENV PATH="/root/.local/bin/:$PATH"
 
-# Project files
+# Project files. Services are virtual projects (package = false) and run from
+# /home/pi/services in the final image, so only their metadata is required to
+# resolve dependencies. Copying the source would rebuild this environment on
+# every service edit, and the vehicle would re-download the whole virtualenv.
 COPY ./uv.lock /home/pi/uv.lock
 COPY ./pyproject.toml /home/pi/pyproject.toml
 COPY ./.python-version /home/pi/.python-version
 
-COPY ./libs /home/pi/libs
-COPY ./services /home/pi/services
-
-COPY ./tools /home/pi/tools
+COPY --parents libs/*/pyproject.toml /home/pi/
+COPY --parents services/*/pyproject.toml /home/pi/
 
 # Virtual environment creation and packages installation
 WORKDIR /home/pi
-RUN uv venv && uv sync --frozen --no-default-groups
+RUN uv venv && uv sync --frozen --no-default-groups --no-install-workspace \
+    && SITE_PACKAGES=$(.venv/bin/python -c 'import sysconfig; print(sysconfig.get_path("purelib"))') \
+    && for lib in libs/*/; do \
+        name=$(basename "$lib"); \
+        printf '%s\n' "/home/pi/libs/$name/src" > "$SITE_PACKAGES/$name.pth"; \
+    done
 
-# Post install scripts
+# Post install scripts. Kept after the sync so a tool-script edit does not
+# redo the dependency install above.
+COPY --parents tools/ardupilot_tools tools/install-python-libs.sh /home/pi/
 RUN BLUEOS_PYTHON_ENVS="/home/pi/.venv" /home/pi/tools/install-python-libs.sh
 
 # Reset default workdir
 WORKDIR /home/pi
 ENV VIRTUAL_ENV=/home/pi/.venv
 
-# BlueOS base image
+# BlueOS base image.
+# Layers are ordered by how often their inputs change, least often first. A vehicle pulling an update
+# with the classic image store re-downloads the first layer that changed and every layer after it, so a
+# layer that changes often must not sit above one that rarely does. The binary order below has the git log
+# recipe to re-rank it; do not copy figures from it here, they drift. Services and the frontend change most.
+# GIT_DESCRIBE_TAGS changes on every release, so it goes last.
 FROM base
 
 # Define arguments for target platform
@@ -74,61 +75,42 @@ FROM base
 ARG TARGETARCH
 ARG TARGETVARIANT
 
-# Ensure that the git describe exists and also is in valid format as well
-# The format can be invalid if someone is build BlueOS without a tag as reference
-ARG GIT_DESCRIBE_TAGS
-ENV GIT_DESCRIBE_TAGS=${GIT_DESCRIBE_TAGS:-0.0.0-0-g00000000}
-RUN <<-EOF
-set -e
-
-    if ! echo "$GIT_DESCRIBE_TAGS" | grep -Eq -- '-[0-9]+-g[a-f0-9]{8,}$'; then
-        echo "Invalid format: $GIT_DESCRIBE_TAGS (E.g: <TAG>-<COMMIT_NUMBER>-g<SHORT_HASH>)"
-        exit 1
-    fi
-
-EOF
-
 # Set these arguments as environment variables
 ENV TARGETARCH=${TARGETARCH}
 ENV TARGETVARIANT=${TARGETVARIANT}
 
-# Install necessary tools
-COPY tools /home/pi/tools
+# Only the tools that install-system-tools.sh runs, so a change to any other tool does not redo it.
+# Keep this list in sync with TOOLS in tools/install-system-tools.sh and the --exclude list below.
+COPY --parents \
+    tools/ardupilot_tools \
+    tools/filebrowser \
+    tools/logviewer \
+    tools/scripts \
+    tools/swagger_ui \
+    tools/wifi \
+    tools/install-system-tools.sh \
+    /home/pi/
 RUN /home/pi/tools/install-system-tools.sh
 
-# Copy libs and services code
-COPY libs /home/pi/libs
-COPY services /home/pi/services
+# One layer per binary. Keep this order, do not sort it alphabetically: it follows how often the corresponding
+# tools/ directory changes (git log, least often first). A release usually changes only a few, and a pull
+# re-downloads from the first changed one. To check or update the order, rank the directories by commits since
+# 2025-06 (the binary names differ from the directory names for recorder, mcap-extractor and machineid):
+#   for d in tools/*/; do echo "$(git log --since=2025-06-01 --oneline -- $d | wc -l) $d"; done | sort -n
+COPY --from=download-binaries /usr/bin/ttyd /usr/bin/
+COPY --from=download-binaries /usr/bin/bridges /usr/bin/
+COPY --from=download-binaries /usr/bin/disktest /usr/bin/
+COPY --from=download-binaries /usr/bin/machineid-cli /usr/bin/
+COPY --from=download-binaries /usr/bin/mcap /usr/bin/
+COPY --from=download-binaries /usr/bin/zenoh /usr/bin/
+COPY --from=download-binaries /usr/bin/blueos-recorder /usr/bin/
+COPY --from=download-binaries /usr/bin/mcap-foxglove-video-extract /usr/bin/
+COPY --from=download-binaries /usr/bin/mavlink2rest /usr/bin/
+COPY --from=download-binaries /usr/bin/linux2rest /usr/bin/
+COPY --from=download-binaries /usr/bin/mavlink-server /usr/bin/
+COPY --from=download-binaries /usr/bin/mavlink-camera-manager /usr/bin/
+COPY --from=download-binaries /usr/bin/blueos_startup_update.py /usr/bin/
 
-# Set tmux configuration file
-COPY configuration/tmux.conf /etc/tmux.conf
-COPY configuration/motd /etc/motd
-
-# Copy configuration files
-COPY start-blueos-core /usr/bin/start-blueos-core
-COPY run-service.sh /usr/bin/run-service
-
-COPY ./.vscode /home/pi/.vscode
-
-# Copy binaries and necessary folders from download-binaries to this stage
-COPY --from=download-binaries \
-    /usr/bin/blueos_startup_update.py \
-    /usr/bin/blueos-recorder \
-    /usr/bin/bridges \
-    /usr/bin/disktest \
-    /usr/bin/linux2rest \
-    /usr/bin/machineid-cli \
-    /usr/bin/mavlink2rest \
-    /usr/bin/mavlink-camera-manager \
-    /usr/bin/mavlink-server \
-    /usr/bin/mcap \
-    /usr/bin/mcap-foxglove-video-extract \
-    /usr/bin/zenoh \
-    /usr/bin/ttyd \
-    /usr/bin/
-
-# Copy frontend built on frontend-builder to this stage
-COPY --from=frontend-builder /home/pi/frontend/dist /home/pi/frontend
 COPY --from=install-services-and-libs /home/pi/.venv /usr/blueos/venv
 
 RUN <<-EOF
@@ -140,9 +122,9 @@ set -e
     ## If the folder tree contains any files during the build step, it means we put it here by mistake.
     [ -z "$(find '/root/.config' -mindepth 1 -type f)" ]
 
-    # Update blueosrc with the necessary environment variables
+    # Update blueosrc with the necessary environment variables.
+    # GIT_DESCRIBE_TAGS is appended in the last layer; it changes every release.
     RCFILE_PATH="/etc/blueosrc"
-    echo "export GIT_DESCRIBE_TAGS=$GIT_DESCRIBE_TAGS" >> $RCFILE_PATH
     echo "export HISTFILE=/etc/blueos/.bash_history" >> $RCFILE_PATH
     # The terminal shell lives in tmux and never exits cleanly, so write history on every command
     echo "shopt -s histappend" >> $RCFILE_PATH
@@ -171,6 +153,57 @@ set -e
     # on top of the existing file inside the docker.
     # This allows docker to actually create a folder, which we handle in networksetup.py
     rm -f /etc/dhcpcd.conf
+
+EOF
+
+COPY configuration/tmux.conf /etc/tmux.conf
+COPY configuration/motd /etc/motd
+COPY start-blueos-core /usr/bin/start-blueos-core
+COPY run-service.sh /usr/bin/run-service
+COPY ./.vscode /home/pi/.vscode
+
+# Keep the --exclude list in sync with the tools copied above.
+# The remaining tools: binary installers (only needed by the download-binaries stage), nginx and the rest.
+COPY --exclude=ardupilot_tools --exclude=filebrowser --exclude=logviewer --exclude=scripts \
+    --exclude=swagger_ui --exclude=wifi --exclude=install-system-tools.sh tools /home/pi/tools
+
+# An --exclude entry without a matching path in the early COPY would drop that tool from the image silently.
+RUN --mount=type=bind,source=tools,target=/context-tools \
+    for tool in /context-tools/*; do \
+        [ -e "/home/pi/tools/$(basename "$tool")" ] || { echo "$tool is in neither tools COPY"; exit 1; }; \
+    done
+
+# Libs and services code
+COPY libs /home/pi/libs
+COPY services /home/pi/services
+
+# The .pth files written in the install-services-and-libs stage point at libs/<name>/src.
+# Fail the build if a lib uses another layout.
+RUN for lib in /home/pi/libs/*/; do \
+        [ -d "${lib}src" ] || { echo "${lib} has no src directory"; exit 1; }; \
+    done
+
+# Frontend changes most often. The git description is not in this bundle; the
+# last layer writes it beside these files.
+COPY --from=frontend-builder /home/pi/frontend/dist /home/pi/frontend
+
+# Version stamp. Last, because this value changes on every release and a step
+# that consumes it invalidates every layer above it.
+ARG GIT_DESCRIBE_TAGS
+ARG GIT_COMMIT_DATE
+# The frontend never treats the fallback as a tag build; the distance 999 marks a local build without the argument.
+ENV GIT_DESCRIBE_TAGS=${GIT_DESCRIBE_TAGS:-0.0.0-999-g00000000}
+RUN <<-EOF
+set -e
+
+    # The format can be invalid if someone builds BlueOS without a tag as reference.
+    if ! echo "$GIT_DESCRIBE_TAGS" | grep -Eq -- '-[0-9]+-g[a-f0-9]{8,}$'; then
+        echo "Invalid format: $GIT_DESCRIBE_TAGS (E.g: <TAG>-<COMMIT_NUMBER>-g<SHORT_HASH>)"
+        exit 1
+    fi
+
+    echo "export GIT_DESCRIBE_TAGS=$GIT_DESCRIBE_TAGS" >> /etc/blueosrc
+    printf '%s\n%s\n' "$GIT_DESCRIBE_TAGS" "$GIT_COMMIT_DATE" > /home/pi/frontend/blueos-version
 
 EOF
 
