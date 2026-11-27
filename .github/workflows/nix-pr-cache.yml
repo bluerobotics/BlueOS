@@ -1,0 +1,201 @@
+name: Cache PR closures with Nix
+
+# Builds a pull request's system closures and uploads them to the shared cache,
+# so a reviewer can install one on a board without touching Nix.
+#
+# Closures are signed with the cache key, so anything pushed here is trusted by
+# every board that trusts the cache. Three things stand in front of a push:
+#
+#   1. Only branches in this repository. Forks are excluded, and they could not
+#      push regardless: they receive no OIDC token, so `niks3 push` has nothing
+#      to authenticate with.
+#   2. The `nix-cache` label, so nothing is built until a maintainer asks.
+#   3. The `nix-cache` environment's required reviewers. Each push is a new run
+#      and therefore a new pending deployment, so an approval never carries over
+#      to commits it was not granted for. The niks3 OIDC rule grants `write`
+#      only to `repo:bluerobotics/BlueOS:environment:nix-cache`, so an unapproved
+#      job cannot obtain a usable token at all.
+#
+# The build job holds `contents: read` and `id-token: write` and nothing else.
+# It must never reference `secrets.*`: `permissions` and the OIDC request
+# variables are job-scoped, so anything granted there is reachable by the code
+# being built. `nix-cache` must likewise hold no environment secrets.
+
+on:
+  pull_request:
+    types: [labeled, synchronize]
+    paths-ignore:
+      - 'doc/**'
+      - '**/*.md'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Cache ${{ matrix.name }}
+    if: >-
+      github.event.pull_request.head.repo.full_name == github.repository
+      && contains(github.event.pull_request.labels.*.name, 'nix-cache')
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 180
+    environment:
+      name: nix-cache
+      url: ${{ github.event.pull_request.html_url }}
+    permissions:
+      contents: read
+      id-token: write
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - id: pi4
+            name: the RPi 4 system closure
+            runner: ubuntu-24.04-arm
+            installable: nixosConfigurations.blueos-pi4
+          - id: pi5
+            name: the RPi 5 system closure
+            runner: ubuntu-24.04-arm
+            installable: nixosConfigurations.blueos-pi5
+          - id: pi4-guest
+            name: the RPi 4 Docker guest closure
+            runner: ubuntu-24.04-arm
+            installable: nixosConfigurations.blueos-pi4-guest
+          - id: pi5-guest
+            name: the RPi 5 Docker guest closure
+            runner: ubuntu-24.04-arm
+            installable: nixosConfigurations.blueos-pi5-guest
+          - id: guest
+            name: the guest QEMU system closure
+            runner: ubuntu-24.04
+            installable: nixosConfigurations.blueos-guest
+          - id: native
+            name: the native QEMU system closure
+            runner: ubuntu-24.04
+            installable: nixosConfigurations.blueos-native
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          # The merge commit is what would land on master, which is what a
+          # reviewer is approving. It is also what `pull_request` defaults to.
+          persist-credentials: false
+          submodules: recursive
+
+      - name: Free disk space
+        uses: wimpysworld/nothing-but-nix@687c797a730352432950c707ab493fcc951818d7 # v10
+
+      - name: Install Nix
+        uses: NixOS/nix-installer-action@62c1943b776c509394b550f3f983adc14e9212d6 # v1.0.0
+        with:
+          add-channel: "true"
+          extra-conf: |
+            # The flake under test does not get to name its own substituters or
+            # keys. Otherwise a pull request could add a substituter it controls
+            # and the approved closure would contain inputs absent from the diff.
+            # The real cache is configured here, from repository variables.
+            accept-flake-config = false
+            extra-substituters = ${{ vars.NIKS3_SERVER_URL }}
+            extra-trusted-public-keys = ${{ vars.NIKS3_PUBLIC_KEY }}
+            # Prevent out-of-memory SIGTERM
+            max-jobs = 1
+
+      - name: Install niks3
+        id: niks3
+        uses: Mic92/niks3-action@01820a2b97ac01531ad9fb859db94af63ffcbd83 # v1.10.0
+        with:
+          server-url: ${{ vars.NIKS3_SERVER_URL }}
+          skip-push: true
+
+      # The action caches its binaries but only exposes the directory as an
+      # output, so the CLI has to be put on PATH explicitly for `niks3 push`.
+      - name: Put niks3 on PATH
+        run: |
+          echo "${{ steps.niks3.outputs.binary-dir }}" >> "$GITHUB_PATH"
+
+      - name: Build the system closure
+        run: |
+          nix build --no-accept-flake-config --no-link --print-out-paths \
+            ".#${{ matrix.installable }}.config.system.build.toplevel" \
+            > "$RUNNER_TEMP/toplevel"
+
+      - name: Push the closure
+        env:
+          NIKS3_SERVER_URL: ${{ vars.NIKS3_SERVER_URL }}
+          AUTH_TOKEN_SCRIPT: ${{ steps.niks3.outputs.auth-token-script }}
+        run: |
+          if [[ -z "$AUTH_TOKEN_SCRIPT" ]]; then
+            echo "::error::No OIDC token was available, so nothing can be pushed." >&2
+            exit 1
+          fi
+
+          toplevel=$(cat "$RUNNER_TEMP/toplevel")
+          if [[ ! "$toplevel" =~ ^/nix/store/[0-9a-z]{32}-.+$ ]]; then
+            echo "::error::nix build did not report a single store path." >&2
+            exit 1
+          fi
+
+          niks3 push --auth-token-script "$AUTH_TOKEN_SCRIPT" "$toplevel"
+
+      # Matrix legs cannot share a job output: every leg writes the same output
+      # name and the last to finish wins. Artifacts keep them distinct.
+      - name: Upload the store path
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: toplevel-${{ matrix.id }}
+          path: "$RUNNER_TEMP/toplevel"
+          retention-days: 1
+          if-no-files-found: error
+
+  report:
+    name: Comment the store paths
+    needs: build
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+      - name: Download the store paths
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          pattern: toplevel-*
+          path: "$RUNNER_TEMP/paths"
+
+      - name: Comment the store paths
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          # Every value here came from the build job, so treat it as untrusted
+          # text: it becomes the comment body but never reaches a shell
+          # unquoted, and anything that is not a store path aborts the step.
+          body="$RUNNER_TEMP/body.md"
+          {
+            echo "Cached closures for \`$GITHUB_SHA\`:"
+            echo
+            echo "| board | store path |"
+            echo "| --- | --- |"
+            for file in "$RUNNER_TEMP"/paths/*/toplevel; do
+              board=${file%/toplevel}
+              board=${board##*/toplevel-}
+              toplevel=$(tr -d '[:space:]' < "$file")
+              if [[ ! "$toplevel" =~ ^/nix/store/[0-9a-z]{32}-[A-Za-z0-9+._?=-]+$ ]]; then
+                echo "::error::Refusing to publish an unexpected store path for $board" >&2
+                exit 1
+              fi
+              echo "| $board | \`$toplevel\` |"
+            done
+            echo
+            echo "Paste the approriate one into *Install a store path* in the version"
+            echo "chooser's developer mode. It becomes an ordinary generation, so it"
+            echo "rolls back like any other."
+          } > "$body"
+
+          # One comment per pull request, rewritten on every push, rather than a
+          # new comment per build.
+          gh pr comment "$PR_NUMBER" --repo "$GITHUB_REPOSITORY" \
+            --body-file "$body" --edit-last --create-if-none

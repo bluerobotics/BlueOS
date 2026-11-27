@@ -1,0 +1,26 @@
+# Logs forwarded journal and kernel messages at debug instead of info.
+#
+# As a systemd unit stdout goes to the journal, so every forwarded entry the
+# follower picks up produces another entry: at info level the echo is most of
+# the journal and never catches up. debug keeps the line available under
+# RUST_LOG=debug while the default filter drops it.
+--- a/src/recorder/mod.rs
++++ b/src/recorder/mod.rs
+@@ -34,7 +34,7 @@
+             };
+ 
+             while let Ok(Some(message)) = kernel_client.try_next() {
+-                info!("Sending kernel message to zenoh: {message}");
++                debug!("Sending kernel message to zenoh: {message}");
+                 zenoh_session
+                     .put(zenoh_topic_name.replace("{}", "kernel"), message)
+                     .encoding(zenoh::bytes::Encoding::APPLICATION_JSON)
+@@ -43,7 +43,7 @@
+             }
+ 
+             while let Ok(Some(message)) = journal_client.try_next() {
+-                info!("Sending journal message to zenoh: {message}");
++                debug!("Sending journal message to zenoh: {message}");
+                 zenoh_session
+                     .put(zenoh_topic_name.replace("{}", "journal"), message)
+                     .encoding(zenoh::bytes::Encoding::APPLICATION_JSON)
