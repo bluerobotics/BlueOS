@@ -53,7 +53,7 @@
           </thead>
           <tbody>
             <tr v-for="(fit, compass_id) of fitness" :key="compass_id">
-              <td>{{ compasses[compass_id]?.deviceName ?? 'unknown' }}</td>
+              <td>{{ compassName(compass_id) }}</td>
               <td>
                 <calibrationQualityIndicator :quality="fit" />
               </td>
@@ -115,6 +115,7 @@ import { Dictionary } from '@/types/common'
 import { deviceId } from '@/utils/deviceid_decoder'
 
 import CalibrationQualityIndicator from './CalibrationQualityIndicator.vue'
+import { compassFromCalibrationSlot } from './compassPriority'
 
 enum states {
   IDLE,
@@ -198,6 +199,9 @@ export default {
     this.progress_listener?.discard()
   },
   methods: {
+    compassName(compass_id: string): string {
+      return compassFromCalibrationSlot(this.compasses, Number(compass_id))?.deviceName ?? 'unknown'
+    },
     reset() {
       this.state = states.IDLE
       this.cleanup()
