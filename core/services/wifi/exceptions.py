@@ -25,3 +25,17 @@ class WPAOperationFail(ConnectionError):
 
 class NetworkAddFail(ValueError):
     """Raised when a WPA add_network operation fails to return an int."""
+
+
+class InterfaceNotFound(ValueError):
+    """Raised when a requested wifi interface does not exist."""
+
+    def __init__(self, interface: str) -> None:
+        super().__init__(f"Wifi interface '{interface}' not found.")
+
+
+class HotspotNotSupported(ValueError):
+    """Raised when a wifi interface cannot host an access point beside a station interface."""
+
+    def __init__(self, interface: str) -> None:
+        super().__init__(f"Wifi interface '{interface}' cannot host a hotspot.")

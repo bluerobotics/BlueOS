@@ -1,13 +1,16 @@
 import {
-  getModule, Mutation, VuexModule,
+  Action, getModule, Mutation, VuexModule,
 } from 'vuex-module-decorators'
 
 import store from '@/store'
+import bag from '@/store/bag'
 import {
   Network, NetworkCredentials, SavedNetwork, WifiStatus, HotspotStatus
 } from '@/types/wifi'
 import { DynamicModule as Module } from '@/utils/vuex'
 import { sorted_networks } from '@/utils/wifi'
+
+const SELECTED_INTERFACE_PATH = 'wifi/selected_interface'
 
 @Module({
   dynamic: true,
@@ -32,7 +35,60 @@ class WifiStore extends VuexModule {
 
   hotspot_credentials: NetworkCredentials | null = null
 
+  hotspot_interface: string | null = null
+
+  interfaces: string[] = []
+
+  interface_statuses: Record<string, WifiStatus> = {}
+
+  // null means the backend's default interface
+  selected_interface: string | null = null
+
   is_loading: boolean = true
+
+  @Mutation
+  setWifiInterfaces(interfaces: string[]): void {
+    this.interfaces = interfaces
+  }
+
+  @Mutation
+  setInterfaceStatuses(statuses: Record<string, WifiStatus>): void {
+    this.interface_statuses = statuses
+  }
+
+  @Mutation
+  setSelectedInterface(selected_interface: string | null): void {
+    if (selected_interface === this.selected_interface) {
+      return
+    }
+    this.selected_interface = selected_interface
+    this.network_status = null
+    this.current_network = null
+    this.available_networks = null
+    this.is_loading = true
+  }
+
+  @Action
+  async loadSelectedInterface(): Promise<void> {
+    const data = await bag.getData(SELECTED_INTERFACE_PATH)
+    // undefined means Bag could not be reached; leave the selection unset for this session
+    if (data === undefined || data === null) {
+      return
+    }
+    const name = data.interface
+    this.setSelectedInterface(typeof name === 'string' && name !== '' ? name : null)
+  }
+
+  @Action
+  async selectInterface(selected_interface: string | null): Promise<void> {
+    await bag.setData(SELECTED_INTERFACE_PATH, { interface: selected_interface })
+    this.setSelectedInterface(selected_interface)
+  }
+
+  @Mutation
+  setHotspotInterface(hotspot_interface: string | null): void {
+    this.hotspot_interface = hotspot_interface
+  }
 
   @Mutation
   setCurrentNetwork(network: Network | null): void {
@@ -92,6 +148,10 @@ class WifiStore extends VuexModule {
   @Mutation
   setLoading(loading: boolean): void {
     this.is_loading = loading
+  }
+
+  get interface_params(): { interface?: string } {
+    return this.selected_interface === null ? {} : { interface: this.selected_interface }
   }
 
   get connectable_networks(): Network[] | null {
