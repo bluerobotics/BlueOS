@@ -299,7 +299,7 @@ jobs:
       - name: Install dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install --no-install-recommends --assume-yes qemu-system-x86 qemu-utils sshpass
+          sudo apt-get install --no-install-recommends --assume-yes qemu-system-x86 sshpass
 
       - name: Install the latest version of uv
         uses: astral-sh/setup-uv@v8.0.0

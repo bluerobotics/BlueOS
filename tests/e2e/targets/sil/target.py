@@ -4,7 +4,6 @@ from pathlib import Path
 
 from blueos.core import BlueOS
 from targets.sil import docker
-from targets.sil.vm import disk
 from targets.sil.vm.qemu import Qemu
 from targets.sil.vm.ssh import Ssh
 from targets.target import Target
@@ -17,7 +16,7 @@ class SilTarget(Target):
     name = "sil"
     vm_ssh_forward_port = 2222
     vm_http_forward_port = 8080
-    required_tools = ("docker", "qemu-img", "qemu-system-x86_64", "ssh", "sshpass")
+    required_tools = ("docker", "qemu-system-x86_64", "ssh", "sshpass")
 
     def __init__(self) -> None:
         super().__init__()
@@ -25,10 +24,9 @@ class SilTarget(Target):
             raise RuntimeError(f"the sil target needs {', '.join(missing)} installed")
         self.run_dir = E2E_DIR / ".run"
         self.run_dir.mkdir(exist_ok=True)
-        base = disk.base_image(E2E_DIR / ".cache")
         self.qemu = Qemu(
             self.run_dir,
-            disk.overlay(base, self.run_dir / "disk.qcow2"),
+            E2E_DIR / ".cache" / "sil.qcow2",
             self.vm_ssh_forward_port,
             self.vm_http_forward_port,
         )

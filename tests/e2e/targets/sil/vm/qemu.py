@@ -11,6 +11,8 @@ logger = logging.getLogger(__name__)
 
 class Qemu:
     def __init__(self, run_dir: Path, disk: Path, ssh_port: int, http_port: int) -> None:
+        if not disk.exists():
+            raise FileNotFoundError(f"{disk} not found, build it first with targets/sil/image/build.sh")
         self.pidfile = run_dir / "qemu.pid"
         self.serial_log = run_dir / "serial.log"
         self.args = [
@@ -32,7 +34,8 @@ class Qemu:
             logger.warning("/dev/kvm is not available, the vm will run without acceleration and be very slow")
         self.args += [
             "-drive",
-            f"file={disk},if=virtio",
+            # Disk is a temporary snapshot of the base image
+            f"file={disk},if=virtio,snapshot=on",
             "-netdev",
             f"user,id=n0,hostfwd=tcp:127.0.0.1:{ssh_port}-:22,hostfwd=tcp:127.0.0.1:{http_port}-:80",
             "-device",
