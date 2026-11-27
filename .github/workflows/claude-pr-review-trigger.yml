@@ -1,0 +1,17 @@
+name: Claude PR Review Trigger
+
+# pull_request_target is blocked by default on public repositories since 2026-12-02. This unprivileged run only
+# starts claude-pr-review.yml through workflow_run, which runs from the default branch with secrets.
+on:
+  pull_request:
+    types: [opened, reopened, ready_for_review]
+
+permissions: {}
+
+jobs:
+  trigger:
+    name: Trigger Claude PR Review
+    runs-on: ubuntu-latest
+    if: ${{ !github.event.pull_request.draft }}
+    steps:
+      - run: echo "Requesting a review"
