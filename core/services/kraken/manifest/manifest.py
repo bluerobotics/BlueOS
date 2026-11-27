@@ -9,7 +9,7 @@ from aiocache import cached
 from commonwealth.settings.manager import Manager
 from loguru import logger
 
-from config import DEFAULT_MANIFESTS, SERVICE_NAME
+from config import DEFAULT_MANIFESTS
 from manifest.exceptions import (
     ManifestBackendOffline,
     ManifestDataFetchFailed,
@@ -26,7 +26,7 @@ from manifest.models import (
     RepositoryEntry,
     UpdateManifestSource,
 )
-from settings import ManifestSettings, SettingsV2
+from settings import ManifestSettings, settings_manager
 
 
 class ManifestManager:
@@ -35,7 +35,7 @@ class ManifestManager:
     """
 
     _instance: Optional["ManifestManager"] = None
-    _manager: Manager = Manager(SERVICE_NAME, SettingsV2)
+    _manager: Manager = settings_manager
     _settings = _manager.settings
 
     def __init__(self) -> None:

@@ -3,7 +3,10 @@ import re
 from typing import Any, Dict
 
 from commonwealth.settings import settings
+from commonwealth.settings.manager import Manager
 from pykson import BooleanField, IntegerField, JsonObject, ObjectListField, StringField
+
+from config import SERVICE_NAME
 
 
 class ExtensionSettings(JsonObject):
@@ -79,3 +82,7 @@ class SettingsV2(SettingsV1):
 
             data["VERSION"] = SettingsV2.VERSION
             data["manifests"] = []
+
+
+# A single instance, since each Manager keeps its own in-memory copy and saves all of it
+settings_manager: Manager = Manager(SERVICE_NAME, SettingsV2)

@@ -22,7 +22,7 @@ from aiodocker.exceptions import DockerError
 from commonwealth.settings.manager import Manager
 from loguru import logger
 
-from config import DEFAULT_INJECTED_ENV_VARIABLES, SERVICE_NAME
+from config import DEFAULT_INJECTED_ENV_VARIABLES
 from extension.exceptions import (
     ExtensionInsufficientStorage,
     ExtensionNotFound,
@@ -35,12 +35,20 @@ from harbor import ContainerManager, DockerCtx
 from harbor.exceptions import ContainerNotFound
 from manifest import ManifestManager
 from manifest.models import ExtensionVersion
-from settings import ExtensionSettings, SettingsV2
+from recovery import (
+    LABEL_IDENTIFIER,
+    LABEL_NAME,
+    LABEL_PERMISSIONS,
+    LABEL_USER_PERMISSIONS,
+    stamp_extension_labels,
+)
+from settings import ExtensionSettings, settings_manager
 from utils import has_enough_disk_space
 
 TEMP_EXTENSION_KEEPALIVE_TTL_SECONDS = 10 * 60
 TEMP_EXTENSION_TAG_PREFIX = "temp-"
 CONFIG_FINGERPRINT_LABEL = "blueos.config-fingerprint"
+IDENTITY_LABELS = (LABEL_IDENTIFIER, LABEL_NAME, LABEL_PERMISSIONS, LABEL_USER_PERMISSIONS)
 
 
 class Extension:
@@ -54,7 +62,7 @@ class Extension:
     start_attempts: Dict[str, Tuple[int, int]] = {}
     temp_extension_activity: Dict[str, Tuple[int, int]] = {}
 
-    _manager: Manager = Manager(SERVICE_NAME, SettingsV2)
+    _manager: Manager = settings_manager
     _settings = _manager.settings
 
     def __init__(self, source: ExtensionSource, digest: Optional[str] = None) -> None:
@@ -151,11 +159,16 @@ class Extension:
         digest of what was requested is the only thing that can be compared.
 
         The fingerprint's own label is excluded, so recomputing it from an
-        already-labelled config is idempotent. The image id is included
+        already-labelled config is idempotent. So are the identity labels, they
+        say what the container is, not how it is configured. The image id is included
         because a tag can be re-pulled onto a new digest.
         """
         comparable = {key: value for key, value in config.items() if key != "Labels"}
-        labels = {key: value for key, value in (config.get("Labels") or {}).items() if key != CONFIG_FINGERPRINT_LABEL}
+        labels = {
+            key: value
+            for key, value in (config.get("Labels") or {}).items()
+            if key != CONFIG_FINGERPRINT_LABEL and key not in IDENTITY_LABELS
+        }
         if labels:
             comparable["Labels"] = labels
 
@@ -185,6 +198,11 @@ class Extension:
         if current_labels.get(CONFIG_FINGERPRINT_LABEL) == fingerprint:
             return container
 
+        # Created before identity labels existed, so its real configuration is unknown (settings may have been
+        # rebuilt by recovery): keep a container that runs the requested image instead of replacing it
+        if LABEL_IDENTIFIER not in current_labels and container["Image"] == image_id:
+            return container
+
         if (container["State"] or {}).get("Running", False):
             await container.stop()
         await container.delete()
@@ -199,7 +217,9 @@ class Extension:
             cls.lock(container_name)
 
             async with DockerCtx() as client:
-                container = await ContainerManager.get_raw_container_by_name(client, container_name)
+                container = await ContainerManager.get_raw_container_by_name(
+                    client, container_name, include_stopped=True
+                )
 
                 image = container["Image"]
 
@@ -319,20 +339,22 @@ class Extension:
 
     async def uninstall(self) -> None:
         old_settings = self.settings
-        self._save_settings()
 
         try:
             await self.remove(old_settings.container_name())
         except ContainerNotFound:
+            self._save_settings()
             # If container was not found we must try to remove the image since it will be lost
             try:
                 async with DockerCtx() as client:
                     await client.images.delete(old_settings.fullname(), force=True, noprune=False)
             except Exception:
                 pass
-        except Exception:
-            # If its other exception we should just ignore since the main loop will take care
-            pass
+        except Exception as error:
+            # The entry stays, otherwise the container is orphaned and, if it was the last one, recovery brings it back
+            logger.warning(f"Unable to remove container of {self.identifier}:{self.tag}, keeping its settings: {error}")
+        else:
+            self._save_settings()
         finally:
             if self.tag.startswith(TEMP_EXTENSION_TAG_PREFIX):
                 self.temp_extension_activity.pop(self.tag, None)
@@ -351,6 +373,7 @@ class Extension:
 
         self._set_container_config_host_config(config)
         self._set_container_config_default_env_variables(config)
+        stamp_extension_labels(config, ext.identifier, ext.name, ext.permissions, ext.user_permissions)
 
         try:
             async with DockerCtx() as client:

@@ -1,5 +1,5 @@
 import asyncio
-from typing import AsyncGenerator, Dict, List, cast
+from typing import Any, AsyncGenerator, Dict, List, cast
 
 import psutil
 from aiodocker import Docker
@@ -15,10 +15,14 @@ from harbor.models import ContainerModel, ContainerUsageModel
 
 class ContainerManager:
     @staticmethod
-    async def get_raw_container_by_name(client: Docker, container_name: str) -> DockerContainer:
-        containers = await client.containers.list(filters={"name": {container_name: True}})  # type: ignore
+    async def get_raw_container_by_name(
+        client: Docker, container_name: str, include_stopped: bool = False
+    ) -> DockerContainer:
+        containers = await client.containers.list(  # type: ignore
+            all=include_stopped, filters={"name": {container_name: True}}
+        )
         if not containers:
-            raise ContainerNotFound(f"Container {container_name} not found in running containers")
+            raise ContainerNotFound(f"Container {container_name} not found")
 
         return cast(DockerContainer, containers[0])
 
@@ -84,6 +88,24 @@ class ContainerManager:
             )
 
         return result
+
+    @staticmethod
+    async def inspect_extension_containers() -> List[Dict[str, Any]]:
+        async with DockerCtx() as client:
+            containers = await client.containers.list(all=True)  # type: ignore
+            inspects: List[Dict[str, Any]] = []
+            for container in containers:
+                names = container["Names"] or []
+                if not any(str(name).lstrip("/").startswith("extension-") for name in names):
+                    continue
+                show = await container.show()  # type: ignore
+                try:
+                    # Lets recovery tell what the image provides from what the extension asked for
+                    show["ImageConfig"] = (await client.images.inspect(show["Image"])).get("Config") or {}
+                except Exception:
+                    show["ImageConfig"] = {}
+                inspects.append(show)
+            return inspects
 
     @staticmethod
     async def get_running_containers() -> List[ContainerModel]:
