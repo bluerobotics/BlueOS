@@ -15,4 +15,8 @@ export default defineConfig({
     viewport: { width: 1280, height: 800 },
     screenshot: 'only-on-failure',
   },
+  projects: [
+    { name: 'setup', testMatch: 'setup.spec.ts' },
+    { name: 'pages', testMatch: 'pages/**/*.spec.ts', dependencies: ['setup'] },
+  ],
 })
