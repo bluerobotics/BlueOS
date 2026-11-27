@@ -1,19 +1,13 @@
-{ modulesPath, pkgs, ... }:
+{ modulesPath, ... }:
 {
-  imports = [ (modulesPath + "/profiles/qemu-guest.nix") ];
+  imports = [
+    (modulesPath + "/profiles/qemu-guest.nix")
+    ./wifi-lab.nix
+  ];
 
   system.stateVersion = "26.05";
   networking.hostName = "blueos";
   boot.kernelParams = [ "console=ttyS0" ];
-
-  # Enable the mac80211_hwsim module to simulate wifi radios
-  boot.kernelModules = [ "mac80211_hwsim" ];
-  boot.extraModprobeConfig = ''
-    options mac80211_hwsim radios=6 channels=2
-    options cfg80211 ieee80211_regdom=US
-  '';
-  hardware.wirelessRegulatoryDatabase = true;
-  environment.systemPackages = with pkgs; [ dnsmasq hostapd iw ];
 
   networking.networkmanager.enable = true;
   networking.networkmanager.unmanaged = [

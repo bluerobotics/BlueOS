@@ -2,6 +2,8 @@ from abc import ABC, abstractmethod
 from collections.abc import Callable
 from typing import ClassVar, TypeVar, cast
 
+import pytest
+
 T = TypeVar("T")
 
 
@@ -12,10 +14,9 @@ class Target(ABC):
         self.features: dict[object, object] = {}
 
     def feature(self, kind: Callable[..., T]) -> T:
-        try:
-            return cast(T, self.features[kind])
-        except KeyError:
-            raise NotImplementedError(f"{self.name} does not implement {kind}") from None
+        if kind not in self.features:
+            pytest.skip(f"{self.name} does not implement {kind}")
+        return cast(T, self.features[kind])
 
     @property
     @abstractmethod
