@@ -8,7 +8,7 @@ from config import SERVICE_NAME
 from loguru import logger
 from mavlink_proxy.Endpoint import Endpoint
 from pydantic import field_validator
-from typedefs import FlightController, Serial, SITLFrame, TLogMode
+from typedefs import FlightController, Serial, SITLFrame, TLogMode, platform_from_legacy
 from typing_extensions import override
 
 
@@ -108,7 +108,10 @@ class SettingsV1(PydanticSettings):
         data["VERSION"] = SettingsV1.STATIC_VERSION
 
     @override
-    def on_settings_created(self, _: Path) -> None:
+    def on_settings_created(self, file_path: Path) -> None:
+        # Settings loaded from a previous settings-N.json are newer than the old settings.json
+        if any(path != file_path for path in file_path.parent.glob("settings-*.json")):
+            return
         migrate_from_old_settings(self)
 
     def create_app_folders(self) -> None:
@@ -120,3 +123,25 @@ class SettingsV1(PydanticSettings):
                 logger.warning(f"Found file {folder} where a folder should be. Removing file and creating folder.")
                 Path.unlink(folder)
                 Path.mkdir(folder)
+
+
+class SettingsV2(SettingsV1):
+    """Boards are saved with a Platform object, older versions only understand the legacy platform string."""
+
+    @override
+    def migrate(self, data: dict[str, Any]) -> None:
+        if data["VERSION"] == SettingsV2.STATIC_VERSION:
+            return
+
+        if data["VERSION"] < SettingsV2.STATIC_VERSION:
+            super().migrate(data)
+
+        board = data.get("preferred_board")
+        if isinstance(board, dict) and isinstance(board.get("platform"), str):
+            try:
+                board["platform"] = platform_from_legacy(board["platform"]).model_dump(mode="json")
+            except ValueError as error:
+                logger.warning(f"Dropping preferred board with unknown platform: {error}")
+                data["preferred_board"] = None
+
+        data["VERSION"] = SettingsV2.STATIC_VERSION

@@ -19,8 +19,8 @@ from autopilot_manager import AutoPilotManager
 from config import SERVICE_NAME
 from flight_controller_detector.linux.linux_boards import LinuxFlightController
 from mavlink_proxy.Endpoint import Endpoint, EndpointType
-from settings import SettingsV1, migrate_from_old_settings
-from typedefs import FlightController, Platform, Serial, SITLFrame
+from settings import SettingsV1, SettingsV2, migrate_from_old_settings
+from typedefs import FlightController, Platform, PlatformType, Serial, SITLFrame
 
 VALID_SERIAL_ENDPOINT = "udp:192.168.2.1:14550"
 
@@ -52,7 +52,7 @@ def _old_settings_payload() -> dict[str, Any]:
             "preferred_board": {
                 "name": "Navigator",
                 "manufacturer": "Blue Robotics",
-                "platform": Platform.Navigator.value,
+                "platform": "navigator",
                 "path": None,
                 "flags": [],
             },
@@ -94,7 +94,7 @@ def test_migrate_from_old_settings_copies_supported_fields(tmp_path: Path, monke
     assert target.sitl_frame == SITLFrame.VECTORED
     assert target.preferred_board is not None
     assert target.preferred_board.name == "Navigator"
-    assert target.preferred_board.platform == Platform.Navigator
+    assert target.preferred_board.platform == Platform(name="Navigator", platform_type=PlatformType.Linux)
     assert target.serials == [Serial(port="B", endpoint=VALID_SERIAL_ENDPOINT)]
     assert target.endpoints == {
         Endpoint.model_validate(_endpoint()),
@@ -107,6 +107,52 @@ def test_migrate_from_old_settings_copies_supported_fields(tmp_path: Path, monke
             argument=14551,
         )
     )
+
+
+def _write_v1_settings(tmp_path: Path, preferred_board: dict[str, Any]) -> Path:
+    v1_settings = SettingsV1(start_on_boot=False, serials=[Serial(port="B", endpoint=VALID_SERIAL_ENDPOINT)])
+    data = v1_settings.model_dump(mode="json")
+    data["preferred_board"] = preferred_board
+    v1_file = tmp_path / SERVICE_NAME / "settings-1.json"
+    v1_file.parent.mkdir(parents=True)
+    v1_file.write_text(json.dumps(data), encoding="utf-8")
+    return v1_file
+
+
+def test_v1_settings_with_legacy_platform_migrate_to_v2(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    # The pre-pydantic settings.json must not override settings migrated from settings-1.json
+    monkeypatch.setattr("settings.appdirs.user_config_dir", lambda _name: str(tmp_path / "legacy"))
+    _write_old_settings(tmp_path / "legacy" / "settings.json", _old_settings_payload())
+    v1_file = _write_v1_settings(
+        tmp_path, {"name": "PX4 FMU v2.x", "platform": "Pixhawk1", "path": "/dev/ttyACM0", "flags": []}
+    )
+    v1_content = v1_file.read_text(encoding="utf-8")
+
+    manager: PydanticManager[SettingsV2] = PydanticManager(SERVICE_NAME, SettingsV2, tmp_path)
+    settings = manager.settings
+    assert settings.VERSION == 2
+    assert settings.start_on_boot is False
+    assert settings.preferred_board is not None
+    assert settings.preferred_board.name == "PX4 FMU v2.x"
+    assert settings.preferred_board.platform == Platform(name="Pixhawk1", platform_type=PlatformType.Serial)
+    assert settings.preferred_board.ardupilot_board_id is None
+
+    manager.save()
+    assert v1_file.read_text(encoding="utf-8") == v1_content
+    v2_data = json.loads((tmp_path / SERVICE_NAME / "settings-2.json").read_text(encoding="utf-8"))
+    assert v2_data["VERSION"] == 2
+    assert v2_data["serials"] == [{"port": "B", "endpoint": VALID_SERIAL_ENDPOINT}]
+    assert v2_data["preferred_board"]["platform"] == {"name": "Pixhawk1", "platform_type": "Serial"}
+
+    reloaded: PydanticManager[SettingsV2] = PydanticManager(SERVICE_NAME, SettingsV2, tmp_path)
+    assert reloaded.settings.preferred_board == settings.preferred_board
+
+
+def test_v2_migration_drops_unknown_legacy_platform() -> None:
+    data: dict[str, Any] = {"VERSION": 1, "preferred_board": {"name": "x", "platform": "nope"}}
+    SettingsV2().migrate(data)
+    assert data["VERSION"] == 2
+    assert data["preferred_board"] is None
 
 
 def _assert_unmigrated_defaults(target: SettingsV1) -> None:
@@ -183,11 +229,12 @@ def test_keep_valid_serials_accepts_empty_values() -> None:
     assert not SettingsV1(serials="nope").serials
 
 
-def test_migrate_is_noop_for_current_version() -> None:
-    settings = SettingsV1()
-    data = {"VERSION": SettingsV1.STATIC_VERSION, "start_on_boot": False}
+@pytest.mark.parametrize("settings_type", [SettingsV1, SettingsV2])
+def test_migrate_is_noop_for_current_version(settings_type: type[SettingsV1]) -> None:
+    settings = settings_type()
+    data = {"VERSION": settings_type.STATIC_VERSION, "start_on_boot": False}
     settings.migrate(data)
-    assert data["VERSION"] == SettingsV1.STATIC_VERSION
+    assert data["VERSION"] == settings_type.STATIC_VERSION
     assert data["start_on_boot"] is False
 
 
@@ -213,20 +260,23 @@ def test_pydantic_manager_migrates_old_settings_on_first_save(tmp_path: Path, mo
     monkeypatch.setattr("settings.appdirs.user_config_dir", lambda _name: str(old_config))
     _write_old_settings(old_config / "settings.json", _old_settings_payload())
 
-    manager: PydanticManager[SettingsV1] = PydanticManager(SERVICE_NAME, SettingsV1, new_config)
+    manager: PydanticManager[SettingsV2] = PydanticManager(SERVICE_NAME, SettingsV2, new_config)
     settings = manager.settings
 
     assert settings.start_on_boot is False
     assert settings.preferred_router == "MAVLinkRouter"
     assert settings.sitl_frame == SITLFrame.VECTORED
     assert settings.serials == [Serial(port="B", endpoint=VALID_SERIAL_ENDPOINT)]
-    assert (new_config / SERVICE_NAME / "settings-1.json").is_file()
+    assert settings.preferred_board is not None
+    assert settings.preferred_board.platform == Platform(name="Navigator", platform_type=PlatformType.Linux)
+    assert (new_config / SERVICE_NAME / "settings-2.json").is_file()
+    assert not (new_config / SERVICE_NAME / "settings-1.json").exists()
 
 
 def test_pydantic_manager_roundtrip_preserves_typed_fields(tmp_path: Path) -> None:
-    manager: PydanticManager[SettingsV1] = PydanticManager(SERVICE_NAME, SettingsV1, tmp_path)
+    manager: PydanticManager[SettingsV2] = PydanticManager(SERVICE_NAME, SettingsV2, tmp_path)
     endpoint = Endpoint.model_validate(_endpoint())
-    board = FlightController(name="Navigator", platform=Platform.Navigator)
+    board = FlightController(name="Navigator", platform=Platform(name="Navigator", platform_type=PlatformType.Linux))
     manager.settings.start_on_boot = False
     manager.settings.preferred_router = "MAVP2P"
     manager.settings.sitl_frame = SITLFrame.VECTORED
@@ -236,7 +286,7 @@ def test_pydantic_manager_roundtrip_preserves_typed_fields(tmp_path: Path) -> No
     manager.settings.manual_board_master_endpoint = endpoint
     manager.save()
 
-    reloaded: PydanticManager[SettingsV1] = PydanticManager(SERVICE_NAME, SettingsV1, tmp_path)
+    reloaded: PydanticManager[SettingsV2] = PydanticManager(SERVICE_NAME, SettingsV2, tmp_path)
     assert reloaded.settings.start_on_boot is False
     assert reloaded.settings.preferred_router == "MAVP2P"
     assert reloaded.settings.sitl_frame == SITLFrame.VECTORED
@@ -257,7 +307,7 @@ class _FakeSettingsManager:
 
 def _manager_with_settings(settings: Any) -> AutoPilotManager:
     manager = AutoPilotManager.__new__(AutoPilotManager)
-    manager._settings_manager = cast(PydanticManager[SettingsV1], _FakeSettingsManager(settings))
+    manager._settings_manager = cast(PydanticManager[SettingsV2], _FakeSettingsManager(settings))
     return manager
 
 
@@ -268,7 +318,9 @@ def test_get_serials_prefers_saved_then_linux_board_defaults() -> None:
     assert manager.get_serials() == [Serial(port="B", endpoint=VALID_SERIAL_ENDPOINT)]
 
     settings.serials = []
-    manager._current_board = FlightController(name="Pixhawk1", platform=Platform.Pixhawk1)
+    manager._current_board = FlightController(
+        name="Pixhawk1", platform=Platform(name="Pixhawk1", platform_type=PlatformType.Serial)
+    )
     assert not manager.get_serials()
 
     linux_board = MagicMock(spec=LinuxFlightController)

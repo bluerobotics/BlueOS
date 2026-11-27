@@ -5,13 +5,14 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 from autopilot_manager import AutoPilotManager
+from flight_controller_detector.Detector import Detector
 from mavlink_proxy.Endpoint import Endpoint, EndpointType
 from mavlink_proxy.Manager import Manager
 from typedefs import FlightController, Platform, PlatformType
 
 pytestmark = [pytest.mark.asyncio, pytest.mark.timeout(5)]
 
-SITL = FlightController(name="SITL", platform=Platform.SITL)
+SITL = FlightController(name="SITL", platform=Platform.SITL())
 MASTER = Endpoint(name="Master", owner="Test", connection_type=EndpointType.UDPServer, place="0.0.0.0", argument=14551)
 
 
@@ -89,6 +90,78 @@ async def test_failed_install_starts_autopilot_again(manager: AutoPilotManager, 
 
     assert lifecycle.calls == ["kill", "start"]
     assert not manager._lifecycle_lock.locked()
+
+
+async def test_make_default_of_non_serial_board_is_saved_before_flashing(manager: AutoPilotManager) -> None:
+    firmware_manager = cast(AsyncMock, manager.firmware_manager)
+    await manager.install_firmware_from_url("https://example.invalid/fw", SITL, make_default=True)
+    firmware_manager.install_firmware_from_url.assert_awaited_once_with(
+        "https://example.invalid/fw", SITL, True, None, None
+    )
+    firmware_manager.save_default_firmware.assert_not_called()
+
+
+async def test_make_default_of_serial_board_survives_a_failed_restart(manager: AutoPilotManager) -> None:
+    serial_board = FlightController(
+        name="MatekH743",
+        platform=Platform(name="MatekH743", platform_type=PlatformType.Serial),
+        ardupilot_board_id=1013,
+        path="/dev/ttyACM0",
+    )
+    firmware_manager = cast(AsyncMock, manager.firmware_manager)
+    firmware_manager.save_default_firmware = MagicMock()
+    firmware_manager.install_firmware_from_url.return_value = Path("firmware.apj")
+    with patch.object(manager, "_start_ardupilot_locked", AsyncMock(side_effect=RuntimeError("no board"))):
+        with pytest.raises(RuntimeError):
+            await manager.install_firmware_from_url("https://example.invalid/fw", serial_board, make_default=True)
+
+    firmware_manager.save_default_firmware.assert_called_once_with(Path("firmware.apj"), serial_board.platform)
+
+
+@pytest.mark.parametrize("install_error", [None, RuntimeError("upload failed")])
+async def test_install_pauses_serial_probing_until_flashed(
+    manager: AutoPilotManager, install_error: Exception | None
+) -> None:
+    paused: dict[str, bool] = {}
+
+    async def install(*_args: Any) -> None:
+        paused["install"] = Detector.is_probing_paused()
+        if install_error:
+            raise install_error
+
+    async def start() -> None:
+        paused["start"] = Detector.is_probing_paused()
+
+    with (
+        patch.object(manager.firmware_manager, "install_firmware_from_file", install),
+        patch.object(manager, "_start_ardupilot_locked", start),
+    ):
+        if install_error:
+            with pytest.raises(RuntimeError):
+                await manager.install_firmware_from_file(Path("firmware"), SITL)
+        else:
+            await manager.install_firmware_from_file(Path("firmware"), SITL)
+
+    # The autopilot restart must detect the freshly flashed board again
+    assert paused == {"install": True, "start": False}
+    assert not Detector.is_probing_paused()
+
+
+async def test_install_waits_for_probe_in_flight(
+    manager: AutoPilotManager, lifecycle: Lifecycle, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    probing_lock = asyncio.Lock()
+    monkeypatch.setattr(Detector, "_probing_lock", probing_lock)
+    await probing_lock.acquire()
+    install = asyncio.create_task(manager.install_firmware_from_file(Path("firmware"), SITL))
+    await asyncio.sleep(0.05)
+    assert Detector.is_probing_paused()
+    assert not lifecycle.calls, "the autopilot must not be stopped while a port is being probed"
+
+    probing_lock.release()
+    await install
+    assert lifecycle.calls == ["kill", "start"]
+    cast(AsyncMock, manager.firmware_manager).install_firmware_from_file.assert_awaited_once()
 
 
 class FakeRouterManager:
@@ -189,7 +262,9 @@ async def test_failed_router_restart_keeps_retrying(manager: AutoPilotManager) -
 async def test_serial_restart_holds_router_watchdog(manager: AutoPilotManager, lifecycle: Lifecycle) -> None:
     router = FakeRouterManager(lifecycle)
     manager.mavlink_manager = cast(Manager, router)
-    manager._current_board = FlightController(name="Pixhawk", platform=Platform.Pixhawk1, path="/dev/ttyACM0")
+    manager._current_board = FlightController(
+        name="Pixhawk", platform=Platform(name="Pixhawk1", platform_type=PlatformType.Serial), path="/dev/ttyACM0"
+    )
     assert manager._current_board.type == PlatformType.Serial
     manager.vehicle_manager = AsyncMock()
     board_dropped = asyncio.Event()

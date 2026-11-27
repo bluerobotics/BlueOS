@@ -59,7 +59,7 @@ export default Vue.extend({
       return null
     },
     boardType() {
-      return autopilot.current_board?.name
+      return autopilot.current_board?.platform.name
     },
   },
   methods: {

@@ -1,28 +1,47 @@
 import asyncio
-import os
+import json
 import shutil
-from functools import wraps
+from contextlib import contextmanager
+from functools import partial, wraps
 from pathlib import Path
-from typing import Any, Callable, List, Optional, Tuple
+from typing import (
+    Any,
+    AsyncGenerator,
+    Callable,
+    Iterator,
+    List,
+    NoReturn,
+    Optional,
+    Tuple,
+)
 
-from autopilot_manager import AutoPilotManager
+from autopilot_manager import (
+    AutoPilotManager,
+    board_matches_preferred,
+    is_same_hardware,
+)
 from commonwealth.mavlink_comm.exceptions import (
     FetchUpdatedMessageFail,
     MavlinkMessageReceiveFail,
     MavlinkMessageSendFail,
 )
 from commonwealth.mavlink_comm.typedefs import FirmwareInfo, MavlinkVehicleType
-from commonwealth.utils.apis import StackedHTTPException
-from commonwealth.utils.decorators import single_threaded
 from exceptions import InvalidFirmwareFile, NoDefaultFirmwareAvailable
 from fastapi import APIRouter, Body, File, HTTPException, Query, UploadFile, status
-from fastapi.responses import PlainTextResponse
+from fastapi.responses import PlainTextResponse, StreamingResponse
 from fastapi_versioning import versioned_api_route
+from firmware.install_job import (
+    FirmwareInstallJob,
+    FirmwareInstallJobManager,
+    InstallJobLocked,
+    OutputCallback,
+)
 from loguru import logger
 from typedefs import (
     Firmware,
     FlightController,
     FlightControllerFlags,
+    FlightControllerV1,
     Parameters,
     Serial,
     SITLFrame,
@@ -37,6 +56,7 @@ index_router_v1 = APIRouter(
 )
 
 autopilot = AutoPilotManager()
+install_jobs = FirmwareInstallJobManager()
 
 
 def index_to_http_exception(endpoint: Callable[..., Any]) -> Callable[..., Any]:
@@ -60,33 +80,81 @@ def index_to_http_exception(endpoint: Callable[..., Any]) -> Callable[..., Any]:
 # all the CRUD operations, we gonna keep ones that have less than 2 endpoints in the index router.
 
 
-async def target_board(board_name: Optional[str]) -> FlightController:
+async def target_board(board_name: Optional[str], board_id: Optional[int] = None) -> FlightController:
     """Returns the board that should be used to perform operations on.
 
     Most of the API routes that have operations related to board management will give the option to perform those
     operations on the running board or on some of the connected boards. This function abstract this logic that is
     common on all the routes.
 
-    If the `board_name` argument is None, it will check if there's a running board, and return it if so. If one
-    provides the `board_name`, this function will check if there's a connected board with that name and return it if so.
+    If both `board_name` and `board_id` are None, it will check if there's a running board, and return it if so.
+    Otherwise it returns the first connected board, bootloaders included, matching the ArduPilot board id and whose
+    platform (case-insensitive) or name matches `board_name`.
     """
-    if board_name is not None:
-        try:
-            return next(board for board in await autopilot.available_boards(True) if board.name == board_name)
-        except StopIteration as error:
-            raise ValueError("Chosen board not available.") from error
-    if autopilot.current_board is None:
-        raise RuntimeError("No board running and no target board set.")
-    return autopilot.current_board
+    if board_name is None and board_id is None:
+        if autopilot.current_board is None:
+            raise RuntimeError("No board running and no target board set.")
+        return autopilot.current_board
+
+    for board in await autopilot.available_boards(True):
+        if board_id is not None and board.ardupilot_board_id != board_id:
+            continue
+        if board_name is not None and board_name.lower() != board.platform.name.lower() and board_name != board.name:
+            continue
+        return board
+    raise ValueError("Chosen board not available.")
 
 
-def raise_lock(*raise_args: str, **kwargs: int) -> None:
+def raise_lock(*raise_args: str, **kwargs: int) -> NoReturn:
     """Raise a 423 HTTP Error status
 
     Raises:
         HTTPException: Exception that the operation is already in progress.
     """
     raise HTTPException(status_code=status.HTTP_423_LOCKED, detail="Operation already in progress.")
+
+
+async def install_target_board(board_name: Optional[str]) -> FlightController:
+    try:
+        return await target_board(board_name)
+    except ValueError as error:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(error)) from error
+
+
+@contextmanager
+def install_job_slot() -> Iterator[None]:
+    """Hold the single firmware install slot while a request is validated, mapping validation errors to HTTP codes.
+
+    Errors not handled here end up as 500 through index_to_http_exception.
+    """
+    try:
+        with install_jobs.reserve():
+            yield
+    except InstallJobLocked:
+        raise_lock()
+    except NoDefaultFirmwareAvailable as error:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(error)) from error
+    except InvalidFirmwareFile as error:
+        raise HTTPException(status_code=status.HTTP_415_UNSUPPORTED_MEDIA_TYPE, detail=str(error)) from error
+
+
+def stream_install_job(job: FirmwareInstallJob) -> StreamingResponse:
+    """Stream the job log as NDJSON, from its start until its final control line."""
+
+    async def generate() -> AsyncGenerator[str, None]:
+        async for stream, line in job.follow():
+            yield json.dumps({"stream": stream, "data": line}) + "\n"
+
+    return StreamingResponse(
+        generate(),
+        media_type="application/x-ndjson",
+        headers={
+            "Content-Type": "application/x-ndjson",
+            "Cache-Control": "no-cache",
+            "Connection": "keep-alive",
+            "X-Accel-Buffering": "no",  # Disable buffering for nginx
+        },
+    )
 
 
 @index_router_v1.put("/serials", status_code=status.HTTP_200_OK)
@@ -157,13 +225,21 @@ async def get_firmware_vehicle_type() -> Any:
     summary="Retrieve dictionary of available firmwares versions with their respective URL.",
 )
 @index_to_http_exception
-async def get_available_firmwares(vehicle: Vehicle, board_name: Optional[str] = None) -> Any:
-    return await autopilot.get_available_firmwares(vehicle, (await target_board(board_name)).platform)
+async def get_available_firmwares(
+    vehicle: Vehicle,
+    board_name: Optional[str] = None,
+    board_id: Optional[int] = None,
+) -> Any:
+    """List the firmwares available for the board.
+
+    The platform of the first firmware is the backend's preferred platform for the board, the one it would install
+    by itself. Other platforms built for the same board id (variants like "-bdshot") follow it.
+    """
+    return await autopilot.get_available_firmwares(vehicle, await target_board(board_name, board_id))
 
 
 @index_router_v1.post("/install_firmware_from_url", summary="Install firmware for given URL.")
 @index_to_http_exception
-@single_threaded(callback=raise_lock)
 async def install_firmware_from_url(
     url: str,
     board_name: Optional[str] = None,
@@ -171,48 +247,78 @@ async def install_firmware_from_url(
     parameters: Optional[Parameters] = None,
     auto_switch_board: bool = True,
 ) -> Any:
-    board = await target_board(board_name)
-    await autopilot.install_firmware_from_url(url, board, make_default, parameters)
+    with install_job_slot():
+        board = await install_target_board(board_name)
 
-    # In some cases user might install a firmware that implies in a board change but this is not reflected,
-    # so if the board is different from the current one, we change it.
-    if (
-        auto_switch_board
-        and board
-        and autopilot.current_board
-        and autopilot.current_board.name != board.name
-        and FlightControllerFlags.is_bootloader not in board.flags
-    ):
-        await autopilot.change_board(board)
+        async def switch_board(output_callback: OutputCallback) -> None:
+            current = autopilot.current_board
+            if not auto_switch_board or current is None or FlightControllerFlags.is_bootloader in board.flags:
+                return
+            # The flashed build can rename the board it runs on (e.g. "MatekH743" -> "MatekH743-bdshot"), the
+            # restart already picked it up under its new name
+            if is_same_hardware(board, current):
+                autopilot.set_preferred_board(current)
+                return
+            # In some cases user might install a firmware that implies in a board change but this is not reflected,
+            # so if the board is different from the current one, we change it.
+            if current.name != board.name:
+                # Switch to the board as detected after the flash, which may have been renamed by the new build
+                detected_boards = await autopilot.available_boards()
+                target = next(
+                    (detected for detected in detected_boards if board_matches_preferred(board, detected)),
+                    next((detected for detected in detected_boards if is_same_hardware(board, detected)), board),
+                )
+                await autopilot.change_board(target)
+                await output_callback("stdout", f"Switched to board {target.name}")
+
+        job = install_jobs.start(
+            partial(autopilot.install_firmware_from_url, url, board, make_default, parameters),
+            post_success_steps=[switch_board],
+        )
+    return stream_install_job(job)
 
 
 @index_router_v1.post("/install_firmware_from_file", summary="Install firmware from user file.")
 @index_to_http_exception
-@single_threaded(callback=raise_lock)
 async def install_firmware_from_file(
     binary: UploadFile = File(...),
     board_name: Optional[str] = None,
     parameters: Optional[Parameters] = None,
 ) -> Any:
-    try:
+    with install_job_slot():
         custom_firmware = Path.joinpath(autopilot.settings.firmware_folder, "custom_firmware")
-        with open(custom_firmware, "wb") as buffer:
-            shutil.copyfileobj(binary.file, buffer)
-        logger.debug("Installing firmware from file")
-        await autopilot.install_firmware_from_file(custom_firmware, await target_board(board_name), parameters)
-        os.remove(custom_firmware)
-    except InvalidFirmwareFile as error:
-        raise StackedHTTPException(status_code=status.HTTP_415_UNSUPPORTED_MEDIA_TYPE, error=error) from error
-    finally:
-        binary.file.close()
+
+        async def remove_custom_firmware(output_callback: OutputCallback) -> None:
+            custom_firmware.unlink(missing_ok=True)
+            await output_callback("stdout", "Cleaned up temporary firmware file")
+
+        try:
+            try:
+                with open(custom_firmware, "wb") as buffer:
+                    shutil.copyfileobj(binary.file, buffer)
+            finally:
+                binary.file.close()
+
+            board = await install_target_board(board_name)
+            autopilot.firmware_manager.validate_firmware(custom_firmware, board)
+            job = install_jobs.start(
+                partial(autopilot.install_firmware_from_file, custom_firmware, board, parameters),
+                cleanup_steps=[remove_custom_firmware],
+            )
+        except BaseException:
+            custom_firmware.unlink(missing_ok=True)
+            raise
+    return stream_install_job(job)
 
 
 @index_router_v1.get(
-    "/board", response_model=Optional[FlightController], summary="Check what is the current running board."
+    "/board", response_model=Optional[FlightControllerV1], summary="Check what is the current running board."
 )
 @index_to_http_exception
 def get_board() -> Any:
-    return autopilot.current_board
+    if autopilot.current_board is None:
+        return None
+    return FlightControllerV1.from_flight_controller(autopilot.current_board)
 
 
 @index_router_v1.post("/board", summary="Set board to be used.")
@@ -279,18 +385,33 @@ async def stop() -> Any:
 @index_router_v1.post("/restore_default_firmware", summary="Restore default firmware.")
 @index_to_http_exception
 async def restore_default_firmware(board_name: Optional[str] = None) -> Any:
-    try:
-        await autopilot.restore_default_firmware(await target_board(board_name))
-    except (NoDefaultFirmwareAvailable, ValueError) as error:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(error)) from error
+    with install_job_slot():
+        board = await install_target_board(board_name)
+        if not autopilot.firmware_manager.is_default_firmware_available(board.platform):
+            raise NoDefaultFirmwareAvailable(f"Default firmware not available for '{board.name}'.")
+        job = install_jobs.start(partial(autopilot.restore_default_firmware, board))
+    return stream_install_job(job)
+
+
+@index_router_v1.get("/install_firmware_progress", summary="Follow the firmware install currently running.")
+@index_to_http_exception
+async def install_firmware_progress() -> Any:
+    """Stream the log of the running firmware install from its start, ending with its final control line.
+
+    Finished installs are not replayed, so a client never mistakes an old result for a live install.
+    """
+    job = install_jobs.running_job
+    if job is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="No firmware install running.")
+    return stream_install_job(job)
 
 
 @index_router_v1.get(
-    "/available_boards", response_model=List[FlightController], summary="Retrieve list of connected boards."
+    "/available_boards", response_model=List[FlightControllerV1], summary="Retrieve list of connected boards."
 )
 @index_to_http_exception
 async def available_boards() -> Any:
-    return await autopilot.available_boards(True)
+    return [FlightControllerV1.from_flight_controller(board) for board in await autopilot.available_boards(True)]
 
 
 @index_router_v1.post("/system_id", summary="Set the vehicle's system id.")

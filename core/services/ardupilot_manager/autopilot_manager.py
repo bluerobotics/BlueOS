@@ -4,7 +4,7 @@ import pathlib
 import subprocess
 import time
 from contextlib import asynccontextmanager
-from typing import Any, AsyncIterator, List, Optional, Set
+from typing import Any, AsyncIterator, Awaitable, Callable, List, Optional, Set
 from uuid import uuid4
 
 import psutil
@@ -21,11 +21,12 @@ from exceptions import (
 from firmware.FirmwareManagement import FirmwareManager
 from flight_controller_detector.Detector import Detector as BoardDetector
 from flight_controller_detector.linux.linux_boards import LinuxFlightController
+from flight_controller_detector.serial_identification import GENERIC_SERIAL_PLATFORM
 from loguru import logger
 from mavlink_proxy.Endpoint import Endpoint, EndpointType
 from mavlink_proxy.exceptions import EndpointAlreadyExists
 from mavlink_proxy.Manager import Manager as MavlinkManager
-from settings import SettingsV1
+from settings import SettingsV2
 from typedefs import (
     Firmware,
     FlightController,
@@ -40,10 +41,49 @@ from typedefs import (
 )
 
 
+def board_matches_preferred(preferred: FlightController, detected: FlightController) -> bool:
+    """Check if a detected board is the saved one. Path, flags and USB strings can change between sessions."""
+    if preferred.type != detected.type:
+        return False
+    if (
+        preferred.ardupilot_board_id is not None
+        and detected.ardupilot_board_id is not None
+        and preferred.ardupilot_board_id != detected.ardupilot_board_id
+    ):
+        return False
+    # Serial boards saved before board ids existed may only be known by their USB product name, and their saved
+    # platform may not be the manifest one (e.g. "CubeOrange" for a "CubeOrange+"). The v1 API reports serial boards
+    # it has no legacy platform for as "GenericSerial", with their board id.
+    if preferred.type == PlatformType.Serial and (
+        preferred.ardupilot_board_id is None or preferred.platform.name == GENERIC_SERIAL_PLATFORM
+    ):
+        if preferred.name == detected.name:
+            return True
+        if preferred.platform.name == GENERIC_SERIAL_PLATFORM:
+            return False
+    return preferred.platform.name.lower() == detected.platform.name.lower()
+
+
+def is_same_hardware(board: FlightController, other: FlightController) -> bool:
+    """Check if two serial boards are the same hardware, flashing another build renames a board and its platform
+    (e.g. "MatekH743" -> "MatekH743-bdshot")."""
+    if (
+        board.type != PlatformType.Serial
+        or other.type != PlatformType.Serial
+        or board.ardupilot_board_id is None
+        or board.ardupilot_board_id != other.ardupilot_board_id
+    ):
+        return False
+    if board.path is not None and board.path == other.path:
+        return True
+    serial_number = BoardDetector.usb_serial_number(board.path)
+    return serial_number is not None and serial_number == BoardDetector.usb_serial_number(other.path)
+
+
 class AutoPilotManager(metaclass=Singleton):
     # pylint: disable=too-many-instance-attributes
     def __init__(self) -> None:
-        self._settings_manager: PydanticManager[SettingsV1] = PydanticManager(SERVICE_NAME, SettingsV1)
+        self._settings_manager: PydanticManager[SettingsV2] = PydanticManager(SERVICE_NAME, SettingsV2)
         self._settings_manager.settings.create_app_folders()
         self._current_board: Optional[FlightController] = None
         self.should_be_running = False
@@ -277,7 +317,7 @@ class AutoPilotManager(metaclass=Singleton):
             await mavlink_manager.restart()
 
     @property
-    def settings(self) -> SettingsV1:
+    def settings(self) -> SettingsV2:
         return self._settings_manager.settings
 
     @property
@@ -341,12 +381,12 @@ class AutoPilotManager(metaclass=Singleton):
     async def start_linux_board(self, board: LinuxFlightController) -> None:
         self._current_board = board
         if not self.firmware_manager.is_firmware_installed(self._current_board):
-            if board.platform == Platform.Navigator:
+            if board.platform.name == "Navigator":
                 await self.firmware_manager.install_firmware_from_file(
                     pathlib.Path("/root/blueos-files/ardupilot-manager/default/ardupilot_navigator"),
                     board,
                 )
-            elif board.platform == Platform.Navigator64:
+            elif board.platform.name == "Navigator64":
                 await self.firmware_manager.install_firmware_from_file(
                     pathlib.Path("/root/blueos-files/ardupilot-manager/default/ardupilot_navigator64"),
                     board,
@@ -357,7 +397,7 @@ class AutoPilotManager(metaclass=Singleton):
                 )
 
         firmware_path = self.firmware_manager.firmware_path(self._current_board.platform)
-        self.firmware_manager.validate_firmware(firmware_path, self._current_board.platform)
+        self.firmware_manager.validate_firmware(firmware_path, self._current_board)
 
         # ArduPilot process will connect as a client on the UDP server created by the mavlink router
         master_endpoint = Endpoint(
@@ -491,7 +531,7 @@ class AutoPilotManager(metaclass=Singleton):
         self.current_sitl_frame = frame
 
         firmware_path = self.firmware_manager.firmware_path(self._current_board.platform)
-        self.firmware_manager.validate_firmware(firmware_path, self._current_board.platform)
+        self.firmware_manager.validate_firmware(firmware_path, self._current_board)
 
         # ArduPilot SITL binary will bind TCP port 5760 (server) and the mavlink router will connect to it as a client
         master_endpoint = Endpoint(
@@ -551,9 +591,11 @@ class AutoPilotManager(metaclass=Singleton):
                 logger.warning(str(error))
         await self.mavlink_manager.start(device)
 
-    @staticmethod
-    async def available_boards(include_bootloaders: bool = False) -> List[FlightController]:
-        all_boards = await BoardDetector.detect(True)
+    async def available_boards(self, include_bootloaders: bool = False) -> List[FlightController]:
+        known_boards = (
+            [self.current_board] if self.current_board and self.current_board.type == PlatformType.Serial else []
+        )
+        all_boards = await BoardDetector.detect(True, known_boards=known_boards)
         if include_bootloaders:
             return all_boards
         return [board for board in all_boards if FlightControllerFlags.is_bootloader not in board.flags]
@@ -561,7 +603,7 @@ class AutoPilotManager(metaclass=Singleton):
     async def change_board(self, board: FlightController) -> None:
         logger.info(f"Trying to run with '{board.name}'.")
         boards = await self.available_boards()
-        if not any(board.name == detectedboard.name for detectedboard in boards):
+        if not any(board_matches_preferred(board, detected_board) for detected_board in boards):
             logger.error(f"Attempted to change active board to {board} which is not detected.")
             logger.info(f"detected boards are: {boards}")
             raise ValueError(f"Cannot use '{board.name}'. Board not detected.")
@@ -587,8 +629,11 @@ class AutoPilotManager(metaclass=Singleton):
             preferred_board = self.get_preferred_board()
             logger.debug(f"Preferred flight-controller is {preferred_board.name}.")
             for board in boards:
-                # Compare connected boards with saved board, excluding path (which can change between sessions)
-                if preferred_board.model_dump(exclude={"path"}).items() <= board.model_dump().items():
+                if board_matches_preferred(preferred_board, board):
+                    return board
+            for board in boards:
+                if is_same_hardware(preferred_board, board):
+                    logger.info(f"Flight-controller {preferred_board.name} is now running {board.name}.")
                     return board
             logger.debug(f"Flight-controller {preferred_board.name} not connected.")
         except NoPreferredBoardSet as error:
@@ -600,23 +645,21 @@ class AutoPilotManager(metaclass=Singleton):
         real_boards = [board for board in boards if board.type not in [PlatformType.SITL, PlatformType.Manual]]
         if not real_boards:
             raise RuntimeError("No physical board detected and SITL/Manual board aren't explicitly chosen.")
-        real_boards.sort(key=lambda board: board.platform)
+        # Serial boards first, then by platform, so the choice doesn't depend on the detection order
+        real_boards.sort(key=lambda board: (board.type != PlatformType.Serial, board.platform.name, board.name))
         return real_boards[0]
 
     def running_ardupilot_processes(self) -> List[psutil.Process]:
         """Return list of all Ardupilot process running on system."""
+        firmware_prefix = str(self.firmware_manager.firmware_folder / "ardupilot_")
 
         def is_ardupilot_process(process: psutil.Process) -> bool:
-            """Checks if given process is using a Ardupilot's firmware file, for any known platform."""
-            for platform in Platform:
-                firmware_path = self.firmware_manager.firmware_path(platform)
-                try:
-                    if str(firmware_path) in " ".join(process.cmdline()):
-                        return True
-                except psutil.NoSuchProcess:
-                    # process may have died before we could call cmdline()
-                    pass
-            return False
+            """Checks if given process is using a Ardupilot's firmware file, for any platform."""
+            try:
+                return firmware_prefix in " ".join(process.cmdline())
+            except (psutil.NoSuchProcess, psutil.AccessDenied):
+                # process may have died, or be inaccessible, before we could call cmdline()
+                return False
 
         return list(filter(is_ardupilot_process, psutil.process_iter()))
 
@@ -670,7 +713,7 @@ class AutoPilotManager(metaclass=Singleton):
 
     async def _kill_ardupilot_locked(self) -> None:
         self.should_be_running = False
-        if not self.current_board or self.current_board.platform != Platform.SITL:
+        if not self.current_board or self.current_board.platform.platform_type != PlatformType.SITL:
             try:
                 logger.info("Disarming vehicle.")
                 await self.vehicle_manager.disarm_vehicle()
@@ -717,15 +760,15 @@ class AutoPilotManager(metaclass=Singleton):
             flight_controller = self.get_board_to_be_used(available_boards)
             logger.info(f"Using {flight_controller.name} flight-controller.")
 
-            if flight_controller.platform.type == PlatformType.Linux:
+            if flight_controller.platform.platform_type == PlatformType.Linux:
                 assert isinstance(flight_controller, LinuxFlightController)
                 await asyncio.to_thread(flight_controller.setup)
                 await self.start_linux_board(flight_controller)
-            elif flight_controller.platform.type == PlatformType.Serial:
+            elif flight_controller.platform.platform_type == PlatformType.Serial:
                 await self.start_serial(flight_controller)
-            elif flight_controller.platform == Platform.SITL:
+            elif flight_controller.platform.platform_type == PlatformType.SITL:
                 await self.start_sitl()
-            elif flight_controller.platform == Platform.Manual:
+            elif flight_controller.platform.platform_type == PlatformType.Manual:
                 await self.start_manual_board(flight_controller)
             else:
                 raise RuntimeError(f"Invalid board type: {flight_controller}")
@@ -733,11 +776,12 @@ class AutoPilotManager(metaclass=Singleton):
             self.should_be_running = True
 
     async def _detect_serial_board(self, board: FlightController) -> Optional[FlightController]:
+        BoardDetector.invalidate_detection()
         return next(
             (
                 detected
                 for detected in await self.available_boards()
-                if detected.type == PlatformType.Serial and detected.platform == board.platform and detected.path
+                if detected.type == PlatformType.Serial and board_matches_preferred(board, detected) and detected.path
             ),
             None,
         )
@@ -855,37 +899,65 @@ class AutoPilotManager(metaclass=Singleton):
         if self.mavlink_manager.should_be_running:
             await self.mavlink_manager.restart()
 
-    async def get_available_firmwares(self, vehicle: Vehicle, platform: Platform) -> List[Firmware]:
-        return await self.firmware_manager.get_available_firmwares(vehicle, platform)
+    async def get_available_firmwares(self, vehicle: Vehicle, board: FlightController) -> List[Firmware]:
+        return await self.firmware_manager.get_available_firmwares(vehicle, board)
 
     @asynccontextmanager
     async def _autopilot_paused(self) -> AsyncIterator[None]:
         async with self._lifecycle_lock:
             try:
-                await self._kill_ardupilot_locked()
-                yield
+                BoardDetector.invalidate_caches()
+                # Probing a port, bootloaders above all, while the uploader talks to the board can break the flash
+                with BoardDetector.pause_probing():
+                    await BoardDetector.wait_for_idle()
+                    await self._kill_ardupilot_locked()
+                    yield
             finally:
+                # Flashing reboots the board, which can come back on another path
+                BoardDetector.invalidate_caches()
                 await self._start_ardupilot_locked()
 
     async def install_firmware_from_file(
-        self, firmware_path: pathlib.Path, board: FlightController, default_parameters: Optional[Parameters] = None
+        self,
+        firmware_path: pathlib.Path,
+        board: FlightController,
+        default_parameters: Optional[Parameters] = None,
+        output_callback: Optional[Callable[[str, str], Awaitable[None]]] = None,
     ) -> None:
         async with self._autopilot_paused():
-            await self.firmware_manager.install_firmware_from_file(firmware_path, board, default_parameters)
+            await self.firmware_manager.install_firmware_from_file(
+                firmware_path, board, default_parameters, output_callback
+            )
 
+    # pylint: disable=too-many-arguments
     async def install_firmware_from_url(
         self,
         url: str,
         board: FlightController,
         make_default: bool = False,
         default_parameters: Optional[Parameters] = None,
+        output_callback: Optional[Callable[[str, str], Awaitable[None]]] = None,
+    ) -> None:
+        # A serial board is only known by the platform of the flashed build once it is detected again with it
+        save_default_after_restart = make_default and board.type == PlatformType.Serial
+        firmware: Optional[pathlib.Path] = None
+        try:
+            async with self._autopilot_paused():
+                firmware = await self.firmware_manager.install_firmware_from_url(
+                    url, board, make_default and not save_default_after_restart, default_parameters, output_callback
+                )
+        finally:
+            # Also saved when the restart fails, the firmware is on the board already
+            if save_default_after_restart and firmware is not None:
+                current = self.current_board
+                flashed = current if current is not None and is_same_hardware(board, current) else board
+                self.firmware_manager.save_default_firmware(firmware, flashed.platform)
+
+    async def restore_default_firmware(
+        self, board: FlightController, output_callback: Optional[Callable[[str, str], Awaitable[None]]] = None
     ) -> None:
         async with self._autopilot_paused():
-            await self.firmware_manager.install_firmware_from_url(url, board, make_default, default_parameters)
-
-    async def restore_default_firmware(self, board: FlightController) -> None:
-        async with self._autopilot_paused():
-            await self.firmware_manager.restore_default_firmware(board)
+            await self.firmware_manager.restore_default_firmware(board, output_callback)
 
     async def set_manual_board_master_endpoint(self, endpoint: Endpoint) -> bool:
         async with self._lifecycle_lock:

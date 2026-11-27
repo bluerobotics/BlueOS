@@ -1,6 +1,6 @@
 import ipaddress
 import re
-from enum import Enum, auto
+from enum import Enum
 from pathlib import Path
 from platform import machine
 from typing import Any, Dict, List, Optional
@@ -79,10 +79,19 @@ class TLogMode(str, Enum):
 
 
 class Firmware(BaseModel):
-    """Simplified representation of a firmware, as available on Ardupilot's manifest."""
+    """Simplified representation of a firmware, as available on Ardupilot's manifest.
 
+    Lists of firmwares for a board come with the backend's preferred platform for that board first: the first item's
+    `platform` is the one used when installing without choosing a specific firmware.
+    """
+
+    board_id: Optional[int]
+    platform: str
     name: str
     url: str
+
+    def __hash__(self) -> int:
+        return hash(self.platform + self.name + str(self.board_id))
 
 
 class Vehicle(str, Enum):
@@ -95,52 +104,34 @@ class Vehicle(str, Enum):
     Copter = "Copter"
 
 
-# TODO: This class can be deprecated once we move to Python 3.11, which introduces the equivalent StrEnum
-class LowerStringEnum(str, Enum):
-    def __str__(self) -> str:
-        return self.name.lower()
+class PlatformType(str, Enum):
+    """Kind of platform, which defines how the autopilot is installed and started.
 
+    Serialized with capitalized values ("Serial", "Linux", "SITL", "Unknown", "Manual"). This is part of the API
+    contract of the routes returning the `FlightController` model, older versions used lowercase names.
+    """
 
-class PlatformType(LowerStringEnum):
-    Serial = auto()
-    Linux = auto()
-    SITL = auto()
-    Unknown = auto()
-    Manual = auto()
-
-
-class Platform(str, Enum):
-    """Valid Ardupilot platform types.
-    The Enum values are 1:1 representations of the platforms available on the ArduPilot manifest."""
-
-    Pixhawk1 = "Pixhawk1"
-    Pixhawk4 = "Pixhawk4"
-    Pixhawk6X = "Pixhawk6X"
-    Pixhawk6C = "Pixhawk6C"
-    CubeOrange = "CubeOrange"
-    GenericSerial = "GenericSerial"
-    Navigator = "navigator"
-    Navigator64 = "navigator64"
-    Argonot = "argonot"
-    SITL = get_sitl_platform_name(machine())
+    Serial = "Serial"
+    Linux = "Linux"
+    SITL = "SITL"
+    Unknown = "Unknown"
     Manual = "Manual"
 
-    @property
-    def type(self) -> PlatformType:
-        platform_types = {
-            Platform.Pixhawk1: PlatformType.Serial,
-            Platform.Pixhawk4: PlatformType.Serial,
-            Platform.Pixhawk6X: PlatformType.Serial,
-            Platform.Pixhawk6C: PlatformType.Serial,
-            Platform.CubeOrange: PlatformType.Serial,
-            Platform.GenericSerial: PlatformType.Serial,
-            Platform.Navigator: PlatformType.Linux,
-            Platform.Navigator64: PlatformType.Linux,
-            Platform.Argonot: PlatformType.Linux,
-            Platform.SITL: PlatformType.SITL,
-            Platform.Manual: PlatformType.Manual,
-        }
-        return platform_types.get(self, PlatformType.Unknown)
+
+class Platform(BaseModel):
+    """Platform a board runs ArduPilot on.
+
+    `name` is the ArduPilot manifest platform name (e.g. "CubeOrange", "Navigator", "SITL_x86_64_linux_gnu").
+    For serial boards it is derived from the USB product string, so it can be a name the manifest doesn't have
+    (e.g. "GenericSerial"); their firmwares are matched by board id instead.
+    """
+
+    name: str
+    platform_type: PlatformType
+
+    @staticmethod
+    def SITL() -> "Platform":
+        return Platform(name=get_sitl_platform_name(machine()), platform_type=PlatformType.SITL)
 
 
 class FlightControllerFlags(str, Enum):
@@ -153,18 +144,89 @@ class Parameters(BaseModel):
     params: Dict[str, float]
 
 
+# Platforms used to be a string enum, these are the values that may still be on saved settings
+LEGACY_PLATFORMS = {
+    "Pixhawk1": Platform(name="Pixhawk1", platform_type=PlatformType.Serial),
+    "Pixhawk4": Platform(name="Pixhawk4", platform_type=PlatformType.Serial),
+    "Pixhawk6X": Platform(name="Pixhawk6X", platform_type=PlatformType.Serial),
+    "Pixhawk6C": Platform(name="Pixhawk6C", platform_type=PlatformType.Serial),
+    "CubeOrange": Platform(name="CubeOrange", platform_type=PlatformType.Serial),
+    "GenericSerial": Platform(name="GenericSerial", platform_type=PlatformType.Serial),
+    "navigator": Platform(name="Navigator", platform_type=PlatformType.Linux),
+    "navigator64": Platform(name="Navigator64", platform_type=PlatformType.Linux),
+    "argonot": Platform(name="Argonot", platform_type=PlatformType.Linux),
+    "Manual": Platform(name="Manual", platform_type=PlatformType.Manual),
+}
+
+
+def platform_from_legacy(value: str) -> Platform:
+    if value.startswith("SITL_"):
+        return Platform(name=value, platform_type=PlatformType.SITL)
+    if value in LEGACY_PLATFORMS:
+        return LEGACY_PLATFORMS[value]
+    raise ValueError(f"Unknown platform: {value}")
+
+
+def platform_to_legacy(platform: Platform) -> str:
+    """Name a platform like the former platform enum did, serial platforms it didn't know are "GenericSerial"."""
+    if platform.platform_type == PlatformType.SITL:
+        return platform.name
+    for legacy_name, legacy_platform in LEGACY_PLATFORMS.items():
+        if (
+            legacy_platform.platform_type == platform.platform_type
+            and legacy_platform.name.lower() == platform.name.lower()
+        ):
+            return legacy_name
+    if platform.platform_type == PlatformType.Serial:
+        return "GenericSerial"
+    return platform.name
+
+
 class FlightController(BaseModel):
     """Flight-controller board."""
 
     name: str
     manufacturer: Optional[str] = None
     platform: Platform
+    ardupilot_board_id: Optional[int] = None
     path: Optional[str] = None
     flags: List[FlightControllerFlags] = []
 
+    @field_validator("platform", mode="before")
+    @classmethod
+    def accept_legacy_platform(cls: Any, value: Any) -> Any:
+        if not isinstance(value, str):
+            return value
+        return platform_from_legacy(value)
+
     @property
     def type(self) -> PlatformType:
-        return self.platform.type
+        return self.platform.platform_type
+
+    def __hash__(self) -> int:
+        return hash(self.name + self.platform.name)
+
+
+class FlightControllerV1(BaseModel):
+    """Flight-controller board."""
+
+    name: str  # Whatever we get on the usb description
+    manufacturer: Optional[str] = None  # Whatever we get on the usb description
+    platform: str  # The platform of the board according to the ardupilot's manifest.
+    ardupilot_board_id: Optional[int] = None
+    path: Optional[str] = None
+    flags: List[FlightControllerFlags] = []
+
+    @classmethod
+    def from_flight_controller(cls, board: FlightController) -> "FlightControllerV1":
+        return cls(
+            name=board.name,
+            manufacturer=board.manufacturer,
+            platform=platform_to_legacy(board.platform),
+            ardupilot_board_id=board.ardupilot_board_id,
+            path=board.path,
+            flags=board.flags,
+        )
 
 
 class AvailableBoards(BaseModel):

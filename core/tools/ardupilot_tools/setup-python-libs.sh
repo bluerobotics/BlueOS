@@ -15,7 +15,7 @@ fi
 mkdir -p "$PYTHON_BIN_DIR"
 
 ### Ardupilot's uploader is used to upload firmwares to serial boards
-COMMIT_HASH=f6544ca25ab232407ec102b7a5adf0adca0f2062
+COMMIT_HASH=8b779a8f3b61e66b4bfc39ff413e27b4be51df2e
 LOCAL_PATH_UPLOADER="$PYTHON_BIN_DIR/ardupilot_fw_uploader.py"
 REMOTE_URL_UPLOADER="https://raw.githubusercontent.com/ArduPilot/ardupilot/${COMMIT_HASH}/Tools/scripts/uploader.py"
 
@@ -28,12 +28,9 @@ else
     SUDO="$(command -v sudo || echo '')"
 fi
 readonly SUDO
-if [ ! -f "$LOCAL_PATH_UPLOADER" ]; then
-  $SUDO wget "$REMOTE_URL_UPLOADER" -O "$LOCAL_PATH_UPLOADER"
-  $SUDO chmod +x "$LOCAL_PATH_UPLOADER"
-else
-  echo "File $LOCAL_PATH_UPLOADER already exists. Skipping download."
-fi
+# Always downloaded, an existing file may come from an older commit
+$SUDO wget "$REMOTE_URL_UPLOADER" -O "$LOCAL_PATH_UPLOADER"
+$SUDO chmod +x "$LOCAL_PATH_UPLOADER"
 
 ## Download and install necessary modules to site-packages folder
 

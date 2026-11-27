@@ -25,6 +25,8 @@ const LEGACY_SUB_LIGHTS2 = 60 // RCIN10
 class AutopilotManagerStore extends VuexModule {
   API_URL = '/ardupilot-manager/v1.0'
 
+  API_URL_V2 = '/ardupilot-manager/v2.0'
+
   available_endpoints: AutopilotEndpoint[] = []
 
   available_boards: FlightController[] = []

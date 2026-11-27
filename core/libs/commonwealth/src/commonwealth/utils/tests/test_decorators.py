@@ -1,6 +1,10 @@
+import asyncio
 import time
 from concurrent.futures import ThreadPoolExecutor, wait
 from datetime import datetime
+from typing import Any, List
+
+import pytest
 
 from .. import decorators
 
@@ -56,3 +60,130 @@ def test_temporary_cache_coalesces_in_flight() -> None:
 
     assert len(calls) == 1
     assert results == [1, 1, 1, 1]
+
+
+@pytest.mark.asyncio
+async def test_async_cache_not_called_on_hit() -> None:
+    """Test that the inner coroutine is not called again on cache hit."""
+    call_count = 0
+
+    @decorators.temporary_cache(timeout_seconds=CACHE_TIME)
+    async def counting_function(_key: str) -> int:
+        nonlocal call_count
+        call_count += 1
+        await asyncio.sleep(0.01)
+        return call_count
+
+    # First call - should execute the function
+    result1 = await counting_function("test_key")
+    assert result1 == 1
+    assert call_count == 1
+
+    # Second call with same key - should return cached result WITHOUT calling function
+    result2 = await counting_function("test_key")
+    assert result2 == 1  # Same cached result
+    assert call_count == 1  # Function was NOT called again
+
+    # Third call - still cached
+    result3 = await counting_function("test_key")
+    assert result3 == 1
+    assert call_count == 1
+
+
+@pytest.mark.asyncio
+async def test_async_cache_timeout() -> None:
+    """Test that async cache expires after timeout."""
+    call_count = 0
+
+    @decorators.temporary_cache(timeout_seconds=CACHE_TIME)
+    async def counting_function(_key: str) -> int:
+        nonlocal call_count
+        call_count += 1
+        await asyncio.sleep(0.01)
+        return call_count
+
+    # First call
+    result1 = await counting_function("timeout_test")
+    assert result1 == 1
+    assert call_count == 1
+
+    # Should return cached value immediately
+    result2 = await counting_function("timeout_test")
+    assert result2 == 1
+    assert call_count == 1
+
+    # Wait for cache to expire
+    await asyncio.sleep(CACHE_WAIT_TIME)
+
+    # Should call function again after timeout
+    result3 = await counting_function("timeout_test")
+    assert result3 == 2  # New result
+    assert call_count == 2  # Function was called again
+
+
+@pytest.mark.asyncio
+async def test_async_cache_no_coroutine_reuse_error() -> None:
+    """Test that async cached functions don't raise 'cannot reuse already awaited coroutine' error."""
+    # This was the original bug - caching the coroutine instead of the result
+
+    @decorators.temporary_cache(timeout_seconds=CACHE_TIME)
+    async def async_function(key: str) -> str:
+        await asyncio.sleep(0.01)
+        return f"result_{key}"
+
+    key = "reuse_test"
+
+    # First call
+    first_result = await async_function(key)
+    assert first_result == "result_reuse_test"
+
+    # Second call should not raise "cannot reuse already awaited coroutine"
+    # It should return the cached result, not a cached coroutine
+    try:
+        second_result = await async_function(key)
+        assert second_result == first_result
+    except RuntimeError as e:
+        if "cannot reuse already awaited coroutine" in str(e):
+            pytest.fail("Cache is storing coroutine instead of result!")
+        raise
+
+
+class RefreshError(Exception):
+    pass
+
+
+@pytest.mark.asyncio
+async def test_async_failed_refresh_is_not_cached() -> None:
+    results: List[Any] = [1, RefreshError(), 2]
+
+    @decorators.temporary_cache(timeout_seconds=CACHE_TIME)
+    async def refresh(_key: str) -> Any:
+        result = results.pop(0)
+        if isinstance(result, Exception):
+            raise result
+        return result
+
+    assert await refresh("key") == 1
+    await asyncio.sleep(CACHE_WAIT_TIME)
+    with pytest.raises(RefreshError):
+        await refresh("key")
+    assert await refresh("key") == 2
+
+
+@pytest.mark.asyncio
+async def test_async_cache_coalesces_in_flight_and_drops_unused_locks() -> None:
+    calls = []
+
+    @decorators.temporary_cache(timeout_seconds=1.0)
+    async def slow(_entry: str) -> int:
+        calls.append(1)
+        await asyncio.sleep(0.1)
+        return len(calls)
+
+    assert await asyncio.gather(*(slow("same") for _ in range(4))) == [1, 1, 1, 1]
+    assert len(calls) == 1
+
+    for entry in range(10):
+        await slow(f"entry {entry}")
+    free_variables = dict(zip(slow.__code__.co_freevars, slow.__closure__ or ()))
+    assert not free_variables["async_locks"].cell_contents

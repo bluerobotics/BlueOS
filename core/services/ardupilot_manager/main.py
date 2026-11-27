@@ -16,6 +16,22 @@ logging.basicConfig(handlers=[InterceptHandler()], level=0)
 init_logger(SERVICE_NAME)
 
 logger.info("Starting AutoPilot Manager.")
+
+# CAP_SYS_ADMIN lets root open serial ports locked with TIOCEXCL. Dropping it makes the in-process serial probing
+# skip ports held by the MAVLink router or the firmware uploader instead of stealing their data.
+# This only applies to this Python process and the threads it creates afterwards: root children exec'd later
+# (router, uploader, ArduPilot) regain it from the bounding set.
+try:
+    import prctl
+
+    prctl.cap_effective.drop(prctl.CAP_SYS_ADMIN)
+    prctl.cap_permitted.drop(prctl.CAP_SYS_ADMIN)
+    logger.info("Dropped CAP_SYS_ADMIN from the AutoPilot Manager process")
+except ImportError:
+    logger.warning("prctl module not available, serial probing may interfere with ports in use")
+except Exception as e:
+    logger.warning(f"Failed to drop CAP_SYS_ADMIN, serial probing may interfere with ports in use: {e}")
+
 autopilot = AutoPilotManager()
 
 from api import application
