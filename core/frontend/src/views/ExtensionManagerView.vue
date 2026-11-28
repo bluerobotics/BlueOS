@@ -287,6 +287,7 @@
         type="error"
         variant="tonal"
         class="mb-0"
+        data-testid="extension-error"
       >
         {{ alerter_error }}
       </v-alert>
